@@ -2,5 +2,12 @@
   "LandingPage": {
     "title": "Landing Page",
     "description": "This is the landing page of the application."
+  },
+  "LocaleSwitcher": {
+    "label": "Language",
+    "locale": {
+      "en": "English",
+      "pl": "Polish"
+    }
   }
 }
