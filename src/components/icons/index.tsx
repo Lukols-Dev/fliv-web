@@ -8,7 +8,7 @@ export const Icons = {
     const size = props?.size ?? 44;
     return (
       <Image
-        src="icons/logo.svg"
+        src="/icons/logo.svg"
         alt="Logo"
         width={size}
         height={size}

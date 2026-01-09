@@ -12,8 +12,9 @@ import {
   createSignInSchema,
   type SignInValues,
 } from "@/features/auth/components/sign-in/validation-schema";
-// import { authClient } from "../../lib/auth";
+
 import { useTranslations } from "next-intl";
+import { authClient } from "../../lib/auth";
 
 export const SignInForm = () => {
   const t = useTranslations("SignInForm");
@@ -48,28 +49,28 @@ export const SignInForm = () => {
     },
   });
 
-  //   const onSubmit = async (formValues: SignInValues) => {
-  //     const { email, password } = formValues;
-  //     const payload = { email, password, callbackURL: redirectTo };
+  const onSubmit = async (formValues: SignInValues) => {
+    const { email, password } = formValues;
+    const payload = { email, password, callbackURL: redirectTo };
 
-  //     setFormError(null);
+    setFormError(null);
 
-  //     try {
-  //       const { error } = await authClient.signIn.email(payload);
+    try {
+      const { error } = await authClient.signIn.email(payload);
 
-  //       if (error) {
-  //         setFormError(error.message || t("errors.generic"));
-  //         return;
-  //       }
+      if (error) {
+        setFormError(error.message || t("errors.generic"));
+        return;
+      }
 
-  //       reset();
-  //     } catch (err) {
-  //       setFormError(err instanceof Error ? err.message : t("errors.generic"));
-  //     }
-  //   };
+      reset();
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : t("errors.generic"));
+    }
+  };
 
   return (
-    <form className="space-y-4" noValidate>
+    <form className="space-y-4" noValidate onSubmit={handleSubmit(onSubmit)}>
       {formError && (
         <Alert variant="destructive">
           <AlertDescription>{formError}</AlertDescription>
@@ -108,7 +109,7 @@ export const SignInForm = () => {
       <Button
         className="w-full"
         type="submit"
-        variant="secondary"
+        variant="default"
         disabled={isSubmitting}
       >
         {isSubmitting ? t("buttons.submitting") : t("buttons.submit")}
