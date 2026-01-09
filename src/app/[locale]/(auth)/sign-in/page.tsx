@@ -1,6 +1,6 @@
+import { SignInForm } from "@/features/auth/components/sign-in/sign-in-form";
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
-// import { UserAuthForm } from "../_components/user-auth-form";
 
 export default function SignInPage() {
   const t = useTranslations("SignInPage");
@@ -12,10 +12,7 @@ export default function SignInPage() {
         <p className="text-muted-foreground text-sm">{t("description")}</p>
       </div>
 
-      {/* <UserAuthForm mode="signin" /> */}
-      <div className="text-muted-foreground text-center text-sm">
-        Form goes here
-      </div>
+      <SignInForm />
 
       <p className="text-muted-foreground text-center text-sm">
         {t("footerText")}{" "}

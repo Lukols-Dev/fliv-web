@@ -17,6 +17,28 @@
     "footerText": "Already have an account?",
     "footerCta": "Sign in"
   },
+  "SignInForm": {
+    "fields": {
+      "emailLabel": "Email",
+      "emailPlaceholder": "name@example.com",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "**********"
+    },
+    "links": {
+      "forgotPassword": "Forgot password?"
+    },
+    "buttons": {
+      "submit": "Sign in",
+      "submitting": "Signing in..."
+    },
+    "errors": {
+      "generic": "Unable to sign in. Please try again."
+    },
+    "validation": {
+      "emailInvalid": "Please enter a valid email address",
+      "passwordRequired": "Password is required"
+    }
+  },
   "LocaleSwitcher": {
     "label": "Language",
     "locale": {

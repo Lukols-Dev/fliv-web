@@ -17,6 +17,28 @@
     "footerText": "Masz już konto?",
     "footerCta": "Zaloguj się"
   },
+  "SignInForm": {
+    "fields": {
+      "emailLabel": "Email",
+      "emailPlaceholder": "name@example.com",
+      "passwordLabel": "Hasło",
+      "passwordPlaceholder": "**********"
+    },
+    "links": {
+      "forgotPassword": "Nie pamiętasz hasła?"
+    },
+    "buttons": {
+      "submit": "Zaloguj się",
+      "submitting": "Logowanie..."
+    },
+    "errors": {
+      "generic": "Nie udało się zalogować. Spróbuj ponownie."
+    },
+    "validation": {
+      "emailInvalid": "Podaj poprawny adres e-mail",
+      "passwordRequired": "Hasło jest wymagane"
+    }
+  },
   "LocaleSwitcher": {
     "label": "Język",
     "locale": {
