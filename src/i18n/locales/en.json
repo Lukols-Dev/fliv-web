@@ -3,6 +3,20 @@
     "title": "Landing Page",
     "description": "This is the landing page of the application."
   },
+  "SignInPage": {
+    "title": "Sign in",
+    "description": "Welcome back! Please sign in to continue.",
+    "submit": "Sign in",
+    "footerText": "Don't have an account?",
+    "footerCta": "Sign up"
+  },
+  "SignUpPage": {
+    "title": "Create an account",
+    "description": "Enter your email below to create your account.",
+    "submit": "Sign up",
+    "footerText": "Already have an account?",
+    "footerCta": "Sign in"
+  },
   "LocaleSwitcher": {
     "label": "Language",
     "locale": {

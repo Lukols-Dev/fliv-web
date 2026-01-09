@@ -3,6 +3,20 @@
     "title": "Strona główna",
     "description": "Strona główna aplikacji."
   },
+  "SignInPage": {
+    "title": "Zaloguj się",
+    "description": "Witaj ponownie! Proszę zaloguj się, aby kontynuować.",
+    "submit": "Zaloguj się",
+    "footerText": "Nie masz jeszcze konta?",
+    "footerCta": "Zarejestruj się"
+  },
+  "SignUpPage": {
+    "title": "Utwórz konto",
+    "description": "Podaj email poniżej, aby założyć konto.",
+    "submit": "Zarejestruj się",
+    "footerText": "Masz już konto?",
+    "footerCta": "Zaloguj się"
+  },
   "LocaleSwitcher": {
     "label": "Język",
     "locale": {
