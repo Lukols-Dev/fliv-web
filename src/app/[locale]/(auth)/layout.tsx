@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import Image from "next/image";
 import { LanguageToggle } from "@/components/custom/language-toggle";
+import { Icons } from "@/components/icons";
+import { Link } from "@/i18n/navigation";
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
@@ -20,11 +22,15 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
       </div>
 
       {/* Right side */}
-      <div className="flex items-center justify-center lg:h-screen lg:p-8">
+      <div className="relative flex items-center justify-center lg:h-screen lg:p-8">
+        <div className="absolute top-4 right-4 md:top-8 md:right-8">
+          <LanguageToggle />
+        </div>
         <div className="mx-auto flex w-full flex-col justify-center gap-6 sm:w-[350px]">
-          <div className="absolute top-4 right-4 md:top-8 md:right-8">
-            <LanguageToggle />
-          </div>
+          <Link href="/" className="mx-auto inline-flex items-center gap-2">
+            <Icons.logo size={200} />
+            <span className="sr-only">Go to home</span>
+          </Link>
           {children}
         </div>
       </div>
