@@ -1,0 +1,13 @@
+{
+  "LandingPage": {
+    "title": "Strona główna",
+    "description": "Strona główna aplikacji."
+  },
+  "LocaleSwitcher": {
+    "label": "Język",
+    "locale": {
+      "en": "Angielski",
+      "pl": "Polski"
+    }
+  }
+}
