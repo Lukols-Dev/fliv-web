@@ -1,4 +1,12 @@
-export type OrderStatus = "in_progress" | "waiting" | "done" | "issue";
+export type OrderStatus =
+  | "PENDING"
+  | "ACCEPTED"
+  | "IN_PROGRESS"
+  | "LOADING"
+  | "UNLOADING"
+  | "PAUSED"
+  | "COMPLETED"
+  | "PROBLEM";
 
 export type OrderListItem = {
   id: string;

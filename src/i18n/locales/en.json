@@ -101,5 +101,56 @@
       "callDriver": "Call driver",
       "messageDriver": "Message driver"
     }
+  },
+  "OrdersDetails": {
+    "header": {
+      "subtitle": "In progress"
+    },
+    "tabs": {
+      "info": "Order info",
+      "documents": "Documents"
+    },
+    "actions": {
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "driver": {
+      "role": "Driver",
+      "call": "Call",
+      "message": "Message"
+    },
+    "route": {
+      "title": "Route",
+      "edit": "Edit route",
+      "mapPlaceholder": "Map (placeholder)"
+    },
+    "stats": {
+      "currentDistance": "Current distance",
+      "distance": "Distance",
+      "startTime": "Start time",
+      "startDate": "Start date"
+    },
+    "tracking": {
+      "title": "Tracking history"
+    },
+    "trackingStatus": {
+      "waiting": "Waiting",
+      "accepted": "Accepted",
+      "loaded": "Loaded",
+      "delivered": "Delivered"
+    },
+    "documents": {
+      "empty": "No documents"
+    }
+  },
+  "OrderStatus": {
+    "PENDING": "Pending",
+    "ACCEPTED": "Accepted",
+    "IN_PROGRESS": "In progress",
+    "LOADING": "Loading",
+    "UNLOADING": "Unloading",
+    "PAUSED": "Paused",
+    "COMPLETED": "Completed",
+    "PROBLEM": "Problem"
   }
 }

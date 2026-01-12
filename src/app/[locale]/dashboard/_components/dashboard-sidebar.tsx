@@ -26,7 +26,11 @@ export function AppSidebar() {
     pathname === href || pathname.startsWith(`${href}/`);
 
   return (
-    <Sidebar variant="sidebar" collapsible="none" className="h-screen border-r">
+    <Sidebar
+      variant="sidebar"
+      collapsible="none"
+      className="h-screen border-r bg-white"
+    >
       <SidebarHeader className="gap-2 px-3 py-3 mx-auto">
         <Link href="/dashboard" className="flex items-center gap-2">
           <Icons.logo size={130} />

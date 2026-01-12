@@ -22,10 +22,10 @@ export default function DashboardShell({ children, user }: Props) {
     <SidebarProvider className="min-h-svh w-full">
       <AppSidebar />
 
-      <SidebarInset>
+      <SidebarInset className="flex h-svh flex-col overflow-hidden">
         <SiteHeader user={user} />
 
-        <main className="flex flex-1 flex-col">
+        <main className="flex flex-1 flex-col overflow-y-auto bg-[#EBE5D4]/18">
           <div className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
             {children}
           </div>

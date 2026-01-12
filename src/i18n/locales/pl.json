@@ -101,5 +101,56 @@
       "callDriver": "Zadzwoń do kierowcy",
       "messageDriver": "Wyślij wiadomość do kierowcy"
     }
+  },
+  "OrdersDetails": {
+    "header": {
+      "subtitle": "W realizacji"
+    },
+    "tabs": {
+      "info": "Informacje o zleceniu",
+      "documents": "Dokumenty"
+    },
+    "actions": {
+      "edit": "Edytuj",
+      "delete": "Usuń"
+    },
+    "driver": {
+      "role": "Driver",
+      "call": "Zadzwoń",
+      "message": "Wiadomość"
+    },
+    "route": {
+      "title": "Trasa",
+      "edit": "Edytuj trasę",
+      "mapPlaceholder": "Mapa (placeholder)"
+    },
+    "stats": {
+      "currentDistance": "Aktualny dystans",
+      "distance": "Dystans",
+      "startTime": "Godzina startu",
+      "startDate": "Data startu"
+    },
+    "tracking": {
+      "title": "Historia śledzenia"
+    },
+    "trackingStatus": {
+      "waiting": "Oczekuje",
+      "accepted": "Przyjęto",
+      "loaded": "Załadunek",
+      "delivered": "Dostarczono"
+    },
+    "documents": {
+      "empty": "Brak dokumentów"
+    }
+  },
+  "OrderStatus": {
+    "PENDING": "Oczekuje",
+    "ACCEPTED": "Przyjęto",
+    "IN_PROGRESS": "W trakcie",
+    "LOADING": "Ładowanie",
+    "UNLOADING": "Rozładunek",
+    "PAUSED": "Wstrzymane",
+    "COMPLETED": "Zakończone",
+    "PROBLEM": "Problem"
   }
 }

@@ -24,7 +24,7 @@ export default function OrdersGrid({
           isActive={item.id === selectedId}
           orderNumber={item.number}
           createdAt="10.09.2025"
-          status="issue"
+          status={item.status}
           from={{
             city: "Piaseczno",
             country: "Polska",

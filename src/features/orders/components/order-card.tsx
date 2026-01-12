@@ -58,8 +58,8 @@ export default function OrderCard({
     >
       <Card
         className={cn(
-          "h-auto rounded-xl border bg-card shadow-none transition-all duration-200",
-          "hover:bg-muted/20 hover:shadow-lg hover:shadow-[#F2542F]/15 hover:-translate-y-1",
+          "bg-white h-auto rounded-xl border shadow-none transition-all duration-200",
+          "hover:shadow-lg hover:shadow-[#F2542F]/15 hover:-translate-y-1",
           "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
           isActive
             ? "border-[#F2542F]/60 shadow-lg shadow-[#F2542F]/20"
@@ -69,9 +69,7 @@ export default function OrderCard({
         {/* Top */}
         <div className="flex items-start justify-between gap-3 px-4 pt-4">
           <div className="min-w-0">
-            <p className="text-xs text-muted-foreground">
-              {t("orderNumberLabel")}
-            </p>
+            <p className="text-xs text-[#709470]">{t("orderNumberLabel")}</p>
             <p className="truncate text-lg font-semibold leading-6">
               {orderNumber}
             </p>
@@ -83,7 +81,7 @@ export default function OrderCard({
           <OrderStatusBadge
             status={status}
             className={cn(
-              status === "issue" &&
+              status === "PROBLEM" &&
                 "bg-destructive/15 text-destructive border-0"
             )}
           />
@@ -96,20 +94,116 @@ export default function OrderCard({
         {/* Route line */}
         <div className="px-4 pt-3">
           <div className="relative flex items-center justify-between">
-            <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-muted">
-              <Circle className="h-3 w-3 text-muted-foreground" />
+            <span
+              className={cn(
+                "inline-flex h-6 w-6 items-center justify-center rounded-full transition-colors",
+                (status === "IN_PROGRESS" ||
+                  status === "LOADING" ||
+                  status === "UNLOADING") &&
+                  "bg-[#709470]/20",
+
+                (status === "PENDING" ||
+                  status === "PAUSED" ||
+                  status === "ACCEPTED") &&
+                  "bg-[#EBE5D4]/40",
+                status === "COMPLETED" && "bg-green-500/20",
+                status === "PROBLEM" && "bg-destructive/20"
+              )}
+            >
+              <span
+                className={cn(
+                  "h-3 w-3 transition-colors rounded-full",
+                  (status === "IN_PROGRESS" ||
+                    status === "LOADING" ||
+                    status === "UNLOADING") &&
+                    "bg-[#709470]",
+                  (status === "PENDING" ||
+                    status === "PAUSED" ||
+                    status === "ACCEPTED") &&
+                    "bg-[#EBE5D4]",
+                  status === "COMPLETED" && "bg-green-500",
+                  status === "PROBLEM" && "bg-destructive"
+                )}
+              />
             </span>
 
-            <div className="mx-2 h-[2px] flex-1 bg-muted" />
+            <div
+              className={cn(
+                "mx-2 h-[2px] flex-1 transition-colors",
+                (status === "IN_PROGRESS" || status === "UNLOADING") &&
+                  "bg-[#709470]/20",
+                (status === "PENDING" ||
+                  status === "PAUSED" ||
+                  status === "LOADING" ||
+                  status === "ACCEPTED") &&
+                  "bg-[#EBE5D4]",
+                status === "COMPLETED" && "bg-green-500",
+                status === "PROBLEM" && "bg-destructive/20"
+              )}
+            />
 
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#F2542F]/10 text-[#F2542F]">
-              <Truck className="h-4 w-4" />
+            <span
+              className={cn(
+                "inline-flex h-8 w-8 items-center justify-center rounded-full transition-colors",
+                (status === "IN_PROGRESS" || status === "UNLOADING") &&
+                  "text-[#709470]",
+                (status === "PENDING" ||
+                  status === "PAUSED" ||
+                  status === "LOADING" ||
+                  status === "ACCEPTED") &&
+                  "text-[#EBE5D4]",
+                status === "COMPLETED" && "text-green-600",
+                status === "PROBLEM" && "text-destructive"
+              )}
+            >
+              <Truck className="h-6 w-6" />
             </span>
 
-            <div className="mx-2 h-[2px] flex-1 bg-muted" />
+            <div
+              className={cn(
+                "mx-2 h-[2px] flex-1 transition-colors",
+                (status === "IN_PROGRESS" || status === "UNLOADING") &&
+                  "bg-[#709470]/20",
+                (status === "PENDING" ||
+                  status === "PAUSED" ||
+                  status === "LOADING" ||
+                  status === "ACCEPTED" ||
+                  status === "IN_PROGRESS") &&
+                  "bg-[#EBE5D4]",
+                status === "COMPLETED" && "bg-green-500",
+                status === "PROBLEM" && "bg-destructive/20"
+              )}
+            />
 
-            <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-muted">
-              <MapPin className="h-3 w-3 text-muted-foreground" />
+            <span
+              className={cn(
+                "inline-flex h-6 w-6 items-center justify-center rounded-full transition-colors",
+                (status === "IN_PROGRESS" || status === "UNLOADING") &&
+                  "bg-[#709470]/20",
+                (status === "PENDING" ||
+                  status === "PAUSED" ||
+                  status === "LOADING" ||
+                  status === "ACCEPTED" ||
+                  status === "IN_PROGRESS") &&
+                  "bg-[#EBE5D4]/40",
+                status === "COMPLETED" && "bg-green-500/20",
+                status === "PROBLEM" && "bg-destructive/20"
+              )}
+            >
+              <MapPin
+                className={cn(
+                  "h-4 w-4 transition-colors",
+                  status === "UNLOADING" && "text-[#709470]",
+                  (status === "PENDING" ||
+                    status === "PAUSED" ||
+                    status === "LOADING" ||
+                    status === "ACCEPTED" ||
+                    status === "IN_PROGRESS") &&
+                    "text-[#EBE5D4]",
+                  status === "COMPLETED" && "text-green-600",
+                  status === "PROBLEM" && "text-destructive"
+                )}
+              />
             </span>
           </div>
 
@@ -129,6 +223,10 @@ export default function OrderCard({
               <p className="text-muted-foreground">{to.addressLine}</p>
             </div>
           </div>
+        </div>
+
+        <div className="px-4 pt-3">
+          <Separator />
         </div>
 
         {/* Bottom */}

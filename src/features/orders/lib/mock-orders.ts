@@ -1,10 +1,14 @@
 import type { OrderListItem, OrderStatus } from "../types";
 
 const STATUSES: readonly OrderStatus[] = [
-  "in_progress",
-  "waiting",
-  "done",
-  "issue",
+  "PENDING",
+  "ACCEPTED",
+  "IN_PROGRESS",
+  "LOADING",
+  "UNLOADING",
+  "PAUSED",
+  "COMPLETED",
+  "PROBLEM",
 ] as const;
 
 export function mockOrders(count = 12): OrderListItem[] {
