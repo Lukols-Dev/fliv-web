@@ -1,3 +1,4 @@
+import { SignUpForm } from "@/features/auth/components/sign-up/sign-up-form";
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 
@@ -13,10 +14,7 @@ export default function SignUpPage() {
         <p className="text-muted-foreground text-sm">{t("description")}</p>
       </div>
 
-      {/* <UserAuthForm mode="signup" /> */}
-      <div className="text-muted-foreground text-center text-sm">
-        Form goes here
-      </div>
+      <SignUpForm />
 
       <p className="text-muted-foreground text-center text-sm">
         {t("footerText")}{" "}
