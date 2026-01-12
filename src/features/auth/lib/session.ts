@@ -4,7 +4,7 @@ import { authEndpoints } from "./endpoints";
 import { ApiError, apiFetchPath } from "@/config/http/api-client";
 
 type SessionPayload = {
-  user: { id: string; email: string; role?: string };
+  user: { id: string; email: string; name: string; role?: string };
 } | null;
 
 const REQUEST_TIMEOUT_MS = 3000;

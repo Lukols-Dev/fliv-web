@@ -29,7 +29,7 @@ export function AppSidebar() {
     <Sidebar variant="sidebar" collapsible="none" className="h-screen border-r">
       <SidebarHeader className="gap-2 px-3 py-3 mx-auto">
         <Link href="/dashboard" className="flex items-center gap-2">
-          <Icons.logo size={100} />
+          <Icons.logo size={130} />
           {/* TODO: Add safety margin look to figma */}
         </Link>
       </SidebarHeader>
