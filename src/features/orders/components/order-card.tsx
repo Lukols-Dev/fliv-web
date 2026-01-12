@@ -4,7 +4,7 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-import { MapPin, Phone, MessageSquare, Truck, Circle } from "lucide-react";
+import { MapPin, Phone, MessageSquare, Truck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import OrderStatusBadge from "./order-status-badge";
 import type { OrderStatus } from "../types";
@@ -242,20 +242,18 @@ export default function OrderCard({
               <p className="truncate text-sm font-semibold leading-5">
                 {driver.name}
               </p>
-              <p className="text-xs text-muted-foreground">
-                {driver.roleLabel}
-              </p>
+              <p className="text-xs text-[#709470]">{driver.roleLabel}</p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
             <IconActionButton
-              icon={<Phone className="h-4 w-4" />}
+              icon={<Phone className="h-4 w-4 text-[#709470]" />}
               label={t("actions.callDriver")}
               onAction={onCallDriver}
             />
             <IconActionButton
-              icon={<MessageSquare className="h-4 w-4" />}
+              icon={<MessageSquare className="h-4 w-4 text-[#709470]" />}
               label={t("actions.messageDriver")}
               onAction={onMessageDriver}
             />

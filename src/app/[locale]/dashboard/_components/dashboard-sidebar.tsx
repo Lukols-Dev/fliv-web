@@ -3,7 +3,6 @@
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarHeader,
   SidebarGroup,
   SidebarGroupContent,
@@ -16,14 +15,16 @@ import { Separator } from "@/components/ui/separator";
 import { usePathname, Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { Icons } from "@/components/icons";
-import { dashboardNav, DashboardNavItem } from "../config/nav";
+import {
+  dashboardNav,
+  DashboardNavItem,
+  isNavItemActive,
+} from "../_config/nav";
+import { cn } from "@/lib/utils";
 
 export function AppSidebar() {
   const pathname = usePathname();
   const t = useTranslations("DashboardNav");
-
-  const isActive = (href: string) =>
-    pathname === href || pathname.startsWith(`${href}/`);
 
   return (
     <Sidebar
@@ -47,9 +48,19 @@ export function AppSidebar() {
             <SidebarMenu>
               {dashboardNav.main.map((item: DashboardNavItem) => {
                 const Icon = item.icon;
+                const active = isNavItemActive(pathname, item);
                 return (
                   <SidebarMenuItem key={item.href}>
-                    <SidebarMenuButton asChild isActive={isActive(item.href)}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={active}
+                      className={cn(
+                        "transition-colors",
+                        "data-[active=true]:bg-[#F2542F] data-[active=true]:text-white",
+                        "data-[active=true]:hover:bg-[#F2542F]",
+                        "data-[active=true]:[&>a>svg]:text-white"
+                      )}
+                    >
                       <Link
                         href={item.href}
                         className="flex items-center gap-2"
