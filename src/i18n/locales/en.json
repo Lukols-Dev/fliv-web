@@ -72,5 +72,16 @@
       "en": "English",
       "pl": "Polish"
     }
+  },
+  "DashboardNav": {
+    "groups": {
+      "main": "Main",
+      "settings": "System"
+    },
+    "items": {
+      "dashboard": "Dashboard",
+      "orders": "Orders",
+      "account": "Account"
+    }
   }
 }

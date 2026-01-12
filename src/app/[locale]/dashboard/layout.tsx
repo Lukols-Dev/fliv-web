@@ -1,15 +1,11 @@
+import type { ReactNode } from "react";
 import { requireUserOrRedirect } from "@/features/auth/lib/session";
+import DashboardShell from "./_components/dashboard-shell";
 
 export default async function DashboardLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  await requireUserOrRedirect();
+}: Readonly<{ children: ReactNode }>) {
+  const session = await requireUserOrRedirect("/dashboard");
 
-  return (
-    <div className="flex min-h-screen flex-col">
-      <main className="flex-1">{children}</main>
-    </div>
-  );
+  return <DashboardShell user={session.user}>{children}</DashboardShell>;
 }
