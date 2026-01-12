@@ -35,7 +35,11 @@ export default function OrdersView({ items, i18n }: Props) {
 
   return (
     <>
-      <OrdersGrid items={items} onOpenDetails={onOpenDetails} />
+      <OrdersGrid
+        items={items}
+        onOpenDetails={onOpenDetails}
+        selectedId={selectedId}
+      />
 
       <OrderDetailsSheet
         open={open}

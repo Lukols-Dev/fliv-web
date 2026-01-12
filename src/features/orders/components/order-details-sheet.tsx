@@ -31,7 +31,11 @@ export default function OrderDetailsSheet({
 }: Props) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-xl">
+      <SheetContent
+        side="right"
+        className="w-full sm:max-w-xl"
+        overlayClassName="bg-black/20"
+      >
         <SheetHeader>
           <SheetTitle className="truncate">
             {i18n.title}
