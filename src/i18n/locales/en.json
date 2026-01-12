@@ -83,5 +83,14 @@
       "orders": "Orders",
       "account": "Account"
     }
+  },
+  "OrdersPage": {
+    "title": "Orders",
+    "create": "Create order",
+    "details": {
+      "title": "Order",
+      "subtitle": "Order details",
+      "close": "Close"
+    }
   }
 }

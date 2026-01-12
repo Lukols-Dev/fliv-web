@@ -83,5 +83,14 @@
       "orders": "Zlecenia",
       "account": "Konto"
     }
+  },
+  "OrdersPage": {
+    "title": "Zlecenia",
+    "create": "Utwórz nowe zlecenie",
+    "details": {
+      "title": "Zlecenie",
+      "subtitle": "Szczegóły zlecenia",
+      "close": "Zamknij"
+    }
   }
 }
