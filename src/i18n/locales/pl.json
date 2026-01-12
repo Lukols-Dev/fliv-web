@@ -92,5 +92,14 @@
       "subtitle": "Szczegóły zlecenia",
       "close": "Zamknij"
     }
+  },
+  "OrderCard": {
+    "orderNumberLabel": "Numer zlecenia",
+    "createdAt": "Utworzono:",
+    "openDetails": "Otwórz szczegóły zlecenia",
+    "actions": {
+      "callDriver": "Zadzwoń do kierowcy",
+      "messageDriver": "Wyślij wiadomość do kierowcy"
+    }
   }
 }

@@ -92,5 +92,14 @@
       "subtitle": "Order details",
       "close": "Close"
     }
+  },
+  "OrderCard": {
+    "orderNumberLabel": "Order number",
+    "createdAt": "Created:",
+    "openDetails": "Open order details",
+    "actions": {
+      "callDriver": "Call driver",
+      "messageDriver": "Message driver"
+    }
   }
 }
