@@ -3,6 +3,69 @@
     "title": "Landing Page",
     "description": "This is the landing page of the application."
   },
+  "SignInPage": {
+    "title": "Sign in",
+    "description": "Welcome back! Please sign in to continue.",
+    "submit": "Sign in",
+    "footerText": "Don't have an account?",
+    "footerCta": "Sign up"
+  },
+  "SignUpPage": {
+    "title": "Create an account",
+    "description": "Enter your email below to create your account.",
+    "submit": "Sign up",
+    "footerText": "Already have an account?",
+    "footerCta": "Sign in"
+  },
+  "SignUpForm": {
+    "fields": {
+      "emailLabel": "Email",
+      "emailPlaceholder": "name@example.com",
+      "firstNameLabel": "First name",
+      "firstNamePlaceholder": "John",
+      "lastNameLabel": "Last name",
+      "lastNamePlaceholder": "Doe",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "**********",
+      "acceptTermsLabel": "I accept the terms and conditions"
+    },
+    "buttons": {
+      "submit": "Create account",
+      "submitting": "Creating account..."
+    },
+    "errors": {
+      "generic": "Unable to create account. Please try again."
+    },
+    "validation": {
+      "emailInvalid": "Please enter a valid email address",
+      "passwordRequired": "Password is required",
+      "firstNameRequired": "First name is required",
+      "lastNameRequired": "Last name is required",
+      "acceptTermsRequired": "You must accept the terms and conditions FLIV."
+    }
+  },
+  "SignInForm": {
+    "fields": {
+      "emailLabel": "Email",
+      "emailPlaceholder": "name@example.com",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "**********"
+    },
+    "links": {
+      "forgotPassword": "Forgot password?"
+    },
+    "buttons": {
+      "submit": "Sign in",
+      "submitting": "Signing in..."
+    },
+    "errors": {
+      "generic": "Unable to sign in. Please try again."
+    },
+    "validation": {
+      "emailInvalid": "Please enter a valid email address",
+      "passwordRequired": "Password is required"
+    }
+  },
   "LocaleSwitcher": {
     "label": "Language",
     "locale": {

@@ -3,6 +3,69 @@
     "title": "Strona główna",
     "description": "Strona główna aplikacji."
   },
+  "SignInPage": {
+    "title": "Zaloguj się",
+    "description": "Witaj ponownie! Proszę zaloguj się, aby kontynuować.",
+    "submit": "Zaloguj się",
+    "footerText": "Nie masz jeszcze konta?",
+    "footerCta": "Zarejestruj się"
+  },
+  "SignUpPage": {
+    "title": "Utwórz konto",
+    "description": "Podaj email poniżej, aby założyć konto.",
+    "submit": "Zarejestruj się",
+    "footerText": "Masz już konto?",
+    "footerCta": "Zaloguj się"
+  },
+  "SignUpForm": {
+    "fields": {
+      "emailLabel": "Email",
+      "emailPlaceholder": "name@example.com",
+      "firstNameLabel": "Imię",
+      "firstNamePlaceholder": "Jan",
+      "lastNameLabel": "Nazwisko",
+      "lastNamePlaceholder": "Kowalski",
+      "passwordLabel": "Hasło",
+      "passwordPlaceholder": "**********",
+      "acceptTermsLabel": "Akceptuję regulamin"
+    },
+    "buttons": {
+      "submit": "Utwórz konto",
+      "submitting": "Tworzenie konta..."
+    },
+    "errors": {
+      "generic": "Nie udało się utworzyć konta. Spróbuj ponownie."
+    },
+    "validation": {
+      "emailInvalid": "Podaj poprawny adres e-mail",
+      "passwordRequired": "Hasło jest wymagane",
+      "firstNameRequired": "Imię jest wymagane",
+      "lastNameRequired": "Nazwisko jest wymagane",
+      "acceptTermsRequired": "Akceptuję regulamin i politykę prywatności FLIV."
+    }
+  },
+  "SignInForm": {
+    "fields": {
+      "emailLabel": "Email",
+      "emailPlaceholder": "name@example.com",
+      "passwordLabel": "Hasło",
+      "passwordPlaceholder": "**********"
+    },
+    "links": {
+      "forgotPassword": "Nie pamiętasz hasła?"
+    },
+    "buttons": {
+      "submit": "Zaloguj się",
+      "submitting": "Logowanie..."
+    },
+    "errors": {
+      "generic": "Nie udało się zalogować. Spróbuj ponownie."
+    },
+    "validation": {
+      "emailInvalid": "Podaj poprawny adres e-mail",
+      "passwordRequired": "Hasło jest wymagane"
+    }
+  },
   "LocaleSwitcher": {
     "label": "Język",
     "locale": {
