@@ -8,11 +8,7 @@ export default async function OrdersPage() {
 
   return (
     <>
-      <OrdersPageHeader
-        title={t("title")}
-        ctaLabel={t("create")}
-        ctaHref="/dashboard/orders/new"
-      />
+      <OrdersPageHeader title={t("title")} />
 
       <OrdersView
         items={mockOrders(12)}
