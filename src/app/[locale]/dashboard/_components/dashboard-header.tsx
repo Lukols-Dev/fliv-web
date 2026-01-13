@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { UserNav } from "./user-nav";
 import { Button } from "@/components/ui/button";
 import { Icons } from "@/components/icons";
+import { NotificationPopover } from "@/features/notification/components/notification-popover";
 
 type Props = {
   user: { id: string; email: string; name: string; role?: string };
@@ -17,17 +18,7 @@ export function SiteHeader({ user }: Props) {
       )}
     >
       <div className="ml-auto flex items-center gap-2">
-        <Button
-          variant="outline"
-          size="icon"
-          className="cursor-pointer relative"
-        >
-          <Icons.notification className="h-4 w-4" />
-          <span className="absolute -right-1 -top-1 flex size-3">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#F2542F] opacity-75"></span>
-            <span className="relative inline-flex size-3 rounded-full bg-[#F2542F]"></span>
-          </span>
-        </Button>
+        <NotificationPopover />
         <UserNav user={user} />
       </div>
     </header>

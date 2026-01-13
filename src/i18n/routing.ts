@@ -28,5 +28,9 @@ export const routing = defineRouting({
       en: "/dashboard/account",
       pl: "/panel/konto",
     },
+    "/dashboard/notifications": {
+      en: "/dashboard/notifications",
+      pl: "/panel/powiadomienia",
+    },
   },
 });
