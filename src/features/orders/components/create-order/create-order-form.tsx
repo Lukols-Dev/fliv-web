@@ -156,7 +156,7 @@ export default function CreateOrderForm({ onCreated }: Props) {
             onValueChange={(v) => setActiveTab(v as TabKey)}
             className="w-full"
           >
-            <TabsList className="h-auto w-full justify-start gap-1 rounded-xl bg-muted/50 p-1 overflow-x-auto">
+            <TabsList className="h-auto w-full justify-start gap-1 rounded-xl p-1 overflow-x-auto">
               <TabLabel
                 value="record"
                 className={tabTriggerClass}
@@ -294,57 +294,63 @@ export default function CreateOrderForm({ onCreated }: Props) {
                 </Field>
 
                 <FieldSeparator />
+                <div className="flex flex-col gap-2">
+                  <span className="text-sm font-medium">
+                    {t("fields.driver")}
+                  </span>
+                  <FieldGroup className="gap-4 border border-[#EBE5D4]/60 p-4 rounded-md">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      <Field data-invalid={!!errors.driverFirstName}>
+                        <FieldLabel htmlFor="driverFirstName" required>
+                          {t("fields.driverFirstName")}
+                        </FieldLabel>
+                        <Input
+                          id="driverFirstName"
+                          placeholder={t("placeholders.driverFirstName")}
+                          aria-invalid={!!errors.driverFirstName}
+                          {...register("driverFirstName")}
+                        />
+                        {errors.driverFirstName?.message && (
+                          <FieldError>
+                            {errors.driverFirstName.message}
+                          </FieldError>
+                        )}
+                      </Field>
 
-                <FieldGroup className="gap-4">
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <Field data-invalid={!!errors.driverFirstName}>
-                      <FieldLabel htmlFor="driverFirstName" required>
-                        {t("fields.driverFirstName")}
+                      <Field data-invalid={!!errors.driverLastName}>
+                        <FieldLabel htmlFor="driverLastName" required>
+                          {t("fields.driverLastName")}
+                        </FieldLabel>
+                        <Input
+                          id="driverLastName"
+                          placeholder={t("placeholders.driverLastName")}
+                          aria-invalid={!!errors.driverLastName}
+                          {...register("driverLastName")}
+                        />
+                        {errors.driverLastName?.message && (
+                          <FieldError>
+                            {errors.driverLastName.message}
+                          </FieldError>
+                        )}
+                      </Field>
+                    </div>
+
+                    <Field data-invalid={!!errors.driverPhone}>
+                      <FieldLabel htmlFor="driverPhone" required>
+                        {t("fields.driverPhone")}
                       </FieldLabel>
                       <Input
-                        id="driverFirstName"
-                        placeholder={t("placeholders.driverFirstName")}
-                        aria-invalid={!!errors.driverFirstName}
-                        {...register("driverFirstName")}
+                        id="driverPhone"
+                        placeholder={t("placeholders.driverPhone")}
+                        aria-invalid={!!errors.driverPhone}
+                        {...register("driverPhone")}
                       />
-                      {errors.driverFirstName?.message && (
-                        <FieldError>
-                          {errors.driverFirstName.message}
-                        </FieldError>
+                      {errors.driverPhone?.message && (
+                        <FieldError>{errors.driverPhone.message}</FieldError>
                       )}
                     </Field>
-
-                    <Field data-invalid={!!errors.driverLastName}>
-                      <FieldLabel htmlFor="driverLastName" required>
-                        {t("fields.driverLastName")}
-                      </FieldLabel>
-                      <Input
-                        id="driverLastName"
-                        placeholder={t("placeholders.driverLastName")}
-                        aria-invalid={!!errors.driverLastName}
-                        {...register("driverLastName")}
-                      />
-                      {errors.driverLastName?.message && (
-                        <FieldError>{errors.driverLastName.message}</FieldError>
-                      )}
-                    </Field>
-                  </div>
-
-                  <Field data-invalid={!!errors.driverPhone}>
-                    <FieldLabel htmlFor="driverPhone" required>
-                      {t("fields.driverPhone")}
-                    </FieldLabel>
-                    <Input
-                      id="driverPhone"
-                      placeholder={t("placeholders.driverPhone")}
-                      aria-invalid={!!errors.driverPhone}
-                      {...register("driverPhone")}
-                    />
-                    {errors.driverPhone?.message && (
-                      <FieldError>{errors.driverPhone.message}</FieldError>
-                    )}
-                  </Field>
-                </FieldGroup>
+                  </FieldGroup>
+                </div>
               </FieldGroup>
             </TabsContent>
 
@@ -382,52 +388,58 @@ export default function CreateOrderForm({ onCreated }: Props) {
                 </Field>
 
                 <FieldSeparator />
+                <div className="flex flex-col gap-2">
+                  <span className="text-sm font-medium">
+                    {t("fields.payer")}
+                  </span>
+                  <FieldGroup className="gap-4 border border-[#EBE5D4]/60 p-4 rounded-md">
+                    <Field data-invalid={!!errors.payerName}>
+                      <FieldLabel htmlFor="payerName" required>
+                        {t("fields.payerName")}
+                      </FieldLabel>
+                      <Input
+                        id="payerName"
+                        placeholder={t("placeholders.payerName")}
+                        aria-invalid={!!errors.payerName}
+                        {...register("payerName")}
+                      />
+                      {errors.payerName?.message && (
+                        <FieldError>{errors.payerName.message}</FieldError>
+                      )}
+                    </Field>
 
-                <Field data-invalid={!!errors.payerName}>
-                  <FieldLabel htmlFor="payerName" required>
-                    {t("fields.payerName")}
-                  </FieldLabel>
-                  <Input
-                    id="payerName"
-                    placeholder={t("placeholders.payerName")}
-                    aria-invalid={!!errors.payerName}
-                    {...register("payerName")}
-                  />
-                  {errors.payerName?.message && (
-                    <FieldError>{errors.payerName.message}</FieldError>
-                  )}
-                </Field>
+                    <Field data-invalid={!!errors.payerNip}>
+                      <FieldLabel htmlFor="payerNip" required>
+                        {t("fields.payerNip")}
+                      </FieldLabel>
+                      <Input
+                        id="payerNip"
+                        placeholder={t("placeholders.payerNip")}
+                        aria-invalid={!!errors.payerNip}
+                        {...register("payerNip")}
+                      />
+                      {errors.payerNip?.message && (
+                        <FieldError>{errors.payerNip.message}</FieldError>
+                      )}
+                    </Field>
 
-                <Field data-invalid={!!errors.payerNip}>
-                  <FieldLabel htmlFor="payerNip" required>
-                    {t("fields.payerNip")}
-                  </FieldLabel>
-                  <Input
-                    id="payerNip"
-                    placeholder={t("placeholders.payerNip")}
-                    aria-invalid={!!errors.payerNip}
-                    {...register("payerNip")}
-                  />
-                  {errors.payerNip?.message && (
-                    <FieldError>{errors.payerNip.message}</FieldError>
-                  )}
-                </Field>
-
-                <Field data-invalid={!!errors.payerEmail}>
-                  <FieldLabel htmlFor="payerEmail" required>
-                    {t("fields.payerEmail")}
-                  </FieldLabel>
-                  <Input
-                    id="payerEmail"
-                    type="email"
-                    placeholder={t("placeholders.payerEmail")}
-                    aria-invalid={!!errors.payerEmail}
-                    {...register("payerEmail")}
-                  />
-                  {errors.payerEmail?.message && (
-                    <FieldError>{errors.payerEmail.message}</FieldError>
-                  )}
-                </Field>
+                    <Field data-invalid={!!errors.payerEmail}>
+                      <FieldLabel htmlFor="payerEmail" required>
+                        {t("fields.payerEmail")}
+                      </FieldLabel>
+                      <Input
+                        id="payerEmail"
+                        type="email"
+                        placeholder={t("placeholders.payerEmail")}
+                        aria-invalid={!!errors.payerEmail}
+                        {...register("payerEmail")}
+                      />
+                      {errors.payerEmail?.message && (
+                        <FieldError>{errors.payerEmail.message}</FieldError>
+                      )}
+                    </Field>
+                  </FieldGroup>
+                </div>
               </FieldGroup>
             </TabsContent>
 
@@ -499,8 +511,8 @@ export default function CreateOrderForm({ onCreated }: Props) {
                 <Field>
                   <FieldLabel htmlFor="cargoDescription">
                     {t("fields.cargoDescription")}
-                    <span className="ml-2 text-xs text-muted-foreground">
-                      {t("optional")}
+                    <span className="mt-auto mb-0 text-xs text-muted-foreground">
+                      ({t("optional")})
                     </span>
                   </FieldLabel>
                   <Textarea
@@ -550,8 +562,8 @@ export default function CreateOrderForm({ onCreated }: Props) {
                 <Field>
                   <FieldLabel htmlFor="attachments">
                     {t("fields.attachments")}
-                    <span className="ml-2 text-xs text-muted-foreground">
-                      {t("optional")}
+                    <span className="mt-auto mb-0 text-xs text-muted-foreground">
+                      ({t("optional")})
                     </span>
                   </FieldLabel>
                   <Input
@@ -586,8 +598,8 @@ export default function CreateOrderForm({ onCreated }: Props) {
                 <Field>
                   <FieldLabel htmlFor="notes">
                     {t("fields.notes")}
-                    <span className="ml-2 text-xs text-muted-foreground">
-                      {t("optional")}
+                    <span className="mt-auto mb-0 text-xs text-muted-foreground">
+                      ({t("optional")})
                     </span>
                   </FieldLabel>
                   <Textarea
