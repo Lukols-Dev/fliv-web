@@ -6,7 +6,6 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
-  SheetDescription,
 } from "@/components/ui/sheet";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
@@ -25,12 +24,12 @@ import {
   Phone,
   MessageSquare,
   MoreVertical,
-  Pencil,
-  Trash2,
+  Truck,
 } from "lucide-react";
 import OrderStatusBadge from "./order-status-badge";
 import type { OrderListItem, OrderStatus } from "../types";
 import { useTranslations } from "next-intl";
+import { Icons } from "@/components/icons";
 
 type Props = {
   open: boolean;
@@ -61,12 +60,14 @@ export default function OrderDetailsSheet({
   // MOCKI – później podepniesz prawdziwe dane z API
   const driver = { name: "Jan Nowak", role: t("driver.role"), initials: "JN" };
   const from = {
-    city: "Piaseczno, Polska",
-    address: "Jana Pawła II 66, 05-500",
+    city: "Piaseczno",
+    country: "Polska",
+    addressLine: "Jana Pawła II 66, 05-500",
   };
   const to = {
-    city: "Operngasse 3, Wiedeń",
-    address: "Elisabethstraße 1010, Wien, Austria",
+    city: "Wiedeń",
+    country: "Austria",
+    addressLine: "Elisabethstraße 1010, Operngasse 3",
   };
 
   const stats = [
@@ -84,39 +85,44 @@ export default function OrderDetailsSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-md md:max-w-lg p-0">
-        <div className="flex h-full flex-col">
+      <SheetContent
+        side="right"
+        className="w-full sm:max-w-md md:max-w-lg p-0"
+        hideClose
+      >
+        <div className="flex h-full flex-col overflow-y-auto">
           {/* Header */}
-          <div className="px-4 pt-4 pb-3">
+          <div className="px-0 pt-2 pb-3">
             <SheetHeader className="space-y-2">
               <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
+                <div className="min-w-0 flex items-center gap-2">
                   <SheetTitle className="truncate text-lg font-semibold">
                     {orderNumber}
                   </SheetTitle>
-                  <SheetDescription className="text-xs">
-                    {t("header.subtitle")}
-                  </SheetDescription>
+                  <OrderStatusBadge status={orderStatus} />
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <OrderStatusBadge status={orderStatus} />
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="icon" className="h-8 w-8">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8 cursor-pointer"
+                      >
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={onEdit}>
-                        <Pencil className="mr-2 h-4 w-4" />
+                        <Icons.pencil className="mr-2 h-4 w-4" />
                         {t("actions.edit")}
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={onDelete}
                         className="text-destructive focus:text-destructive"
                       >
-                        <Trash2 className="mr-2 h-4 w-4" />
+                        <Icons.trash className="mr-2 h-4 w-4 text-destructive" />
                         {t("actions.delete")}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -137,10 +143,10 @@ export default function OrderDetailsSheet({
                 {/* INFO TAB */}
                 <TabsContent value="info" className="mt-3">
                   {/* Driver box */}
-                  <Card className="border shadow-none">
-                    <div className="flex items-center justify-between gap-3 p-3">
+                  <Card className="border border-[#EBE5D4] bg-[#EBE5D4]/18 shadow-none">
+                    <div className="flex items-center justify-between gap-3 px-3">
                       <div className="flex min-w-0 items-center gap-3">
-                        <Avatar className="h-10 w-10">
+                        <Avatar className="h-12 w-12">
                           <AvatarFallback>{driver.initials}</AvatarFallback>
                         </Avatar>
                         <div className="min-w-0">
@@ -156,13 +162,17 @@ export default function OrderDetailsSheet({
                       <div className="flex items-center gap-2">
                         <IconActionButton
                           label={t("driver.call")}
-                          icon={<Phone className="h-4 w-4" />}
+                          icon={<Phone className="h-4 w-4 text-[#709470]" />}
                           onAction={() => {}}
+                          className="bg-transparent border border-[#EBE5D4]"
                         />
                         <IconActionButton
                           label={t("driver.message")}
-                          icon={<MessageSquare className="h-4 w-4" />}
+                          icon={
+                            <MessageSquare className="h-4 w-4 text-[#709470]" />
+                          }
                           onAction={() => {}}
+                          className="bg-transparent border border-[#EBE5D4]"
                         />
                       </div>
                     </div>
@@ -174,7 +184,8 @@ export default function OrderDetailsSheet({
                       <h3 className="text-base font-semibold">
                         {t("route.title")}
                       </h3>
-                      <Button size="sm" className="h-8">
+                      <Button size="sm" className="h-8 cursor-pointer">
+                        <Icons.pencil className="mr-2 h-4 w-4" />
                         {t("route.edit")}
                       </Button>
                     </div>
@@ -188,8 +199,149 @@ export default function OrderDetailsSheet({
                       </div>
                     </Card>
 
+                    {/* Route line */}
+                    <div className="mt-6">
+                      <div className="relative flex items-center justify-between">
+                        <span
+                          className={cn(
+                            "inline-flex h-6 w-6 items-center justify-center rounded-full transition-colors",
+                            (orderStatus === "IN_PROGRESS" ||
+                              orderStatus === "LOADING" ||
+                              orderStatus === "UNLOADING") &&
+                              "bg-[#709470]/20",
+                            (orderStatus === "PENDING" ||
+                              orderStatus === "PAUSED" ||
+                              orderStatus === "ACCEPTED") &&
+                              "bg-[#EBE5D4]/40",
+                            orderStatus === "COMPLETED" && "bg-green-500/20",
+                            orderStatus === "PROBLEM" && "bg-destructive/20"
+                          )}
+                        >
+                          <span
+                            className={cn(
+                              "h-3 w-3 transition-colors rounded-full",
+                              (orderStatus === "IN_PROGRESS" ||
+                                orderStatus === "LOADING" ||
+                                orderStatus === "UNLOADING") &&
+                                "bg-[#709470]",
+                              (orderStatus === "PENDING" ||
+                                orderStatus === "PAUSED" ||
+                                orderStatus === "ACCEPTED") &&
+                                "bg-[#EBE5D4]",
+                              orderStatus === "COMPLETED" && "bg-green-500",
+                              orderStatus === "PROBLEM" && "bg-destructive"
+                            )}
+                          />
+                        </span>
+
+                        <div
+                          className={cn(
+                            "mx-2 h-[2px] flex-1 transition-colors",
+                            (orderStatus === "IN_PROGRESS" ||
+                              orderStatus === "UNLOADING") &&
+                              "bg-[#709470]/20",
+                            (orderStatus === "PENDING" ||
+                              orderStatus === "PAUSED" ||
+                              orderStatus === "LOADING" ||
+                              orderStatus === "ACCEPTED") &&
+                              "bg-[#EBE5D4]",
+                            orderStatus === "COMPLETED" && "bg-green-500",
+                            orderStatus === "PROBLEM" && "bg-destructive/20"
+                          )}
+                        />
+
+                        <span
+                          className={cn(
+                            "inline-flex h-8 w-8 items-center justify-center rounded-full transition-colors",
+                            (orderStatus === "IN_PROGRESS" ||
+                              orderStatus === "UNLOADING") &&
+                              "text-[#709470]",
+                            (orderStatus === "PENDING" ||
+                              orderStatus === "PAUSED" ||
+                              orderStatus === "LOADING" ||
+                              orderStatus === "ACCEPTED") &&
+                              "text-[#EBE5D4]",
+                            orderStatus === "COMPLETED" && "text-green-600",
+                            orderStatus === "PROBLEM" && "text-destructive"
+                          )}
+                        >
+                          <Truck className="h-6 w-6" />
+                        </span>
+
+                        <div
+                          className={cn(
+                            "mx-2 h-[2px] flex-1 transition-colors",
+                            (orderStatus === "IN_PROGRESS" ||
+                              orderStatus === "UNLOADING") &&
+                              "bg-[#709470]/20",
+                            (orderStatus === "PENDING" ||
+                              orderStatus === "PAUSED" ||
+                              orderStatus === "LOADING" ||
+                              orderStatus === "ACCEPTED" ||
+                              orderStatus === "IN_PROGRESS") &&
+                              "bg-[#EBE5D4]",
+                            orderStatus === "COMPLETED" && "bg-green-500",
+                            orderStatus === "PROBLEM" && "bg-destructive/20"
+                          )}
+                        />
+
+                        <span
+                          className={cn(
+                            "inline-flex h-6 w-6 items-center justify-center rounded-full transition-colors",
+                            (orderStatus === "IN_PROGRESS" ||
+                              orderStatus === "UNLOADING") &&
+                              "bg-[#709470]/20",
+                            (orderStatus === "PENDING" ||
+                              orderStatus === "PAUSED" ||
+                              orderStatus === "LOADING" ||
+                              orderStatus === "ACCEPTED" ||
+                              orderStatus === "IN_PROGRESS") &&
+                              "bg-[#EBE5D4]/40",
+                            orderStatus === "COMPLETED" && "bg-green-500/20",
+                            orderStatus === "PROBLEM" && "bg-destructive/20"
+                          )}
+                        >
+                          <MapPin
+                            className={cn(
+                              "h-4 w-4 transition-colors",
+                              orderStatus === "UNLOADING" && "text-[#709470]",
+                              (orderStatus === "PENDING" ||
+                                orderStatus === "PAUSED" ||
+                                orderStatus === "LOADING" ||
+                                orderStatus === "ACCEPTED" ||
+                                orderStatus === "IN_PROGRESS") &&
+                                "text-[#EBE5D4]",
+                              orderStatus === "COMPLETED" && "text-green-600",
+                              orderStatus === "PROBLEM" && "text-destructive"
+                            )}
+                          />
+                        </span>
+                      </div>
+
+                      {/* addresses */}
+                      <div className="mt-3 grid grid-cols-2 gap-3 text-[11px] leading-snug">
+                        <div className="min-w-0">
+                          <p className="font-medium">
+                            {from.city}, {from.country}
+                          </p>
+                          <p className="text-muted-foreground">
+                            {from.addressLine}
+                          </p>
+                        </div>
+
+                        <div className="min-w-0 text-right">
+                          <p className="font-medium">
+                            {to.city}, {to.country}
+                          </p>
+                          <p className="text-muted-foreground">
+                            {to.addressLine}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
                     {/* Stats */}
-                    <div className="mt-3 grid grid-cols-4 gap-2">
+                    <div className="mt-6 grid grid-cols-4 gap-2">
                       {stats.map((s, idx) => (
                         <div
                           key={s.label}
@@ -204,39 +356,6 @@ export default function OrderDetailsSheet({
                           <p className="text-sm font-semibold">{s.value}</p>
                         </div>
                       ))}
-                    </div>
-
-                    {/* Addresses row */}
-                    <div className="mt-4">
-                      <div className="grid grid-cols-2 gap-3 text-[11px] leading-snug">
-                        <div className="min-w-0">
-                          <div className="flex items-start gap-2">
-                            <span className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-muted">
-                              <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
-                            </span>
-                            <div className="min-w-0">
-                              <p className="font-medium">{from.city}</p>
-                              <p className="text-muted-foreground">
-                                {from.address}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="min-w-0 text-right">
-                          <div className="flex items-start justify-end gap-2">
-                            <div className="min-w-0">
-                              <p className="font-medium">{to.city}</p>
-                              <p className="text-muted-foreground">
-                                {to.address}
-                              </p>
-                            </div>
-                            <span className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-muted">
-                              <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
-                            </span>
-                          </div>
-                        </div>
-                      </div>
                     </div>
                   </div>
 
@@ -287,11 +406,13 @@ export default function OrderDetailsSheet({
 
 function IconActionButton({
   icon,
+  className,
   label,
   onAction,
 }: {
   icon: React.ReactNode;
   label: string;
+  className?: string;
   onAction: () => void;
 }) {
   return (
@@ -299,10 +420,9 @@ function IconActionButton({
       type="button"
       variant="outline"
       size="icon"
-      className="h-9 w-9"
+      className={cn("h-9 w-9 cursor-pointer", className)}
       aria-label={label}
       onClick={(e) => {
-        // ważne: nie zamykamy/nie klikamy “tła” sheeta
         e.preventDefault();
         e.stopPropagation();
         onAction();

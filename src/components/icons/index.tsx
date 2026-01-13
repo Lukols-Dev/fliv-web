@@ -4,6 +4,8 @@ import {
   type Icon as LucideIcon,
   ChevronDownIcon,
   BellIcon,
+  Trash2,
+  Pencil,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -24,6 +26,8 @@ export const Icons = {
   },
   notification: (props: LucideProps) => <BellIcon {...props} />,
   chevronDown: (props: LucideProps) => <ChevronDownIcon {...props} />,
+  trash: (props: LucideProps) => <Trash2 {...props} />,
+  pencil: (props: LucideProps) => <Pencil {...props} />,
   gitHub: (props: LucideProps) => (
     <svg viewBox="0 0 438.549 438.549" {...props}>
       <path
