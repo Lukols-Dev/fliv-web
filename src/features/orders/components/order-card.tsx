@@ -3,6 +3,11 @@ import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { MapPin, Phone, MessageSquare, Truck } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -274,20 +279,31 @@ function IconActionButton({
   onAction?: () => void;
 }) {
   return (
-    <Button
-      type="button"
-      variant="outline"
-      size="icon"
-      className="h-9 w-9 rounded-lg border-muted-foreground/20"
-      aria-label={label}
-      onClick={(e) => {
-        // nie otwieramy sheeta klikając w akcje
-        e.preventDefault();
-        e.stopPropagation();
-        onAction?.();
-      }}
-    >
-      {icon}
-    </Button>
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="h-9 w-9 rounded-lg border-muted-foreground/20"
+          aria-label={label}
+          onClick={(e) => {
+            e.stopPropagation();
+          }}
+        >
+          {icon}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent
+        className="w-auto p-2"
+        onClick={(e) => {
+          e.stopPropagation();
+          onAction?.();
+        }}
+      >
+        {/* TODO: add content */}
+        <p className="text-sm">{label}</p>
+      </PopoverContent>
+    </Popover>
   );
 }
