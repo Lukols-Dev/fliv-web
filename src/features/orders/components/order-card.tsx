@@ -72,7 +72,7 @@ export default function OrderCard({
         )}
       >
         {/* Top */}
-        <div className="flex items-start justify-between gap-3 px-4 pt-4">
+        <div className="flex items-start justify-between gap-3 px-4">
           <div className="min-w-0">
             <p className="text-xs text-[#709470]">{t("orderNumberLabel")}</p>
             <p className="truncate text-lg font-semibold leading-6">
