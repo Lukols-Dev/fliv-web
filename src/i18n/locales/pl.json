@@ -72,5 +72,172 @@
       "en": "Angielski",
       "pl": "Polski"
     }
+  },
+  "DashboardNav": {
+    "groups": {
+      "main": "Główne",
+      "settings": "System"
+    },
+    "items": {
+      "dashboard": "Panel",
+      "orders": "Zlecenia",
+      "account": "Konto"
+    }
+  },
+  "OrdersPage": {
+    "title": "Zlecenia",
+    "create": "Utwórz nowe zlecenie",
+    "details": {
+      "title": "Zlecenie",
+      "subtitle": "Szczegóły zlecenia",
+      "close": "Zamknij"
+    }
+  },
+  "OrderCard": {
+    "orderNumberLabel": "Numer zlecenia",
+    "createdAt": "Utworzono:",
+    "openDetails": "Otwórz szczegóły zlecenia",
+    "actions": {
+      "callDriver": "Zadzwoń do kierowcy",
+      "messageDriver": "Wyślij wiadomość do kierowcy"
+    }
+  },
+  "OrdersDetails": {
+    "header": {
+      "subtitle": "W realizacji"
+    },
+    "tabs": {
+      "info": "Informacje o zleceniu",
+      "documents": "Dokumenty"
+    },
+    "actions": {
+      "edit": "Edytuj",
+      "delete": "Usuń"
+    },
+    "driver": {
+      "role": "Driver",
+      "call": "Zadzwoń",
+      "message": "Wiadomość"
+    },
+    "route": {
+      "title": "Trasa",
+      "edit": "Edytuj trasę",
+      "mapPlaceholder": "Mapa (placeholder)"
+    },
+    "stats": {
+      "currentDistance": "Aktualny dystans",
+      "distance": "Dystans",
+      "startTime": "Godzina startu",
+      "startDate": "Data startu"
+    },
+    "tracking": {
+      "title": "Historia śledzenia"
+    },
+    "trackingStatus": {
+      "waiting": "Oczekuje",
+      "accepted": "Przyjęto",
+      "loaded": "Załadunek",
+      "delivered": "Dostarczono"
+    },
+    "documents": {
+      "empty": "Brak dokumentów"
+    }
+  },
+  "OrderStatus": {
+    "PENDING": "Oczekuje",
+    "ACCEPTED": "Przyjęto",
+    "IN_PROGRESS": "W trakcie",
+    "LOADING": "Ładowanie",
+    "UNLOADING": "Rozładunek",
+    "PAUSED": "Wstrzymane",
+    "COMPLETED": "Zakończone",
+    "PROBLEM": "Problem"
+  },
+  "CreateOrderDialog": {
+    "trigger": "Utwórz nowe zlecenie",
+    "title": "Tworzenie zlecenia transportowego",
+    "optional": "opcjonalne",
+    "tabs": {
+      "record": "Ewidencja",
+      "vehicle": "Pojazd",
+      "payer": "Płatnik",
+      "transport": "Transport",
+      "attachments": "Załączniki",
+      "notes": "Uwagi"
+    },
+    "fields": {
+      "ztNumber": "Numer ZT",
+      "pwNumber": "Numer PW",
+      "status": "Status",
+      "truckPlate": "Samochód",
+      "trailerPlate": "Naczepa",
+      "driver": "Kierowca",
+      "driverFirstName": "Imię",
+      "driverLastName": "Nazwisko",
+      "driverPhone": "Telefon",
+      "principal": "Zleceniodawca",
+      "contractNumber": "Zlecenie/Kontrakt",
+      "payer": "Płatnik",
+      "payerName": "Nazwa płatnika",
+      "payerNip": "NIP",
+      "payerEmail": "Email",
+      "fromCountry": "Z kraju",
+      "toCountry": "Do kraju",
+      "weightKg": "Waga (kg)",
+      "loadingDate": "Data załadunku",
+      "cargoDescription": "Ładunek",
+      "tempSensitive": "Wrażliwość na temperaturę",
+      "attachments": "Pliki",
+      "notes": "Opis"
+    },
+    "placeholders": {
+      "ztNumber": "Numer",
+      "pwNumber": "Numer",
+      "status": "0 - terminowość",
+      "truckPlate": "Numer rejestracyjny",
+      "trailerPlate": "Numer rejestracyjny",
+      "driverFirstName": "Imię",
+      "driverLastName": "Nazwisko",
+      "driverPhone": "Telefon",
+      "principal": "Zleceniodawca",
+      "contractNumber": "Numer",
+      "payerName": "Nazwa",
+      "payerNip": "NIP",
+      "payerEmail": "Email",
+      "fromCountry": "PL",
+      "toCountry": "PL",
+      "weightKg": "3500",
+      "cargoDescription": "Opis",
+      "tempSensitive": "Tak/Nie",
+      "notes": "Dodaj uwagi…"
+    },
+    "options": {
+      "status": {
+        "on_time": "0 - terminowość",
+        "issue": "Problem",
+        "in_progress": "W realizacji"
+      },
+      "tempSensitive": {
+        "yes": "Tak",
+        "no": "Nie"
+      }
+    },
+    "helpers": {
+      "attachments": "Możesz dodać pliki później.",
+      "attachmentsList": "Lista załączników"
+    },
+    "buttons": {
+      "submit": "Utwórz zlecenie",
+      "submitting": "Tworzenie…",
+      "close": "Zamknij"
+    },
+    "validation": {
+      "required": "To pole jest wymagane",
+      "emailInvalid": "Podaj poprawny adres e-mail",
+      "phoneInvalid": "Podaj poprawny numer telefonu",
+      "weightInvalid": "Podaj poprawną wagę",
+      "dateInvalid": "Podaj poprawną datę",
+      "invalidOption": "Wybierz poprawną wartość"
+    }
   }
 }

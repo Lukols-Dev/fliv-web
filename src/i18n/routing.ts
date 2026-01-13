@@ -16,5 +16,21 @@ export const routing = defineRouting({
       en: "/sign-up",
       pl: "/rejestracja",
     },
+    "/dashboard": {
+      en: "/dashboard",
+      pl: "/panel",
+    },
+    "/dashboard/orders": {
+      en: "/dashboard/orders",
+      pl: "/panel/zlecenia",
+    },
+    "/dashboard/account": {
+      en: "/dashboard/account",
+      pl: "/panel/konto",
+    },
+    "/dashboard/notifications": {
+      en: "/dashboard/notifications",
+      pl: "/panel/powiadomienia",
+    },
   },
 });

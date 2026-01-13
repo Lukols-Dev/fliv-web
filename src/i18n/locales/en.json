@@ -72,5 +72,172 @@
       "en": "English",
       "pl": "Polish"
     }
+  },
+  "DashboardNav": {
+    "groups": {
+      "main": "Main",
+      "settings": "System"
+    },
+    "items": {
+      "dashboard": "Dashboard",
+      "orders": "Orders",
+      "account": "Account"
+    }
+  },
+  "OrdersPage": {
+    "title": "Orders",
+    "create": "Create order",
+    "details": {
+      "title": "Order",
+      "subtitle": "Order details",
+      "close": "Close"
+    }
+  },
+  "OrderCard": {
+    "orderNumberLabel": "Order number",
+    "createdAt": "Created:",
+    "openDetails": "Open order details",
+    "actions": {
+      "callDriver": "Call driver",
+      "messageDriver": "Message driver"
+    }
+  },
+  "OrdersDetails": {
+    "header": {
+      "subtitle": "In progress"
+    },
+    "tabs": {
+      "info": "Order info",
+      "documents": "Documents"
+    },
+    "actions": {
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "driver": {
+      "role": "Driver",
+      "call": "Call",
+      "message": "Message"
+    },
+    "route": {
+      "title": "Route",
+      "edit": "Edit route",
+      "mapPlaceholder": "Map (placeholder)"
+    },
+    "stats": {
+      "currentDistance": "Current distance",
+      "distance": "Distance",
+      "startTime": "Start time",
+      "startDate": "Start date"
+    },
+    "tracking": {
+      "title": "Tracking history"
+    },
+    "trackingStatus": {
+      "waiting": "Waiting",
+      "accepted": "Accepted",
+      "loaded": "Loaded",
+      "delivered": "Delivered"
+    },
+    "documents": {
+      "empty": "No documents"
+    }
+  },
+  "OrderStatus": {
+    "PENDING": "Pending",
+    "ACCEPTED": "Accepted",
+    "IN_PROGRESS": "In progress",
+    "LOADING": "Loading",
+    "UNLOADING": "Unloading",
+    "PAUSED": "Paused",
+    "COMPLETED": "Completed",
+    "PROBLEM": "Problem"
+  },
+  "CreateOrderDialog": {
+    "trigger": "Create new order",
+    "title": "Create transport order",
+    "optional": "optional",
+    "tabs": {
+      "record": "Record",
+      "vehicle": "Vehicle",
+      "payer": "Payer",
+      "transport": "Transport",
+      "attachments": "Attachments",
+      "notes": "Notes"
+    },
+    "fields": {
+      "ztNumber": "ZT number",
+      "pwNumber": "PW number",
+      "status": "Status",
+      "truckPlate": "Truck",
+      "trailerPlate": "Trailer",
+      "driver": "Driver",
+      "driverFirstName": "First name",
+      "driverLastName": "Last name",
+      "driverPhone": "Phone",
+      "principal": "Principal",
+      "contractNumber": "Order/Contract",
+      "payer": "Payer",
+      "payerName": " Payer Name",
+      "payerNip": "Tax ID",
+      "payerEmail": "Email",
+      "fromCountry": "From country",
+      "toCountry": "To country",
+      "weightKg": "Weight (kg)",
+      "loadingDate": "Loading date",
+      "cargoDescription": "Cargo",
+      "tempSensitive": "Temperature sensitive",
+      "attachments": "Files",
+      "notes": "Description"
+    },
+    "placeholders": {
+      "ztNumber": "Number",
+      "pwNumber": "Number",
+      "status": "On-time status",
+      "truckPlate": "Plate number",
+      "trailerPlate": "Plate number",
+      "driverFirstName": "First name",
+      "driverLastName": "Last name",
+      "driverPhone": "Phone",
+      "principal": "Principal",
+      "contractNumber": "Number",
+      "payerName": "Name",
+      "payerNip": "Tax ID",
+      "payerEmail": "Email",
+      "fromCountry": "PL",
+      "toCountry": "PL",
+      "weightKg": "3500",
+      "cargoDescription": "Description",
+      "tempSensitive": "Yes/No",
+      "notes": "Add notes…"
+    },
+    "options": {
+      "status": {
+        "on_time": "On time",
+        "issue": "Issue",
+        "in_progress": "In progress"
+      },
+      "tempSensitive": {
+        "yes": "Yes",
+        "no": "No"
+      }
+    },
+    "helpers": {
+      "attachments": "You can add files later.",
+      "attachmentsList": "Attachments list"
+    },
+    "buttons": {
+      "submit": "Create order",
+      "submitting": "Creating…",
+      "close": "Close"
+    },
+    "validation": {
+      "required": "This field is required",
+      "emailInvalid": "Enter a valid email address",
+      "phoneInvalid": "Enter a valid phone number",
+      "weightInvalid": "Enter a valid weight",
+      "dateInvalid": "Enter a valid date",
+      "invalidOption": "Select a valid value"
+    }
   }
 }
