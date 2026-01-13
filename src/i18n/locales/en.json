@@ -239,5 +239,22 @@
       "dateInvalid": "Enter a valid date",
       "invalidOption": "Select a valid value"
     }
+  },
+  "Notifications": {
+    "title": "Notifications",
+    "clearAll": "Clear all",
+    "empty": {
+      "title": "No notifications",
+      "description": "When new events occur, you'll see them here."
+    },
+    "popover": {
+      "title": "Notifications",
+      "openNotifications": "Open notifications",
+      "showAll": "Show all notifications"
+    },
+    "row": {
+      "openMenu": "Open menu",
+      "delete": "Delete"
+    }
   }
 }

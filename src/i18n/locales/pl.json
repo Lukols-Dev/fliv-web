@@ -239,5 +239,22 @@
       "dateInvalid": "Podaj poprawną datę",
       "invalidOption": "Wybierz poprawną wartość"
     }
+  },
+  "Notifications": {
+    "title": "Powiadomienia",
+    "clearAll": "Wyczyść wszystkie",
+    "empty": {
+      "title": "Brak powiadomień",
+      "description": "Gdy pojawią się nowe zdarzenia, zobaczysz je tutaj."
+    },
+    "popover": {
+      "title": "Powiadomienia",
+      "openNotifications": "Otwórz powiadomienia",
+      "showAll": "Pokaż wszystkie powiadomienia"
+    },
+    "row": {
+      "openMenu": "Otwórz menu",
+      "delete": "Usuń"
+    }
   }
 }

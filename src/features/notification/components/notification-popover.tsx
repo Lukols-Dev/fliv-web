@@ -10,9 +10,11 @@ import {
 } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import { Icons } from "@/components/icons";
-import { Info, ArrowRight, Inbox } from "lucide-react";
+import { Info, ArrowRight } from "lucide-react";
 import { Link } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
 import type { NotificationItem } from "../types";
+import { NotificationEmpty } from "./notification-empty";
 
 type Props = {
   items?: NotificationItem[];
@@ -26,6 +28,7 @@ const mockItems: NotificationItem[] = Array.from({ length: 6 }).map((_, i) => ({
 }));
 
 export function NotificationPopover({ items = mockItems }: Props) {
+  const t = useTranslations("Notifications.popover");
   const [open, setOpen] = React.useState(false);
 
   const unreadCount = React.useMemo(
@@ -52,7 +55,7 @@ export function NotificationPopover({ items = mockItems }: Props) {
             </span>
           )}
 
-          <span className="sr-only">Open notifications</span>
+          <span className="sr-only">{t("openNotifications")}</span>
         </Button>
       </PopoverTrigger>
 
@@ -67,7 +70,7 @@ export function NotificationPopover({ items = mockItems }: Props) {
         {/* Header */}
         <div className="px-6 pt-5">
           <h3 className="text-lg font-semibold tracking-tight">
-            Powiadomienia
+            {t("title")}
           </h3>
         </div>
 
@@ -83,7 +86,7 @@ export function NotificationPopover({ items = mockItems }: Props) {
             ))}
           </div>
         ) : (
-          <EmptyState />
+          <NotificationEmpty />
         )}
 
         {/* Footer */}
@@ -97,7 +100,7 @@ export function NotificationPopover({ items = mockItems }: Props) {
             )}
           >
             <span className="text-sm font-normal">
-              Pokaż wszystkie powiadomienia
+              {t("showAll")}
             </span>
             <ArrowRight className="h-4 w-4" />
           </Link>
@@ -119,22 +122,6 @@ function NotificationRow({ item }: { item: NotificationItem }) {
           {item.title}
         </p>
         <p className="mt-1 text-sm text-muted-foreground">{item.dateLabel}</p>
-      </div>
-    </div>
-  );
-}
-
-function EmptyState() {
-  return (
-    <div className="px-6 py-10">
-      <div className="flex flex-col items-center text-center">
-        <div className="mb-4 flex size-14 items-center justify-center rounded-2xl border bg-muted/30">
-          <Inbox className="h-6 w-6 text-muted-foreground" />
-        </div>
-        <p className="text-lg font-semibold">Brak powiadomień</p>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Gdy pojawią się nowe zdarzenia, zobaczysz je tutaj.
-        </p>
       </div>
     </div>
   );
