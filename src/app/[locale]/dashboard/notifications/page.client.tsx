@@ -25,17 +25,15 @@ export default function NotificationsPageClient() {
 
           <div className="px-4 lg:px-6">
             {isPending ? (
-              <div className="text-sm text-muted-foreground">
-                {t("loading")}
-              </div>
+              <div className="text-sm text-muted-foreground">Loading...</div>
             ) : isError ? (
               <div className="rounded-xl border bg-background p-4 space-y-3">
                 <p className="text-sm text-destructive">
-                  {t("loadError")}
+                  Error loading notifications
                   {error ? `: ${(error as Error).message}` : ""}
                 </p>
                 <button className="text-sm underline" onClick={() => refetch()}>
-                  {t("retry")}
+                  Retry
                 </button>
               </div>
             ) : (

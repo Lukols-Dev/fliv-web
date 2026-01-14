@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { MoreVertical, Trash2, Info } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { NotificationListItem } from "../types";
+import { useDeleteNotificationMutation } from "../hooks/use-delete-notification-mutation";
 
 type Props = {
   item: NotificationListItem;
@@ -19,10 +20,10 @@ type Props = {
 
 export function NotificationRow({ item }: Props) {
   const t = useTranslations("Notifications.row");
+  const del = useDeleteNotificationMutation();
 
-  const onDelete = () => {
-    // TODO: call API + optimistic update
-    console.log("delete notification", item.id);
+  const onDelete = async () => {
+    await del.mutateAsync(item.id);
   };
 
   return (

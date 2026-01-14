@@ -17,3 +17,21 @@ export function listNotifications(options: ListNotificationsOptions = {}) {
     headers,
   });
 }
+
+type DeleteNotificationOptions = {
+  signal?: AbortSignal;
+};
+
+export function deleteNotification(
+  id: string,
+  options: DeleteNotificationOptions = {}
+) {
+  return apiFetchPath<{ success: boolean }>(
+    notificationEndpoints.deleteById(id),
+    {
+      method: "DELETE",
+      signal: options.signal,
+      withCredentials: true,
+    }
+  );
+}
