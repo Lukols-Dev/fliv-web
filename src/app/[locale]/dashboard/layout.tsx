@@ -7,7 +7,7 @@ export default async function DashboardLayout({
   children,
 }: Readonly<{ children: ReactNode }>) {
   const session = await requireUserOrRedirect("/dashboard");
-  console.log(session.user);
+
   return (
     <DashboardProviders>
       <DashboardShell user={session.user}>{children}</DashboardShell>
