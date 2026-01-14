@@ -1,26 +1,33 @@
-import { NotificationsList } from "@/features/notification/components/notifications-list";
-import { NotificationsToolbar } from "@/features/notification/components/notifications-toolbar";
-import { useTranslations } from "next-intl";
+import { QueryClient, dehydrate } from "@tanstack/react-query";
+import { HydrationBoundary } from "@tanstack/react-query";
+import { cookies } from "next/headers";
+import { notificationsQueryOptions } from "@/features/notification/queries/notifications.query";
+import NotificationsPageClient from "./page.client";
+import { ApiError } from "@/config/http/api-client";
+import { redirect } from "next/navigation";
 
-export default function NotificationsPage() {
-  const t = useTranslations("Notifications");
+export default async function NotificationsPage() {
+  const queryClient = new QueryClient();
+
+  const cookieStore = await cookies();
+  const cookieHeader = cookieStore.toString();
+
+  try {
+    await queryClient.prefetchQuery(
+      notificationsQueryOptions({
+        headers: { cookie: cookieHeader },
+      })
+    );
+  } catch (e) {
+    if (e instanceof ApiError && (e.status === 401 || e.status === 403)) {
+      redirect("/sign-in");
+    }
+    throw e;
+  }
 
   return (
-    <div className="flex flex-1 flex-col">
-      <div className="@container/main flex flex-1 flex-col gap-2">
-        <div className="flex flex-col gap-4 py-6 md:gap-6 md:py-8">
-          <div className="px-4 lg:px-6">
-            <NotificationsToolbar
-              title={t("title")}
-              clearAllLabel={t("clearAll")}
-            />
-          </div>
-
-          <div className="px-4 lg:px-6">
-            <NotificationsList items={[]} />
-          </div>
-        </div>
-      </div>
-    </div>
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <NotificationsPageClient />
+    </HydrationBoundary>
   );
 }

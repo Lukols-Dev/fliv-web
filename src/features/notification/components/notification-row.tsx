@@ -28,13 +28,12 @@ export function NotificationRow({ item }: Props) {
   return (
     <Card
       className={cn(
-        "flex items-center justify-between gap-4 rounded-xl border bg-background px-5 py-4 shadow-none",
-        item.isUnread && "ring-1 ring-[#F2542F]/15"
+        "flex flex-row items-center justify-between gap-4 rounded-xl border bg-background px-5 py-4 shadow-none"
       )}
     >
       <div className="flex min-w-0 items-center gap-4">
-        <div className="flex size-9 items-center justify-center rounded-full border-2 border-[#6E8B6F]">
-          <Info className="h-4 w-4 text-[#6E8B6F]" />
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border bg-background">
+          <Info className="h-5 w-5 text-[#6E8B6F]" />
         </div>
 
         <p className="truncate text-sm font-medium text-foreground">
