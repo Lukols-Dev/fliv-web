@@ -6,6 +6,8 @@ import {
   BellIcon,
   Trash2,
   Pencil,
+  LogOut,
+  Settings,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -28,6 +30,8 @@ export const Icons = {
   chevronDown: (props: LucideProps) => <ChevronDownIcon {...props} />,
   trash: (props: LucideProps) => <Trash2 {...props} />,
   pencil: (props: LucideProps) => <Pencil {...props} />,
+  settings: (props: LucideProps) => <Settings {...props} />,
+  logOut: (props: LucideProps) => <LogOut {...props} />,
   gitHub: (props: LucideProps) => (
     <svg viewBox="0 0 438.549 438.549" {...props}>
       <path
