@@ -1,0 +1,162 @@
+"use client";
+
+import { useEffect, useMemo } from "react";
+import { useTranslations } from "next-intl";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+import type { AccountUser } from "../types";
+import {
+  createUpdateAccountSchema,
+  type UpdateAccountValues,
+} from "./validation-schema";
+
+type Props = {
+  user: AccountUser;
+  isEditing: boolean;
+  onCancelEditing: () => void;
+  onSave: (values: UpdateAccountValues) => Promise<void> | void;
+};
+
+export function AccountProfileForm({
+  user,
+  isEditing,
+  onCancelEditing,
+  onSave,
+}: Props) {
+  const t = useTranslations("AccountForm");
+
+  const schema = useMemo(
+    () =>
+      createUpdateAccountSchema({
+        required: t("validation.required"),
+        emailInvalid: t("validation.emailInvalid"),
+        passwordMin: t("validation.passwordMin"),
+      }),
+    [t]
+  );
+
+  const form = useForm<UpdateAccountValues>({
+    mode: "onSubmit",
+    resolver: zodResolver(schema),
+    defaultValues: {
+      firstName: user.firstName ?? "",
+      lastName: user.lastName ?? "",
+      email: user.email ?? "",
+      phone: user.phone ?? "",
+      password: "",
+    },
+  });
+
+  const { register, handleSubmit, formState, reset } = form;
+  const { errors, isSubmitting } = formState;
+
+  useEffect(() => {
+    if (!isEditing) {
+      reset({
+        firstName: user.firstName ?? "",
+        lastName: user.lastName ?? "",
+        email: user.email ?? "",
+        phone: user.phone ?? "",
+        password: "",
+      });
+    }
+  }, [isEditing, reset, user]);
+
+  const submit = async (values: UpdateAccountValues) => {
+    await onSave(values);
+    onCancelEditing();
+  };
+
+  return (
+    <form
+      className="space-y-4 max-w-md"
+      noValidate
+      onSubmit={handleSubmit(submit)}
+    >
+      <div className="grid gap-2">
+        <Label htmlFor="firstName">{t("fields.firstName")}</Label>
+        <Input
+          id="firstName"
+          disabled={!isEditing}
+          placeholder={t("placeholders.firstName")}
+          aria-invalid={!!errors.firstName}
+          {...register("firstName")}
+        />
+        {errors.firstName?.message && (
+          <p className="text-destructive text-xs">{errors.firstName.message}</p>
+        )}
+      </div>
+
+      <div className="grid gap-2">
+        <Label htmlFor="lastName">{t("fields.lastName")}</Label>
+        <Input
+          id="lastName"
+          disabled={!isEditing}
+          placeholder={t("placeholders.lastName")}
+          aria-invalid={!!errors.lastName}
+          {...register("lastName")}
+        />
+        {errors.lastName?.message && (
+          <p className="text-destructive text-xs">{errors.lastName.message}</p>
+        )}
+      </div>
+
+      <div className="grid gap-2">
+        <Label htmlFor="email">{t("fields.email")}</Label>
+        <Input
+          id="email"
+          disabled={!isEditing}
+          placeholder={t("placeholders.email")}
+          type="email"
+          aria-invalid={!!errors.email}
+          {...register("email")}
+        />
+        {errors.email?.message && (
+          <p className="text-destructive text-xs">{errors.email.message}</p>
+        )}
+      </div>
+
+      <div className="grid gap-2">
+        <Label htmlFor="password">{t("fields.password")}</Label>
+        <Input
+          id="password"
+          disabled={!isEditing}
+          type="password"
+          placeholder={t("placeholders.password")}
+          aria-invalid={!!errors.password}
+          {...register("password")}
+        />
+        {errors.password?.message && (
+          <p className="text-destructive text-xs">{errors.password.message}</p>
+        )}
+      </div>
+
+      <div className="grid gap-2">
+        <Label htmlFor="phone">{t("fields.phone")}</Label>
+        <Input
+          id="phone"
+          disabled={!isEditing}
+          placeholder={t("placeholders.phone")}
+          aria-invalid={!!errors.phone}
+          {...register("phone")}
+        />
+        {errors.phone?.message && (
+          <p className="text-destructive text-xs">{errors.phone.message}</p>
+        )}
+      </div>
+
+      <Button
+        type="submit"
+        className="w-full bg-[#F2542F] hover:bg-[#F2542F]/90"
+        disabled={!isEditing || isSubmitting}
+      >
+        {isSubmitting ? t("buttons.saving") : t("buttons.save")}
+      </Button>
+    </form>
+  );
+}

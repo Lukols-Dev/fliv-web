@@ -256,5 +256,57 @@
       "openMenu": "Open menu",
       "delete": "Delete"
     }
+  },
+  "UserNav": {
+    "settings": "Settings",
+    "signOut": "Sign out"
+  },
+  "AccountPage": {
+    "title": "User profile",
+    "role": { "dispatcher": "Dispatcher" },
+    "actions": {
+      "editProfile": "Edit profile",
+      "deleteAccount": "Delete account"
+    }
+  },
+  "AccountForm": {
+    "fields": {
+      "firstName": "First name",
+      "lastName": "Last name",
+      "email": "Email",
+      "password": "Password",
+      "phone": "Phone"
+    },
+    "placeholders": {
+      "firstName": "John",
+      "lastName": "Doe",
+      "email": "name@example.com",
+      "password": "••••••••••••••••",
+      "phone": "Phone"
+    },
+    "buttons": {
+      "save": "Save changes",
+      "saving": "Saving..."
+    },
+    "validation": {
+      "required": "This field is required",
+      "emailInvalid": "Enter a valid email address",
+      "passwordMin": "Password must be at least 8 characters"
+    }
+  },
+  "DeleteAccountDialog": {
+    "title": "Delete account",
+    "description": "This action is irreversible. You will lose access to your account, history, and all data associated with your profile.",
+    "confirmText": "To confirm, type in the field below:",
+    "inputPlaceholder": "Text",
+    "actions": {
+      "close": "Close",
+      "delete": "Delete account",
+      "deleting": "Deleting..."
+    },
+    "validation": {
+      "required": "This field is required",
+      "mustMatch": "Type exactly: {token}"
+    }
   }
 }

@@ -256,5 +256,57 @@
       "openMenu": "Otwórz menu",
       "delete": "Usuń"
     }
+  },
+  "UserNav": {
+    "settings": "Ustawienia",
+    "signOut": "Wyloguj"
+  },
+  "AccountPage": {
+    "title": "Profil użytkownika",
+    "role": { "dispatcher": "Dyspozytor" },
+    "actions": {
+      "editProfile": "Edytuj profil",
+      "deleteAccount": "Usuń konto"
+    }
+  },
+  "AccountForm": {
+    "fields": {
+      "firstName": "Imię",
+      "lastName": "Nazwisko",
+      "email": "Email",
+      "password": "Hasło",
+      "phone": "Telefon"
+    },
+    "placeholders": {
+      "firstName": "Jan",
+      "lastName": "Kowalski",
+      "email": "jan.kowalski@gmail.com",
+      "password": "••••••••••••••••",
+      "phone": "Telefon"
+    },
+    "buttons": {
+      "save": "Zapisz zmiany",
+      "saving": "Zapisywanie..."
+    },
+    "validation": {
+      "required": "To pole jest wymagane",
+      "emailInvalid": "Podaj poprawny adres e-mail",
+      "passwordMin": "Hasło musi mieć minimum 8 znaków"
+    }
+  },
+  "DeleteAccountDialog": {
+    "title": "Usuń konto",
+    "description": "Ta operacja jest nieodwracalna. Utracisz dostęp do konta, historii i wszystkich danych powiązanych z Twoim profilem.",
+    "confirmText": "Aby potwierdzić, wpisz w polu poniżej:",
+    "inputPlaceholder": "Text",
+    "actions": {
+      "close": "Zamknij",
+      "delete": "Usuń konto",
+      "deleting": "Usuwanie..."
+    },
+    "validation": {
+      "required": "To pole jest wymagane",
+      "mustMatch": "Wpisz dokładnie: {token}"
+    }
   }
 }

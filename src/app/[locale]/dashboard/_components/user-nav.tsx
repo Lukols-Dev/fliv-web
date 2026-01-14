@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useParams } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -8,13 +10,18 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { useRouter } from "@/i18n/navigation";
+import { useRouter, usePathname } from "@/i18n/navigation";
 import { authClient } from "@/features/auth/lib/auth";
 import { Icons } from "@/components/icons";
 import { cn } from "@/lib/utils";
+import { Languages, Check } from "lucide-react";
+import { routing, type Locale } from "@/i18n/routing";
 
 type Props = {
   user: { id: string; email: string; name: string; role?: string };
@@ -26,6 +33,11 @@ function initials(email: string) {
 
 export function UserNav({ user }: Props) {
   const router = useRouter();
+  const pathname = usePathname();
+  const params = useParams();
+  const t = useTranslations("LocaleSwitcher");
+  const tUserNav = useTranslations("UserNav");
+  const locale = useLocale() as Locale;
   const [isPending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
 
@@ -39,6 +51,17 @@ export function UserNav({ user }: Props) {
       // TODO: Toast error
       // console.error(error);
     }
+  };
+
+  const switchLanguage = (nextLocale: Locale) => {
+    if (nextLocale === locale) return;
+    startTransition(() => {
+      router.replace(
+        // @ts-expect-error next-intl route typing
+        { pathname, params },
+        { locale: nextLocale }
+      );
+    });
   };
 
   return (
@@ -73,14 +96,42 @@ export function UserNav({ user }: Props) {
 
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem onClick={() => router.push("/dashboard/account")}>
-          Ustawienia
+        <DropdownMenuItem
+          onClick={() => router.push("/dashboard/account")}
+          className="cursor-pointer"
+        >
+          <Icons.settings className="text-balck" /> {tUserNav("settings")}
         </DropdownMenuItem>
 
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem onClick={onSignOut} className="text-destructive">
-          Wyloguj
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger className="cursor-pointer">
+            <Languages className="h-4 w-4" />
+            <span>{t("label")}</span>
+          </DropdownMenuSubTrigger>
+          <DropdownMenuSubContent>
+            {routing.locales.map((cur) => (
+              <DropdownMenuItem
+                key={cur}
+                onClick={() => switchLanguage(cur)}
+                disabled={isPending || cur === locale}
+                className="flex items-center justify-between gap-3 cursor-pointer"
+              >
+                <span>{t(`locale.${cur}` as const)}</span>
+                {cur === locale ? <Check className="h-4 w-4" /> : null}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>
+
+        <DropdownMenuSeparator />
+
+        <DropdownMenuItem
+          onClick={onSignOut}
+          className="text-destructive focus:text-destructive cursor-pointer"
+        >
+          <Icons.logOut className="text-destructive" /> {tUserNav("signOut")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
