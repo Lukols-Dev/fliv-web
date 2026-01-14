@@ -10,7 +10,7 @@ type UserPayload = {
   email: string;
   firstName: string;
   lastName: string;
-  role?: string;
+  roles?: string[];
 };
 
 type Props = {

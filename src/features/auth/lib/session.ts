@@ -10,7 +10,7 @@ type SessionPayload = {
     name: string;
     firstName: string;
     lastName: string;
-    role?: string;
+    roles?: string[];
   };
 } | null;
 

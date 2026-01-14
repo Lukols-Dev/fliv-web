@@ -22,6 +22,7 @@ import { Icons } from "@/components/icons";
 import { cn, initials } from "@/lib/utils";
 import { Languages, Check } from "lucide-react";
 import { routing, type Locale } from "@/i18n/routing";
+import { useRoleTranslations } from "@/lib/roles";
 
 type Props = {
   user: {
@@ -29,7 +30,7 @@ type Props = {
     email: string;
     firstName: string;
     lastName: string;
-    role?: string;
+    roles?: string[];
   };
 };
 
@@ -39,6 +40,7 @@ export function UserNav({ user }: Props) {
   const params = useParams();
   const t = useTranslations("LocaleSwitcher");
   const tUserNav = useTranslations("UserNav");
+  const { translateRoles } = useRoleTranslations();
   const locale = useLocale() as Locale;
   const [isPending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
@@ -84,7 +86,7 @@ export function UserNav({ user }: Props) {
               {user.firstName + " " + user.lastName}
             </p>
             <p className="text-muted-foreground text-xs leading-none">
-              {user.role ?? "Test role"}
+              {translateRoles(user.roles)}
             </p>
           </div>
           <Icons.chevronDown

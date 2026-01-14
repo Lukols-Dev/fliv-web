@@ -265,7 +265,8 @@
     "title": "User profile",
     "role": {
       "DISPATCHER": "Dispatcher",
-      "DRIVER": "Driver"
+      "DRIVER": "Driver",
+      "noRole": "No role"
     },
     "actions": {
       "editProfile": "Edit profile",

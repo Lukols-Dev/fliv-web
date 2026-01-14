@@ -10,7 +10,7 @@ type Props = {
     email: string;
     firstName: string;
     lastName: string;
-    role?: string;
+    roles?: string[];
   };
 };
 

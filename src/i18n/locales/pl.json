@@ -265,7 +265,8 @@
     "title": "Profil użytkownika",
     "role": {
       "DISPATCHER": "Dyspozytor",
-      "DRIVER": "Kierowca"
+      "DRIVER": "Kierowca",
+      "noRole": "Brak roli"
     },
     "actions": {
       "editProfile": "Edytuj profil",

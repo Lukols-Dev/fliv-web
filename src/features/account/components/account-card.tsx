@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AccountProfileForm } from "./account-form";
 import { UpdateAccountValues } from "./validation-schema";
 import { initials } from "@/lib/utils";
-import { useTranslations } from "next-intl";
+import { useRoleTranslations } from "@/lib/roles";
 
 type Props = {
   user: AccountUser;
@@ -21,13 +21,9 @@ export function AccountProfileCard({
   onCancelEditing,
   onSave,
 }: Props) {
-  const t = useTranslations("AccountPage");
+  const { translateRoles } = useRoleTranslations();
   const fullName = user.firstName + " " + user.lastName;
-  const translatedRole = user.role
-    ? (t(`role.${user.role}` as `role.${string}`, {
-        defaultValue: user.role,
-      }) as string)
-    : null;
+  const translatedRoles = translateRoles(user.roles);
 
   return (
     <Card className="rounded-2xl border bg-white p-0">
@@ -44,8 +40,8 @@ export function AccountProfileCard({
 
           <div className="min-w-0">
             <p className="truncate text-xl font-semibold">{fullName}</p>
-            {translatedRole ? (
-              <p className="text-sm text-muted-foreground">{translatedRole}</p>
+            {user.roles && user.roles.length > 0 ? (
+              <p className="text-sm text-muted-foreground">{translatedRoles}</p>
             ) : null}
           </div>
         </div>
