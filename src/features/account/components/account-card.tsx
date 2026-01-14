@@ -4,18 +4,16 @@ import type { AccountUser } from "../types";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AccountProfileForm } from "./account-form";
+import { UpdateAccountValues } from "./validation-schema";
+import { initials } from "@/lib/utils";
+import { useTranslations } from "next-intl";
 
 type Props = {
   user: AccountUser;
   isEditing: boolean;
   onCancelEditing: () => void;
-  onSave: (values: unknown) => Promise<void> | void;
+  onSave: (values: UpdateAccountValues) => Promise<void> | void;
 };
-
-function initials(name: string) {
-  const parts = name.trim().split(/\s+/).slice(0, 2);
-  return parts.map((p) => p[0]?.toUpperCase()).join("");
-}
 
 export function AccountProfileCard({
   user,
@@ -23,28 +21,31 @@ export function AccountProfileCard({
   onCancelEditing,
   onSave,
 }: Props) {
+  const t = useTranslations("AccountPage");
+  const fullName = user.firstName + " " + user.lastName;
+  const translatedRole = user.role
+    ? (t(`role.${user.role}` as `role.${string}`, {
+        defaultValue: user.role,
+      }) as string)
+    : null;
+
   return (
     <Card className="rounded-2xl border bg-white p-0">
       <div className="p-6">
         <div className="flex items-center gap-4">
           <Avatar className="h-16 w-16">
             {user.avatarUrl ? (
-              <AvatarImage
-                src={user.avatarUrl}
-                alt={user.firstName + " " + user.lastName}
-              />
+              <AvatarImage src={user.avatarUrl} alt={fullName} />
             ) : null}
             <AvatarFallback className="text-base">
-              {initials(user.firstName + " " + user.lastName)}
+              {initials(fullName)}
             </AvatarFallback>
           </Avatar>
 
           <div className="min-w-0">
-            <p className="truncate text-xl font-semibold">
-              {user.firstName + " " + user.lastName}
-            </p>
-            {user.role ? (
-              <p className="text-sm text-muted-foreground">{user.role}</p>
+            <p className="truncate text-xl font-semibold">{fullName}</p>
+            {translatedRole ? (
+              <p className="text-sm text-muted-foreground">{translatedRole}</p>
             ) : null}
           </div>
         </div>

@@ -2,12 +2,16 @@
 
 import { cn } from "@/lib/utils";
 import { UserNav } from "./user-nav";
-import { Button } from "@/components/ui/button";
-import { Icons } from "@/components/icons";
 import { NotificationPopover } from "@/features/notification/components/notification-popover";
 
 type Props = {
-  user: { id: string; email: string; name: string; role?: string };
+  user: {
+    id: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    role?: string;
+  };
 };
 
 export function SiteHeader({ user }: Props) {

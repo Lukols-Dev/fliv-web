@@ -22,6 +22,17 @@ type Props = {
   onSave: (values: UpdateAccountValues) => Promise<void> | void;
 };
 
+//TODO:add more in app for all forms
+function getDefaults(user: AccountUser): UpdateAccountValues {
+  return {
+    firstName: user.firstName ?? "",
+    lastName: user.lastName ?? "",
+    email: user.email ?? "",
+    phone: user.phone ?? "",
+    password: "",
+  };
+}
+
 export function AccountProfileForm({
   user,
   isEditing,
@@ -43,13 +54,7 @@ export function AccountProfileForm({
   const form = useForm<UpdateAccountValues>({
     mode: "onSubmit",
     resolver: zodResolver(schema),
-    defaultValues: {
-      firstName: user.firstName ?? "",
-      lastName: user.lastName ?? "",
-      email: user.email ?? "",
-      phone: user.phone ?? "",
-      password: "",
-    },
+    defaultValues: getDefaults(user),
   });
 
   const { register, handleSubmit, formState, reset } = form;
@@ -57,13 +62,7 @@ export function AccountProfileForm({
 
   useEffect(() => {
     if (!isEditing) {
-      reset({
-        firstName: user.firstName ?? "",
-        lastName: user.lastName ?? "",
-        email: user.email ?? "",
-        phone: user.phone ?? "",
-        password: "",
-      });
+      reset(getDefaults(user));
     }
   }, [isEditing, reset, user]);
 

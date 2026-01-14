@@ -263,7 +263,10 @@
   },
   "AccountPage": {
     "title": "Profil użytkownika",
-    "role": { "dispatcher": "Dyspozytor" },
+    "role": {
+      "DISPATCHER": "Dyspozytor",
+      "DRIVER": "Kierowca"
+    },
     "actions": {
       "editProfile": "Edytuj profil",
       "deleteAccount": "Usuń konto"

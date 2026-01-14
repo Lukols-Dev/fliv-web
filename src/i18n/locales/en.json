@@ -263,7 +263,10 @@
   },
   "AccountPage": {
     "title": "User profile",
-    "role": { "dispatcher": "Dispatcher" },
+    "role": {
+      "DISPATCHER": "Dispatcher",
+      "DRIVER": "Driver"
+    },
     "actions": {
       "editProfile": "Edit profile",
       "deleteAccount": "Delete account"

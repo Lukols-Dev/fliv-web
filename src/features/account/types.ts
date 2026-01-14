@@ -1,9 +1,12 @@
 export type AccountUser = {
   id: string;
+  email: string;
+  roles: string[];
+  isActive: boolean;
+
   firstName: string;
   lastName: string;
-  email: string;
-  role?: string;
-  phone?: string;
-  avatarUrl?: string;
+  phone: string;
+  avatarUrl?: string | null;
+  role?: string | null;
 };

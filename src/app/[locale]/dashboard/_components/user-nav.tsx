@@ -19,17 +19,19 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useRouter, usePathname } from "@/i18n/navigation";
 import { authClient } from "@/features/auth/lib/auth";
 import { Icons } from "@/components/icons";
-import { cn } from "@/lib/utils";
+import { cn, initials } from "@/lib/utils";
 import { Languages, Check } from "lucide-react";
 import { routing, type Locale } from "@/i18n/routing";
 
 type Props = {
-  user: { id: string; email: string; name: string; role?: string };
+  user: {
+    id: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    role?: string;
+  };
 };
-
-function initials(email: string) {
-  return email.slice(0, 2).toUpperCase();
-}
 
 export function UserNav({ user }: Props) {
   const router = useRouter();
@@ -73,10 +75,14 @@ export function UserNav({ user }: Props) {
           disabled={isPending}
         >
           <Avatar className="h-10 w-10">
-            <AvatarFallback>{initials(user.name)}</AvatarFallback>
+            <AvatarFallback>
+              {initials(user.firstName + " " + user.lastName)}
+            </AvatarFallback>
           </Avatar>
           <div className="flex flex-col items-start">
-            <p className="hidden text-sm font-bold md:inline">{user.name}</p>
+            <p className="hidden text-sm font-bold md:inline">
+              {user.firstName + " " + user.lastName}
+            </p>
             <p className="text-muted-foreground text-xs leading-none">
               {user.role ?? "Test role"}
             </p>

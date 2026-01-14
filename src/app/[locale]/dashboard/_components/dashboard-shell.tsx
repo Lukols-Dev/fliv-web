@@ -8,7 +8,8 @@ import { SiteHeader } from "./dashboard-header";
 type UserPayload = {
   id: string;
   email: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   role?: string;
 };
 
