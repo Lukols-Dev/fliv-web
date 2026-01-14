@@ -20,6 +20,7 @@ export default function NotificationsPageClient() {
             <NotificationsToolbar
               title={t("title")}
               clearAllLabel={t("clearAll")}
+              hasItems={!isPending && !isError && items.length > 0}
             />
           </div>
 

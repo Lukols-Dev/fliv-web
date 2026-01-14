@@ -35,3 +35,17 @@ export function deleteNotification(
     }
   );
 }
+
+type ClearAllNotificationsOptions = {
+  signal?: AbortSignal;
+};
+
+export function clearAllNotifications(
+  options: ClearAllNotificationsOptions = {}
+) {
+  return apiFetchPath<{ success: boolean }>(notificationEndpoints.clearAll, {
+    method: "DELETE",
+    signal: options.signal,
+    withCredentials: true,
+  });
+}

@@ -2,17 +2,23 @@
 
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
+import { useClearNotificationsMutation } from "../hooks/use-clear-notifications-mutation";
 
 type Props = {
   title: string;
   clearAllLabel: string;
+  hasItems: boolean;
 };
 
-export function NotificationsToolbar({ title, clearAllLabel }: Props) {
-  const onClearAll = () => {
-    // TODO: podłącz do API + optimistic update
-    // na razie demo:
-    console.log("clear all notifications");
+export function NotificationsToolbar({
+  title,
+  clearAllLabel,
+  hasItems,
+}: Props) {
+  const clear = useClearNotificationsMutation();
+
+  const onClearAll = async () => {
+    await clear.mutateAsync();
   };
 
   return (
@@ -23,9 +29,10 @@ export function NotificationsToolbar({ title, clearAllLabel }: Props) {
         type="button"
         onClick={onClearAll}
         className="bg-[#F2542F] hover:bg-[#F2542F]/90"
+        disabled={!hasItems || clear.isPending}
       >
         <Trash2 className="mr-2 h-4 w-4" />
-        {clearAllLabel}
+        {clear.isPending ? "..." : clearAllLabel}
       </Button>
     </div>
   );
