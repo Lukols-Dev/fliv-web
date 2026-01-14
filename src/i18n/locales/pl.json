@@ -59,6 +59,7 @@
       "submitting": "Logowanie..."
     },
     "errors": {
+      "accountNotActive": "Twoje konto nie jest aktywne. Skontaktuj się z administratorem.",
       "generic": "Nie udało się zalogować. Spróbuj ponownie."
     },
     "validation": {

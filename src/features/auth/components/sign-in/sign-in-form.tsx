@@ -59,6 +59,10 @@ export const SignInForm = () => {
       const { error } = await authClient.signIn.email(payload);
 
       if (error) {
+        if (error.code === "ACCOUNT_NOT_ACTIVE") {
+          setFormError(t("errors.accountNotActive"));
+          return;
+        }
         setFormError(error.message || t("errors.generic"));
         return;
       }

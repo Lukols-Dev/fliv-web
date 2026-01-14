@@ -59,6 +59,7 @@
       "submitting": "Signing in..."
     },
     "errors": {
+      "accountNotActive": "Account is not active. Please contact the administrator.",
       "generic": "Unable to sign in. Please try again."
     },
     "validation": {
