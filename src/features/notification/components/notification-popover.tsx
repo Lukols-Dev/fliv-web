@@ -15,21 +15,15 @@ import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import type { NotificationItem } from "../types";
 import { NotificationEmpty } from "./notification-empty";
+import { useNotificationsQuery } from "../hooks/use-notifications-query";
+import { useNotificationPopoverItems } from "../hooks/use-notification-items";
 
-type Props = {
-  items?: NotificationItem[];
-};
-
-const mockItems: NotificationItem[] = Array.from({ length: 6 }).map((_, i) => ({
-  id: String(i + 1),
-  title: "Zlecenie ZL233214124 ma nowy status",
-  dateLabel: "11.10.2025 - 10:10",
-  isUnread: i < 2,
-}));
-
-export function NotificationPopover({ items = mockItems }: Props) {
+export function NotificationPopover() {
   const t = useTranslations("Notifications.popover");
   const [open, setOpen] = React.useState(false);
+
+  const { data } = useNotificationsQuery();
+  const items = useNotificationPopoverItems(data);
 
   const unreadCount = React.useMemo(
     () => items.filter((x) => x.isUnread).length,
@@ -69,9 +63,7 @@ export function NotificationPopover({ items = mockItems }: Props) {
       >
         {/* Header */}
         <div className="px-6 pt-5">
-          <h3 className="text-lg font-semibold tracking-tight">
-            {t("title")}
-          </h3>
+          <h3 className="text-lg font-semibold tracking-tight">{t("title")}</h3>
         </div>
 
         <div className="px-6 pt-4">
@@ -99,9 +91,7 @@ export function NotificationPopover({ items = mockItems }: Props) {
               "text-[#F2542F] hover:text-[#F2542F]/80"
             )}
           >
-            <span className="text-sm font-normal">
-              {t("showAll")}
-            </span>
+            <span className="text-sm font-normal">{t("showAll")}</span>
             <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
@@ -118,10 +108,10 @@ function NotificationRow({ item }: { item: NotificationItem }) {
       </div>
 
       <div className="min-w-0">
-        <p className="text-sm font-normal leading-snug text-foreground">
+        <p className="text-xs font-normal leading-snug text-foreground">
           {item.title}
         </p>
-        <p className="mt-1 text-sm text-muted-foreground">{item.dateLabel}</p>
+        <p className="mt-1 text-xs text-muted-foreground">{item.dateLabel}</p>
       </div>
     </div>
   );

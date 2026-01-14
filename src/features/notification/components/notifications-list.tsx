@@ -12,7 +12,7 @@ export function NotificationsList({ items }: Props) {
   }
 
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-3">
+    <div className="w-full max-w-4xl space-y-3">
       {items.map((item) => (
         <NotificationRow key={item.id} item={item} />
       ))}

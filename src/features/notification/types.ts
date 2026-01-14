@@ -1,3 +1,16 @@
+export type NotificationType = string;
+
+export type NotificationDto = {
+  id: string;
+  userId: string;
+  type: NotificationType;
+  message: string;
+  createdAt: string; // ISO
+  readAt: string | null; // ISO | null
+};
+
+export type Notification = NotificationDto;
+
 export type NotificationItem = {
   id: string;
   title: string;
