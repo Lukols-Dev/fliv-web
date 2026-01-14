@@ -95,7 +95,9 @@ export default function AccountPageClient() {
               disabled={updateProfile.isPending}
             >
               <Pencil className="mr-2 h-4 w-4" />
-              {isEditing ? t("actions.cancelEdit") : t("actions.editProfile")}
+              {isEditing
+                ? t("actions.closeEditProfile")
+                : t("actions.editProfile")}
             </Button>
 
             <DeleteAccountBtn
