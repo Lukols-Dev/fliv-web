@@ -146,7 +146,11 @@
       "delivered": "Delivered"
     },
     "documents": {
-      "empty": "No documents"
+      "empty": "No documents",
+      "actions": {
+        "view": "View",
+        "delete": "Delete"
+      }
     }
   },
   "OrderStatus": {

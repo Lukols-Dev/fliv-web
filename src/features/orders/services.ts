@@ -77,3 +77,17 @@ export function getOrderById(
     headers: options.headers,
   });
 }
+
+export function deleteOrderDocument(
+  orderDocumentId: string,
+  options: { signal?: AbortSignal } = {}
+) {
+  return apiFetchPath<{ success: boolean }>(
+    ordersEndpoints.deleteDocument(orderDocumentId),
+    {
+      method: "DELETE",
+      signal: options.signal,
+      withCredentials: true,
+    }
+  );
+}

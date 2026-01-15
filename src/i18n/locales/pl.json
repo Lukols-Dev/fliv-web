@@ -146,7 +146,11 @@
       "delivered": "Dostarczono"
     },
     "documents": {
-      "empty": "Brak dokumentów"
+      "empty": "Brak dokumentów",
+      "actions": {
+        "view": "Podgląd",
+        "delete": "Usuń"
+      }
     }
   },
   "OrderStatus": {
