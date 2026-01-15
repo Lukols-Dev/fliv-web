@@ -198,6 +198,7 @@
       "toAddress": "Do adresu",
       "cargoWeightKg": "Waga (kg)",
       "loadingDate": "Data załadunku",
+      "loadingTime": "Godzina załadunku",
       "cargoDescription": "Ładunek",
       "temperatureSensitive": "Wrażliwość na temperaturę",
       "attachments": "Pliki",
@@ -222,6 +223,7 @@
       "toCountry": "Polska",
       "toAddress": "Wpisz adres do którego ma być dostarczenie",
       "cargoWeightKg": "3500",
+      "loadingTime": "HH:mm",
       "cargoDescription": "Opis",
       "temperatureSensitive": "Tak/Nie",
       "notes": "Dodaj uwagi…"

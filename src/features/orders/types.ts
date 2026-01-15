@@ -74,6 +74,7 @@ export type CreateTransportOrderPayload = {
 
   cargoWeightKg: number;
   loadingDate: string; // YYYY-MM-DD
+  loadingTime?: string | null; // HH:mm
   cargoDescription?: string;
 
   temperatureSensitive: boolean;
@@ -128,6 +129,7 @@ export type OrderDetailsDto = {
   toAddress: string | null;
   cargoWeightKg: number | null;
   loadingDate: string | null; // ISO
+  loadingTime: string | null; // HH:mm
   cargoDescription: string | null;
   temperatureSensitive: boolean;
   notes: string | null;

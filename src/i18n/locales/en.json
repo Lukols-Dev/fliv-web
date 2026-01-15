@@ -145,14 +145,14 @@
       "loaded": "Loaded",
       "delivered": "Delivered"
     },
-        "documents": {
-          "empty": "No documents",
-          "add": "Add file",
-          "actions": {
-            "view": "View",
-            "delete": "Delete"
-          }
-        }
+    "documents": {
+      "empty": "No documents",
+      "add": "Add file",
+      "actions": {
+        "view": "View",
+        "delete": "Delete"
+      }
+    }
   },
   "OrderStatus": {
     "PENDING": "Pending",
@@ -198,6 +198,7 @@
       "toAddress": "To address",
       "cargoWeightKg": "Weight (kg)",
       "loadingDate": "Loading date",
+      "loadingTime": "Loading time",
       "cargoDescription": "Cargo",
       "temperatureSensitive": "Temperature sensitive",
       "attachments": "Files",
@@ -222,6 +223,7 @@
       "toCountry": "Poland",
       "toAddress": "Enter to address",
       "cargoWeightKg": "3500",
+      "loadingTime": "HH:mm",
       "cargoDescription": "Description",
       "temperatureSensitive": "Yes/No",
       "notes": "Add notes…"

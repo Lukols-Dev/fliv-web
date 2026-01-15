@@ -30,6 +30,7 @@ export function mapCreateOrderValuesToPayload(
 
     cargoWeightKg: v.cargoWeightKg,
     loadingDate: v.loadingDate,
+    loadingTime: v.loadingTime?.trim() || null,
     cargoDescription: v.cargoDescription?.trim()
       ? v.cargoDescription.trim()
       : undefined,

@@ -77,6 +77,7 @@ const TAB_FIELDS: Record<TabKey, (keyof CreateOrderValues)[]> = {
     "toAddress",
     "cargoWeightKg",
     "loadingDate",
+    "loadingTime",
     "cargoDescription",
     "temperatureSensitive",
   ],
@@ -134,6 +135,7 @@ export default function CreateOrderForm({ onCreated }: Props) {
       toAddress: "",
       cargoWeightKg: "" as unknown as number,
       loadingDate: "",
+      loadingTime: "",
       cargoDescription: "",
       temperatureSensitive: undefined as "yes" | "no" | undefined,
       notes: "",
@@ -602,6 +604,24 @@ export default function CreateOrderForm({ onCreated }: Props) {
                   />
                   {errors.loadingDate?.message && (
                     <FieldError>{errors.loadingDate.message}</FieldError>
+                  )}
+                </Field>
+
+                <Field data-invalid={!!errors.loadingTime}>
+                  <FieldLabel htmlFor="loadingTime">
+                    {t("fields.loadingTime")}
+                    <span className="mt-auto mb-0 text-xs text-muted-foreground">
+                      ({t("optional")})
+                    </span>
+                  </FieldLabel>
+                  <Input
+                    id="loadingTime"
+                    type="time"
+                    aria-invalid={!!errors.loadingTime}
+                    {...register("loadingTime")}
+                  />
+                  {errors.loadingTime?.message && (
+                    <FieldError>{errors.loadingTime.message}</FieldError>
                   )}
                 </Field>
 

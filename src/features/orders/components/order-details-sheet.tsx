@@ -90,15 +90,31 @@ export default function OrderDetailsSheet({
   const toCountry = orderDetails?.toCountry ?? "—";
   const toAddress = orderDetails?.toAddress ?? null;
 
-  const loadingDate = orderDetails?.loadingDate
-    ? new Date(orderDetails.loadingDate)
-    : null;
+  const loadingDate = React.useMemo(() => {
+    return orderDetails?.loadingDate
+      ? new Date(orderDetails.loadingDate)
+      : null;
+  }, [orderDetails?.loadingDate]);
+
+  const loadingTime = orderDetails?.loadingTime ?? null;
+
+  // Format loading time: use loadingTime if available, otherwise extract time from loadingDate
+  const formattedLoadingTime = React.useMemo(() => {
+    if (loadingTime) {
+      return loadingTime; // Already in HH:mm format
+    }
+    if (loadingDate) {
+      return formatTimeHM(loadingDate, locale);
+    }
+    return "—";
+  }, [loadingTime, loadingDate, locale]);
+
   const stats = [
     { label: t("stats.currentDistance"), value: "—" },
     { label: t("stats.distance"), value: "—" },
     {
       label: t("stats.startTime"),
-      value: loadingDate ? formatTimeHM(loadingDate, locale) : "—",
+      value: formattedLoadingTime,
     },
     {
       label: t("stats.startDate"),

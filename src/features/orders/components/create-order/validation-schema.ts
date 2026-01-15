@@ -68,6 +68,16 @@ export const createCreateOrderSchema = (m: {
       .refine((v) => /^\d{4}-\d{2}-\d{2}$/.test(v), {
         message: m.dateInvalid,
       }),
+    loadingTime: z
+      .string()
+      .trim()
+      .optional()
+      .refine(
+        (v) => !v || /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/.test(v),
+        {
+          message: m.dateInvalid,
+        }
+      ),
     cargoDescription: z.string().trim().optional(),
     temperatureSensitive: z.enum(TEMP_SENSITIVE, {
       message: m.invalidOption,
