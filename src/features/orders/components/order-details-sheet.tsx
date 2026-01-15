@@ -22,7 +22,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { MapPin, MoreVertical, Truck, Eye, X } from "lucide-react";
 import OrderStatusBadge from "./order-status-badge";
-import type { OrderListItem, OrderStatus } from "../types";
+import type { OrderDetailsDto, OrderListItem, OrderStatus } from "../types";
 import { useTranslations, useLocale } from "next-intl";
 import { Icons } from "@/components/icons";
 import { useDeleteOrderMutation } from "../hooks/use-delete-order-mutation";
@@ -36,6 +36,7 @@ import { DriverActionButtons } from "./driver-action-buttons";
 import { OrderDocumentUploadDialog } from "./order-document-upload";
 import Image from "next/image";
 import { Plus } from "lucide-react";
+import EditOrderDialog from "./edit-order/edit-order-dialog";
 
 type Props = {
   open: boolean;
@@ -63,6 +64,9 @@ export default function OrderDetailsSheet({
   const [selectedImageUrl, setSelectedImageUrl] = React.useState<string | null>(
     null
   );
+
+  const [editOpen, setEditOpen] = React.useState(false);
+
   const {
     data: orderDetails,
     isPending,
@@ -71,6 +75,10 @@ export default function OrderDetailsSheet({
     id: orderId ?? "",
     enabled: open && !!orderId,
   });
+
+  const details: OrderDetailsDto | undefined = orderDetails as
+    | OrderDetailsDto
+    | undefined;
 
   const orderNumber = orderDetails?.ztNumber ?? selected?.number ?? "#ZL-—";
   const orderStatus = (orderDetails?.status ??
@@ -178,6 +186,15 @@ export default function OrderDetailsSheet({
 
   return (
     <>
+      {details ? (
+        <EditOrderDialog
+          open={editOpen}
+          onOpenChange={setEditOpen}
+          orderId={orderId}
+          initial={details}
+        />
+      ) : null}
+
       <Dialog
         open={!!selectedImageUrl}
         onOpenChange={(open) => !open && setSelectedImageUrl(null)}
@@ -244,7 +261,12 @@ export default function OrderDetailsSheet({
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={onEdit}>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            onEdit?.();
+                            setEditOpen(true);
+                          }}
+                        >
                           <Icons.pencil className="mr-2 h-4 w-4" />
                           {t("actions.edit")}
                         </DropdownMenuItem>

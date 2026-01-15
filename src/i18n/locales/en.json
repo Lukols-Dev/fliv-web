@@ -166,6 +166,7 @@
   },
   "CreateOrderDialog": {
     "trigger": "Create new order",
+    "editTitle": "Edit transport order",
     "title": "Create transport order",
     "optional": "optional",
     "tabs": {
@@ -247,7 +248,9 @@
     "buttons": {
       "submit": "Create order",
       "submitting": "Creating…",
-      "close": "Close"
+      "close": "Close",
+      "save": "Save changes",
+      "saving": "Saving…"
     },
     "validation": {
       "required": "This field is required",

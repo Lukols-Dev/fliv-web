@@ -166,6 +166,7 @@
   },
   "CreateOrderDialog": {
     "trigger": "Utwórz nowe zlecenie",
+    "editTitle": "Edytuj zlecenie transportowe",
     "title": "Tworzenie zlecenia transportowego",
     "optional": "opcjonalne",
     "tabs": {
@@ -247,7 +248,9 @@
     "buttons": {
       "submit": "Utwórz zlecenie",
       "submitting": "Tworzenie…",
-      "close": "Zamknij"
+      "close": "Zamknij",
+      "save": "Zapisz zmiany",
+      "saving": "Zapisywanie…"
     },
     "validation": {
       "required": "To pole jest wymagane",

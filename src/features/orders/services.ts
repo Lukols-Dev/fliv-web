@@ -6,6 +6,8 @@ import type {
   DispatcherOrderDto,
   OrderDetailsDto,
   OrderDocumentDto,
+  UpdateTransportOrderPayload,
+  UpdateTransportOrderResult,
 } from "./types";
 
 type ListDispatcherOrdersParams = {
@@ -109,6 +111,22 @@ export function deleteOrderDocument(
     ordersEndpoints.deleteDocument(orderDocumentId),
     {
       method: "DELETE",
+      signal: options.signal,
+      withCredentials: true,
+    }
+  );
+}
+
+export function updateOrder(
+  orderId: string,
+  payload: UpdateTransportOrderPayload,
+  options: { signal?: AbortSignal } = {}
+) {
+  return apiFetchPath<UpdateTransportOrderResult>(
+    ordersEndpoints.updateById(orderId),
+    {
+      method: "PATCH",
+      body: JSON.stringify(payload),
       signal: options.signal,
       withCredentials: true,
     }

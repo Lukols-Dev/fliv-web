@@ -112,6 +112,7 @@ export type OrderDetailsDto = {
   id: string;
   ztNumber: string;
   pwNumber: string | null;
+  timelinessStatus: string | null;
   status: OrderStatus;
   vehiclePlate: string;
   trailerPlate: string | null;
@@ -135,4 +136,42 @@ export type OrderDetailsDto = {
   notes: string | null;
   documents: OrderDocumentDto[];
   events: OrderEventDto[];
+};
+
+export type UpdateTransportOrderPayload = Partial<{
+  ztNumber: string;
+  pwNumber: string;
+  timelinessStatus: string;
+
+  vehiclePlate: string;
+  trailerPlate: string;
+
+  driverFirstName: string;
+  driverLastName: string;
+  driverPhone: string;
+
+  clientName: string;
+  contractNumber: string;
+
+  payerName: string;
+  payerVatId: string;
+  payerEmail: string;
+
+  fromCountry: string;
+  fromAddress: string;
+  toCountry: string;
+  toAddress: string;
+
+  cargoWeightKg: number;
+  loadingDate: string;
+  loadingTime: string;
+  cargoDescription: string;
+  temperatureSensitive: boolean;
+  notes: string;
+}>;
+
+export type UpdateTransportOrderResult = {
+  id: string;
+  ztNumber: string;
+  status: OrderStatus;
 };
