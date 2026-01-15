@@ -28,11 +28,14 @@ import { Icons } from "@/components/icons";
 import { useDeleteOrderMutation } from "../hooks/use-delete-order-mutation";
 import { useOrderDetailsQuery } from "../hooks/use-order-details-query";
 import { useDeleteOrderDocumentMutation } from "../hooks/use-delete-order-document-mutation";
+import { useUploadOrderDocumentMutation } from "../hooks/use-upload-order-document-mutation";
 import { Spinner } from "@/components/ui/spinner";
 import { formatDatePL, formatTimeHM, formatTimeHMS } from "@/lib/format";
 import { initials } from "@/lib/utils";
 import { DriverActionButtons } from "./driver-action-buttons";
+import { OrderDocumentUploadDialog } from "./order-document-upload";
 import Image from "next/image";
+import { Plus } from "lucide-react";
 
 type Props = {
   open: boolean;
@@ -55,6 +58,7 @@ export default function OrderDetailsSheet({
 
   const orderId = selected?.id ?? "";
   const deleteDocument = useDeleteOrderDocumentMutation(orderId);
+  const uploadDocument = useUploadOrderDocumentMutation();
 
   const [selectedImageUrl, setSelectedImageUrl] = React.useState<string | null>(
     null
@@ -136,6 +140,25 @@ export default function OrderDetailsSheet({
   const handleViewDocument = React.useCallback((url: string) => {
     setSelectedImageUrl(url);
   }, []);
+
+  const handleUploadDocument = React.useCallback(
+    async (draft: { file: File; title: string }) => {
+      if (!orderId || uploadDocument.isPending) return;
+      await uploadDocument.mutateAsync({
+        orderId,
+        file: draft.file,
+        title: draft.title,
+      });
+    },
+    [orderId, uploadDocument]
+  );
+
+  const isImageDocument = React.useCallback(
+    (doc: { mimeType: string; url: string }): boolean => {
+      return doc.mimeType.startsWith("image/");
+    },
+    []
+  );
 
   return (
     <>
@@ -505,71 +528,124 @@ export default function OrderDetailsSheet({
                       <div className="py-8 text-center text-sm text-destructive">
                         Failed to load documents
                       </div>
-                    ) : orderDetails && orderDetails.documents.length > 0 ? (
+                    ) : (
                       <div className="space-y-2">
                         {/* TODO:add translate */}
-                        <h2 className="truncate text-lg font-semibold my-2">
-                          Dokumenty
-                        </h2>
-                        {orderDetails.documents.map((doc) => (
-                          <Card key={doc.id} className="border shadow-none p-4">
-                            <div className="flex items-center justify-between gap-3">
-                              <Icons.file className="h-6 w-6 shrink-0 text-[#709470]" />
-                              <p className="text-sm font-normal truncate">
-                                {doc.title || doc.originalFilename}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                {formatDatePL(new Date(doc.createdAt), locale)}
-                              </p>
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8 cursor-pointer"
-                                    onClick={(e) => e.stopPropagation()}
-                                  >
-                                    <MoreVertical className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleViewDocument(doc.url);
-                                    }}
-                                    className="cursor-pointer"
-                                  >
-                                    <Eye className="mr-2 h-4 w-4" />
-                                    {t("documents.actions.view")}
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleDeleteDocument(doc.id);
-                                    }}
-                                    disabled={deleteDocument.isPending}
-                                    className="text-destructive focus:text-destructive cursor-pointer"
-                                  >
-                                    {deleteDocument.isPending ? (
-                                      <Spinner className="mr-2 h-4 w-4" />
+                        <div className="flex items-center justify-between my-2">
+                          <h2 className="truncate text-lg font-semibold">
+                            Dokumenty
+                          </h2>
+                          {orderId && (
+                            <OrderDocumentUploadDialog
+                              trigger={
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  className="flex items-center gap-2 h-8"
+                                  disabled={uploadDocument.isPending}
+                                >
+                                  {uploadDocument.isPending ? (
+                                    <Spinner className="h-4 w-4" />
+                                  ) : (
+                                    <Plus className="h-4 w-4" />
+                                  )}
+                                  {t("documents.add")}
+                                </Button>
+                              }
+                              onAdd={handleUploadDocument}
+                            />
+                          )}
+                        </div>
+                        {orderDetails && orderDetails.documents.length > 0 ? (
+                          <div className="space-y-2">
+                            {orderDetails.documents.map((doc) => {
+                              const isImage = isImageDocument(doc);
+
+                              return (
+                                <Card
+                                  key={doc.id}
+                                  className="border shadow-none p-4"
+                                >
+                                  <div className="flex items-center gap-3">
+                                    {isImage ? (
+                                      <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md border">
+                                        <Image
+                                          src={doc.url}
+                                          alt={
+                                            doc.title || doc.originalFilename
+                                          }
+                                          fill
+                                          className="object-cover"
+                                          unoptimized
+                                        />
+                                      </div>
                                     ) : (
-                                      <Icons.trash className="mr-2 h-4 w-4 text-destructive focus:text-destructive" />
+                                      <Icons.file className="h-6 w-6 shrink-0 text-[#709470]" />
                                     )}
-                                    {t("documents.actions.delete")}
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
+                                    <div className="min-w-0 flex-1">
+                                      <p className="text-sm font-normal truncate">
+                                        {doc.title || doc.originalFilename}
+                                      </p>
+                                      <p className="text-xs text-muted-foreground">
+                                        {formatDatePL(
+                                          new Date(doc.createdAt),
+                                          locale
+                                        )}
+                                      </p>
+                                    </div>
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-8 w-8 cursor-pointer"
+                                          onClick={(e) => e.stopPropagation()}
+                                        >
+                                          <MoreVertical className="h-4 w-4" />
+                                        </Button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent align="end">
+                                        <DropdownMenuItem
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleViewDocument(doc.url);
+                                          }}
+                                          className="cursor-pointer"
+                                        >
+                                          <Eye className="mr-2 h-4 w-4" />
+                                          {t("documents.actions.view")}
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDeleteDocument(doc.id);
+                                          }}
+                                          disabled={deleteDocument.isPending}
+                                          className="text-destructive focus:text-destructive cursor-pointer"
+                                        >
+                                          {deleteDocument.isPending ? (
+                                            <Spinner className="mr-2 h-4 w-4" />
+                                          ) : (
+                                            <Icons.trash className="mr-2 h-4 w-4 text-destructive focus:text-destructive" />
+                                          )}
+                                          {t("documents.actions.delete")}
+                                        </DropdownMenuItem>
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
+                                  </div>
+                                </Card>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <Card className="border shadow-none">
+                            <div className="p-4 text-sm text-muted-foreground">
+                              {t("documents.empty")}
                             </div>
                           </Card>
-                        ))}
+                        )}
                       </div>
-                    ) : (
-                      <Card className="border shadow-none">
-                        <div className="p-4 text-sm text-muted-foreground">
-                          {t("documents.empty")}
-                        </div>
-                      </Card>
                     )}
                   </TabsContent>
                 </Tabs>

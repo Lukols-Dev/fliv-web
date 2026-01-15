@@ -147,6 +147,7 @@
     },
     "documents": {
       "empty": "Brak dokumentów",
+      "add": "Dodaj plik",
       "actions": {
         "view": "Podgląd",
         "delete": "Usuń"

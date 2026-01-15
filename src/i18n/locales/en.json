@@ -145,13 +145,14 @@
       "loaded": "Loaded",
       "delivered": "Delivered"
     },
-    "documents": {
-      "empty": "No documents",
-      "actions": {
-        "view": "View",
-        "delete": "Delete"
-      }
-    }
+        "documents": {
+          "empty": "No documents",
+          "add": "Add file",
+          "actions": {
+            "view": "View",
+            "delete": "Delete"
+          }
+        }
   },
   "OrderStatus": {
     "PENDING": "Pending",
