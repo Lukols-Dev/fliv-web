@@ -6,6 +6,12 @@ export type OrderStatus = (typeof ORDER_STATUSES)[number];
 export const TEMP_SENSITIVE = ["yes", "no"] as const;
 export type TempSensitive = (typeof TEMP_SENSITIVE)[number];
 
+const fileSchema = (m: { invalidFile: string }) =>
+  z.custom<File>(
+    (v): v is File => typeof File !== "undefined" && v instanceof File,
+    { message: m.invalidFile }
+  );
+
 export const createCreateOrderSchema = (m: {
   required: string;
   emailInvalid: string;
@@ -13,6 +19,7 @@ export const createCreateOrderSchema = (m: {
   weightInvalid: string;
   dateInvalid: string;
   invalidOption: string;
+  invalidFile: string;
 }) =>
   z.object({
     ztNumber: z.string().trim().min(1, { error: m.required }),
@@ -67,10 +74,16 @@ export const createCreateOrderSchema = (m: {
     }),
 
     notes: z.string().trim().optional(),
+    documents: z
+      .array(
+        z.object({
+          title: z.string().trim().min(1, { message: m.required }),
+          file: fileSchema({ invalidFile: m.invalidFile }),
+        })
+      )
+      .optional(),
   });
 
 export type CreateOrderValues = z.infer<
   ReturnType<typeof createCreateOrderSchema>
-> & {
-  attachments?: FileList | null;
-};
+>;

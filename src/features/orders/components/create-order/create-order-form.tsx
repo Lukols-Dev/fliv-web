@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { useForm, Controller, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Plus } from "lucide-react";
+import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,6 +38,9 @@ import { cn } from "@/lib/utils";
 import { useCreateOrderMutation } from "../../hooks/use-create-order-mutation";
 import { mapCreateOrderValuesToPayload } from "../../mappers/map-create-order-payload";
 import { Spinner } from "@/components/ui/spinner";
+import { OrderDocumentUploadDialog } from "../order-document-upload";
+import { Icons } from "@/components/icons";
+import { Card } from "@/components/ui/card";
 
 type Props = {
   onCreated: () => void;
@@ -76,7 +80,7 @@ const TAB_FIELDS: Record<TabKey, (keyof CreateOrderValues)[]> = {
     "cargoDescription",
     "temperatureSensitive",
   ],
-  attachments: ["attachments"],
+  attachments: ["documents"],
   notes: ["notes"],
 };
 
@@ -95,6 +99,7 @@ export default function CreateOrderForm({ onCreated }: Props) {
       weightInvalid: t("validation.weightInvalid"),
       dateInvalid: t("validation.dateInvalid"),
       invalidOption: t("validation.invalidOption"),
+      invalidFile: t("validation.invalidFile"),
     });
   }, [t]);
 
@@ -105,6 +110,7 @@ export default function CreateOrderForm({ onCreated }: Props) {
     formState: { errors, isSubmitting },
     reset,
     watch,
+    setValue,
   } = useForm<CreateOrderValues>({
     mode: "onSubmit",
     resolver: zodResolver(schema) as Resolver<CreateOrderValues>,
@@ -131,11 +137,42 @@ export default function CreateOrderForm({ onCreated }: Props) {
       cargoDescription: "",
       temperatureSensitive: undefined as "yes" | "no" | undefined,
       notes: "",
-      attachments: null,
+      documents: [],
     },
   });
 
-  const attachments = watch("attachments");
+  const documentsRaw = watch("documents");
+  const documents = useMemo(() => documentsRaw ?? [], [documentsRaw]);
+
+  const removeDocument = (index: number) => {
+    const updated = documents.filter((_, i) => i !== index);
+    setValue("documents", updated, {
+      shouldDirty: true,
+      shouldTouch: true,
+    });
+  };
+
+  const isImageFile = (file: File): boolean => {
+    return file.type.startsWith("image/");
+  };
+
+  // Memoize image preview URLs
+  const imagePreviewUrls = useMemo(() => {
+    const urls = new Map<number, string>();
+    documents.forEach((d, idx) => {
+      if (isImageFile(d.file)) {
+        urls.set(idx, URL.createObjectURL(d.file));
+      }
+    });
+    return urls;
+  }, [documents]);
+
+  // Cleanup object URLs when documents change or component unmounts
+  useEffect(() => {
+    return () => {
+      imagePreviewUrls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [imagePreviewUrls]);
 
   const tabHasError = (tab: TabKey) => {
     const fields = TAB_FIELDS[tab];
@@ -146,7 +183,10 @@ export default function CreateOrderForm({ onCreated }: Props) {
     setShowTabErrors(false);
 
     try {
-      const payload = mapCreateOrderValuesToPayload(values);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { documents: _docs, ...rest } = values;
+      const payload = mapCreateOrderValuesToPayload(rest);
+
       await createMut.mutateAsync(payload);
 
       reset();
@@ -616,33 +656,86 @@ export default function CreateOrderForm({ onCreated }: Props) {
             <TabsContent value="attachments" className="mt-6">
               <FieldGroup className="gap-6">
                 <Field>
-                  <FieldLabel htmlFor="attachments">
-                    {t("fields.attachments")}
-                    <span className="mt-auto mb-0 text-xs text-muted-foreground">
-                      ({t("optional")})
-                    </span>
-                  </FieldLabel>
-                  <Input
-                    id="attachments"
-                    type="file"
-                    multiple
-                    {...register("attachments")}
-                  />
+                  <div className="flex flex-row w-full justify-between">
+                    <FieldLabel htmlFor="attachments">
+                      {t("fields.attachments")}
+                      <span className=" text-xs text-muted-foreground">
+                        ({t("optional")})
+                      </span>
+                    </FieldLabel>
+                    <OrderDocumentUploadDialog
+                      trigger={
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="flex items-center gap-2"
+                        >
+                          <Plus className="h-4 w-4" />
+                          Dodaj plik
+                        </Button>
+                      }
+                      onAdd={(draft) => {
+                        setValue("documents", [...documents, draft], {
+                          shouldDirty: true,
+                          shouldTouch: true,
+                        });
+                      }}
+                    />
+                  </div>
                   <FieldDescription>
                     {t("helpers.attachments")}
                   </FieldDescription>
                 </Field>
 
-                {attachments?.length ? (
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium">
-                      {t("helpers.attachmentsList")}
-                    </p>
-                    <ul className="space-y-1 text-sm text-muted-foreground">
-                      {Array.from(attachments).map((f) => (
-                        <li key={f.name}>{f.name}</li>
-                      ))}
-                    </ul>
+                {documents.length > 0 ? (
+                  <div className="mt-4 space-y-2">
+                    {documents.map((d, idx) => {
+                      const isImage = isImageFile(d.file);
+                      const previewUrl = isImage
+                        ? imagePreviewUrls.get(idx)
+                        : null;
+
+                      return (
+                        <Card
+                          key={`${d.file.name}-${idx}`}
+                          className="border shadow-none p-4"
+                        >
+                          <div className="flex items-center gap-3">
+                            {isImage && previewUrl ? (
+                              <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md border">
+                                <Image
+                                  src={previewUrl}
+                                  alt={d.title}
+                                  fill
+                                  className="object-cover"
+                                  unoptimized
+                                />
+                              </div>
+                            ) : (
+                              <Icons.file className="h-6 w-6 shrink-0 text-[#709470]" />
+                            )}
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-normal truncate">
+                                {d.title}
+                              </p>
+                              <p className="text-xs text-muted-foreground truncate">
+                                {d.file.name}
+                              </p>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 cursor-pointer text-destructive hover:text-destructive hover:bg-destructive/10"
+                              onClick={() => removeDocument(idx)}
+                              aria-label={t("documents.remove")}
+                            >
+                              <Icons.trash className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </Card>
+                      );
+                    })}
                   </div>
                 ) : null}
               </FieldGroup>

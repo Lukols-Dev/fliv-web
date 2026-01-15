@@ -238,6 +238,9 @@
       "attachments": "Możesz dodać pliki później.",
       "attachmentsList": "Lista załączników"
     },
+    "documents": {
+      "remove": "Usuń dokument"
+    },
     "buttons": {
       "submit": "Utwórz zlecenie",
       "submitting": "Tworzenie…",
@@ -249,7 +252,8 @@
       "phoneInvalid": "Podaj poprawny numer telefonu",
       "weightInvalid": "Podaj poprawną wagę",
       "dateInvalid": "Podaj poprawną datę",
-      "invalidOption": "Wybierz poprawną wartość"
+      "invalidOption": "Wybierz poprawną wartość",
+      "invalidFile": "Nieprawidłowy plik."
     }
   },
   "Notifications": {
@@ -329,5 +333,41 @@
   "Pagination": {
     "prev": "Poprzednia",
     "next": "Następna"
+  },
+  "UploadFileDialog": {
+    "title": "Dodaj plik",
+    "subtitle": "Wybierz plik i nadaj mu nazwę.",
+    "dropzone": {
+      "title": "Przeciągnij plik tutaj",
+      "active": "Upuść plik, aby dodać",
+      "hint": "Możesz też kliknąć i wybrać plik z dysku."
+    },
+    "fields": {
+      "title": "Tytuł",
+      "titlePlaceholder": "Np. CMR Wiedeń 11.10"
+    },
+    "selected": {
+      "title": "Wybrane pliki"
+    },
+    "limits": {
+      "reachedMany": "Osiągnięto limit: maks. {max} plików.",
+      "reachedSingle": "Możesz dodać tylko 1 plik."
+    },
+    "actions": {
+      "pickFile": "Wybierz plik",
+      "remove": "Usuń",
+      "cancel": "Anuluj",
+      "close": "Zamknij",
+      "confirmOne": "Dodaj plik",
+      "confirmMany": "Dodaj pliki"
+    },
+    "errors": {
+      "title": "Nie udało się dodać pliku",
+      "titleRequired": "Podaj nazwę dla każdego pliku.",
+      "tooManyFiles": "Możesz dodać maksymalnie {max} plików.",
+      "fileTooLarge": "Plik jest za duży. Maksymalnie: {max}.",
+      "invalidType": "Nieobsługiwany typ pliku.",
+      "unknown": "Wystąpił nieoczekiwany błąd."
+    }
   }
 }

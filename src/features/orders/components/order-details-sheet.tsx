@@ -507,6 +507,7 @@ export default function OrderDetailsSheet({
                       </div>
                     ) : orderDetails && orderDetails.documents.length > 0 ? (
                       <div className="space-y-2">
+                        {/* TODO:add translate */}
                         <h2 className="truncate text-lg font-semibold my-2">
                           Dokumenty
                         </h2>
