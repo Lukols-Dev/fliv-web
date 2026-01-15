@@ -1,6 +1,10 @@
 import { apiFetchPath } from "@/config/http/api-client";
 import { ordersEndpoints } from "./lib/endpoints";
-import type { DispatcherOrderDto } from "./types";
+import type {
+  CreateTransportOrderPayload,
+  CreateTransportOrderResult,
+  DispatcherOrderDto,
+} from "./types";
 
 type ListDispatcherOrdersParams = {
   status?: string;
@@ -44,6 +48,18 @@ export function deleteOrder(
 ) {
   return apiFetchPath<{ success: boolean }>(ordersEndpoints.deleteById(id), {
     method: "DELETE",
+    signal: options.signal,
+    withCredentials: true,
+  });
+}
+
+export function createOrder(
+  payload: CreateTransportOrderPayload,
+  options: { signal?: AbortSignal } = {}
+) {
+  return apiFetchPath<CreateTransportOrderResult>(ordersEndpoints.create, {
+    method: "POST",
+    body: JSON.stringify(payload),
     signal: options.signal,
     withCredentials: true,
   });

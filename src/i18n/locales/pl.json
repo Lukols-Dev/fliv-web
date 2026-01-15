@@ -173,56 +173,54 @@
     "fields": {
       "ztNumber": "Numer ZT",
       "pwNumber": "Numer PW",
-      "status": "Status",
-      "truckPlate": "Samochód",
+      "timelinessStatus": "Status terminowości",
+      "vehiclePlate": "Samochód",
       "trailerPlate": "Naczepa",
       "driver": "Kierowca",
       "driverFirstName": "Imię",
       "driverLastName": "Nazwisko",
       "driverPhone": "Telefon",
-      "principal": "Zleceniodawca",
+      "clientName": "Zleceniodawca",
       "contractNumber": "Zlecenie/Kontrakt",
       "payer": "Płatnik",
       "payerName": "Nazwa płatnika",
-      "payerNip": "NIP",
+      "payerVatId": "NIP",
       "payerEmail": "Email",
       "fromCountry": "Z kraju",
       "toCountry": "Do kraju",
-      "weightKg": "Waga (kg)",
+      "cargoWeightKg": "Waga (kg)",
       "loadingDate": "Data załadunku",
       "cargoDescription": "Ładunek",
-      "tempSensitive": "Wrażliwość na temperaturę",
+      "temperatureSensitive": "Wrażliwość na temperaturę",
       "attachments": "Pliki",
       "notes": "Opis"
     },
     "placeholders": {
       "ztNumber": "Numer",
       "pwNumber": "Numer",
-      "status": "0 - terminowość",
-      "truckPlate": "Numer rejestracyjny",
+      "timelinessStatus": "Wybierz status terminowości",
+      "vehiclePlate": "Numer rejestracyjny",
       "trailerPlate": "Numer rejestracyjny",
       "driverFirstName": "Imię",
       "driverLastName": "Nazwisko",
       "driverPhone": "Telefon",
-      "principal": "Zleceniodawca",
+      "clientName": "Zleceniodawca",
       "contractNumber": "Numer",
       "payerName": "Nazwa",
-      "payerNip": "NIP",
+      "payerVatId": "NIP",
       "payerEmail": "Email",
-      "fromCountry": "PL",
-      "toCountry": "PL",
-      "weightKg": "3500",
+      "fromCountry": "Polska",
+      "toCountry": "Polska",
+      "cargoWeightKg": "3500",
       "cargoDescription": "Opis",
-      "tempSensitive": "Tak/Nie",
+      "temperatureSensitive": "Tak/Nie",
       "notes": "Dodaj uwagi…"
     },
     "options": {
-      "status": {
-        "on_time": "0 - terminowość",
-        "issue": "Problem",
-        "in_progress": "W realizacji"
+      "timelinessStatus": {
+        "on_time": "Terminowość"
       },
-      "tempSensitive": {
+      "temperatureSensitive": {
         "yes": "Tak",
         "no": "Nie"
       }

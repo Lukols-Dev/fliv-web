@@ -35,3 +35,40 @@ export type OrdersPageResult = {
   hasNext: boolean;
   status?: string;
 };
+
+export type CreateTransportOrderPayload = {
+  ztNumber: string;
+  pwNumber: string;
+  timelinessStatus: string;
+
+  vehiclePlate: string;
+  trailerPlate: string;
+
+  driverFirstName: string;
+  driverLastName: string;
+  driverPhone: string;
+
+  clientName: string;
+  contractNumber: string;
+
+  payerName: string;
+  payerVatId: string;
+  payerEmail: string;
+
+  fromCountry: string;
+  toCountry: string;
+
+  cargoWeightKg: number;
+  loadingDate: string; // YYYY-MM-DD
+  cargoDescription?: string;
+
+  temperatureSensitive: boolean;
+
+  notes?: string;
+};
+
+export type CreateTransportOrderResult = {
+  id: string;
+  ztNumber: string;
+  status: string;
+};

@@ -34,6 +34,9 @@ import {
   TEMP_SENSITIVE,
 } from "./validation-schema";
 import { cn } from "@/lib/utils";
+import { useCreateOrderMutation } from "../../hooks/use-create-order-mutation";
+import { mapCreateOrderValuesToPayload } from "../../mappers/map-create-order-payload";
+import { Spinner } from "@/components/ui/spinner";
 
 type Props = {
   onCreated: () => void;
@@ -48,22 +51,28 @@ type TabKey =
   | "notes";
 
 const TAB_FIELDS: Record<TabKey, (keyof CreateOrderValues)[]> = {
-  record: ["ztNumber", "pwNumber", "status"],
+  record: ["ztNumber", "pwNumber", "timelinessStatus"],
   vehicle: [
-    "truckPlate",
+    "vehiclePlate",
     "trailerPlate",
     "driverFirstName",
     "driverLastName",
     "driverPhone",
   ],
-  payer: ["principal", "contractNumber", "payerName", "payerNip", "payerEmail"],
+  payer: [
+    "clientName",
+    "contractNumber",
+    "payerName",
+    "payerVatId",
+    "payerEmail",
+  ],
   transport: [
     "fromCountry",
     "toCountry",
-    "weightKg",
+    "cargoWeightKg",
     "loadingDate",
     "cargoDescription",
-    "tempSensitive",
+    "temperatureSensitive",
   ],
   attachments: ["attachments"],
   notes: ["notes"],
@@ -73,6 +82,8 @@ export default function CreateOrderForm({ onCreated }: Props) {
   const t = useTranslations("CreateOrderDialog");
   const [activeTab, setActiveTab] = useState<TabKey>("record");
   const [showTabErrors, setShowTabErrors] = useState(false);
+
+  const createMut = useCreateOrderMutation();
 
   const schema = useMemo(() => {
     return createCreateOrderSchema({
@@ -98,23 +109,23 @@ export default function CreateOrderForm({ onCreated }: Props) {
     defaultValues: {
       ztNumber: "",
       pwNumber: "",
-      status: undefined as "on_time" | "issue" | "in_progress" | undefined,
-      truckPlate: "",
+      timelinessStatus: "",
+      vehiclePlate: "",
       trailerPlate: "",
       driverFirstName: "",
       driverLastName: "",
       driverPhone: "",
-      principal: "",
+      clientName: "",
       contractNumber: "",
       payerName: "",
-      payerNip: "",
+      payerVatId: "",
       payerEmail: "",
       fromCountry: "PL",
       toCountry: "PL",
-      weightKg: "" as unknown as number,
+      cargoWeightKg: "" as unknown as number,
       loadingDate: "",
       cargoDescription: "",
-      tempSensitive: undefined as "yes" | "no" | undefined,
+      temperatureSensitive: undefined as "yes" | "no" | undefined,
       notes: "",
       attachments: null,
     },
@@ -130,15 +141,18 @@ export default function CreateOrderForm({ onCreated }: Props) {
   const onValid = async (values: CreateOrderValues) => {
     setShowTabErrors(false);
 
-    // TODO: tutaj podłączysz service / action do backendu
-    console.log("CREATE ORDER", values);
+    try {
+      const payload = mapCreateOrderValuesToPayload(values);
+      await createMut.mutateAsync(payload);
 
-    reset();
-    onCreated();
+      reset();
+      onCreated();
+    } catch (e) {
+      console.log(e);
+    }
   };
 
   const onInvalid = () => {
-    // UX: nie przerzucamy tabów, tylko pokazujemy ikonki błędów na tabach
     setShowTabErrors(true);
   };
 
@@ -228,24 +242,26 @@ export default function CreateOrderForm({ onCreated }: Props) {
                   )}
                 </Field>
 
-                <Field data-invalid={!!errors.status}>
-                  <FieldLabel required>{t("fields.status")}</FieldLabel>
+                <Field data-invalid={!!errors.timelinessStatus}>
+                  <FieldLabel>{t("fields.timelinessStatus")}</FieldLabel>
 
                   <Controller
-                    name="status"
+                    name="timelinessStatus"
                     control={control}
                     render={({ field }) => (
                       <Select
                         value={field.value || undefined}
                         onValueChange={field.onChange}
                       >
-                        <SelectTrigger aria-invalid={!!errors.status}>
-                          <SelectValue placeholder={t("placeholders.status")} />
+                        <SelectTrigger aria-invalid={!!errors.timelinessStatus}>
+                          <SelectValue
+                            placeholder={t("placeholders.timelinessStatus")}
+                          />
                         </SelectTrigger>
                         <SelectContent>
                           {ORDER_STATUSES.map((s) => (
                             <SelectItem key={s} value={s}>
-                              {t(`options.status.${s}`)}
+                              {t(`options.timelinessStatus.${s}`)}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -253,8 +269,8 @@ export default function CreateOrderForm({ onCreated }: Props) {
                     )}
                   />
 
-                  {errors.status?.message && (
-                    <FieldError>{errors.status.message}</FieldError>
+                  {errors.timelinessStatus?.message && (
+                    <FieldError>{errors.timelinessStatus.message}</FieldError>
                   )}
                 </Field>
               </FieldGroup>
@@ -263,18 +279,18 @@ export default function CreateOrderForm({ onCreated }: Props) {
             {/* Pojazd */}
             <TabsContent value="vehicle" className="mt-6">
               <FieldGroup className="gap-6">
-                <Field data-invalid={!!errors.truckPlate}>
-                  <FieldLabel htmlFor="truckPlate" required>
-                    {t("fields.truckPlate")}
+                <Field data-invalid={!!errors.vehiclePlate}>
+                  <FieldLabel htmlFor="vehiclePlate" required>
+                    {t("fields.vehiclePlate")}
                   </FieldLabel>
                   <Input
-                    id="truckPlate"
-                    placeholder={t("placeholders.truckPlate")}
-                    aria-invalid={!!errors.truckPlate}
-                    {...register("truckPlate")}
+                    id="vehiclePlate"
+                    placeholder={t("placeholders.vehiclePlate")}
+                    aria-invalid={!!errors.vehiclePlate}
+                    {...register("vehiclePlate")}
                   />
-                  {errors.truckPlate?.message && (
-                    <FieldError>{errors.truckPlate.message}</FieldError>
+                  {errors.vehiclePlate?.message && (
+                    <FieldError>{errors.vehiclePlate.message}</FieldError>
                   )}
                 </Field>
 
@@ -357,18 +373,18 @@ export default function CreateOrderForm({ onCreated }: Props) {
             {/* Płatnik */}
             <TabsContent value="payer" className="mt-6">
               <FieldGroup className="gap-6">
-                <Field data-invalid={!!errors.principal}>
-                  <FieldLabel htmlFor="principal" required>
-                    {t("fields.principal")}
+                <Field data-invalid={!!errors.clientName}>
+                  <FieldLabel htmlFor="clientName" required>
+                    {t("fields.clientName")}
                   </FieldLabel>
                   <Input
-                    id="principal"
-                    placeholder={t("placeholders.principal")}
-                    aria-invalid={!!errors.principal}
-                    {...register("principal")}
+                    id="clientName"
+                    placeholder={t("placeholders.clientName")}
+                    aria-invalid={!!errors.clientName}
+                    {...register("clientName")}
                   />
-                  {errors.principal?.message && (
-                    <FieldError>{errors.principal.message}</FieldError>
+                  {errors.clientName?.message && (
+                    <FieldError>{errors.clientName.message}</FieldError>
                   )}
                 </Field>
 
@@ -408,18 +424,18 @@ export default function CreateOrderForm({ onCreated }: Props) {
                       )}
                     </Field>
 
-                    <Field data-invalid={!!errors.payerNip}>
-                      <FieldLabel htmlFor="payerNip" required>
-                        {t("fields.payerNip")}
+                    <Field data-invalid={!!errors.payerVatId}>
+                      <FieldLabel htmlFor="payerVatId" required>
+                        {t("fields.payerVatId")}
                       </FieldLabel>
                       <Input
-                        id="payerNip"
-                        placeholder={t("placeholders.payerNip")}
-                        aria-invalid={!!errors.payerNip}
-                        {...register("payerNip")}
+                        id="payerVatId"
+                        placeholder={t("placeholders.payerVatId")}
+                        aria-invalid={!!errors.payerVatId}
+                        {...register("payerVatId")}
                       />
-                      {errors.payerNip?.message && (
-                        <FieldError>{errors.payerNip.message}</FieldError>
+                      {errors.payerVatId?.message && (
+                        <FieldError>{errors.payerVatId.message}</FieldError>
                       )}
                     </Field>
 
@@ -476,20 +492,20 @@ export default function CreateOrderForm({ onCreated }: Props) {
                   )}
                 </Field>
 
-                <Field data-invalid={!!errors.weightKg}>
-                  <FieldLabel htmlFor="weightKg" required>
-                    {t("fields.weightKg")}
+                <Field data-invalid={!!errors.cargoWeightKg}>
+                  <FieldLabel htmlFor="cargoWeightKg" required>
+                    {t("fields.cargoWeightKg")}
                   </FieldLabel>
                   <Input
-                    id="weightKg"
+                    id="cargoWeightKg"
                     type="number"
                     inputMode="numeric"
-                    placeholder={t("placeholders.weightKg")}
-                    aria-invalid={!!errors.weightKg}
-                    {...register("weightKg")}
+                    placeholder={t("placeholders.cargoWeightKg")}
+                    aria-invalid={!!errors.cargoWeightKg}
+                    {...register("cargoWeightKg")}
                   />
-                  {errors.weightKg?.message && (
-                    <FieldError>{errors.weightKg.message}</FieldError>
+                  {errors.cargoWeightKg?.message && (
+                    <FieldError>{errors.cargoWeightKg.message}</FieldError>
                   )}
                 </Field>
 
@@ -524,33 +540,39 @@ export default function CreateOrderForm({ onCreated }: Props) {
                   />
                 </Field>
 
-                <Field data-invalid={!!errors.tempSensitive}>
-                  <FieldLabel required>{t("fields.tempSensitive")}</FieldLabel>
+                <Field data-invalid={!!errors.temperatureSensitive}>
+                  <FieldLabel required>
+                    {t("fields.temperatureSensitive")}
+                  </FieldLabel>
                   <Controller
-                    name="tempSensitive"
+                    name="temperatureSensitive"
                     control={control}
                     render={({ field }) => (
                       <Select
                         value={field.value || undefined}
                         onValueChange={field.onChange}
                       >
-                        <SelectTrigger aria-invalid={!!errors.tempSensitive}>
+                        <SelectTrigger
+                          aria-invalid={!!errors.temperatureSensitive}
+                        >
                           <SelectValue
-                            placeholder={t("placeholders.tempSensitive")}
+                            placeholder={t("placeholders.temperatureSensitive")}
                           />
                         </SelectTrigger>
                         <SelectContent>
                           {TEMP_SENSITIVE.map((v) => (
                             <SelectItem key={v} value={v}>
-                              {t(`options.tempSensitive.${v}`)}
+                              {t(`options.temperatureSensitive.${v}`)}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     )}
                   />
-                  {errors.tempSensitive?.message && (
-                    <FieldError>{errors.tempSensitive.message}</FieldError>
+                  {errors.temperatureSensitive?.message && (
+                    <FieldError>
+                      {errors.temperatureSensitive.message}
+                    </FieldError>
                   )}
                 </Field>
               </FieldGroup>
@@ -625,7 +647,14 @@ export default function CreateOrderForm({ onCreated }: Props) {
                 "bg-[#F2542F] hover:bg-[#F2542F]/90"
               )}
             >
-              {isSubmitting ? t("buttons.submitting") : t("buttons.submit")}
+              {isSubmitting ? (
+                <>
+                  <Spinner />
+                  {t("buttons.submitting")}
+                </>
+              ) : (
+                t("buttons.submit")
+              )}
             </Button>
           </div>
         </FieldGroup>
