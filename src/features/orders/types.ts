@@ -15,7 +15,13 @@ export type DispatcherOrderDto = {
   vehiclePlate?: string | null;
   trailerPlate?: string | null;
   driverName: string;
+  driverPhone?: string | null;
+  driverEmail?: string | null;
   loadingDate?: string | null; // ISO
+  fromCountry: string;
+  fromAddress: string | null;
+  toCountry: string;
+  toAddress: string | null;
 };
 
 export type OrderListItem = {
@@ -23,9 +29,15 @@ export type OrderListItem = {
   number: string;
   status: OrderStatus;
   driverName?: string;
+  driverPhone?: string | null;
+  driverEmail?: string | null;
   vehiclePlate?: string | null;
   trailerPlate?: string | null;
   loadingDate?: string | null;
+  fromCountry?: string;
+  fromAddress?: string | null;
+  toCountry?: string;
+  toAddress?: string | null;
 };
 
 export type OrdersPageResult = {
@@ -56,7 +68,9 @@ export type CreateTransportOrderPayload = {
   payerEmail: string;
 
   fromCountry: string;
+  fromAddress: string | null;
   toCountry: string;
+  toAddress: string | null;
 
   cargoWeightKg: number;
   loadingDate: string; // YYYY-MM-DD
@@ -109,7 +123,9 @@ export type OrderDetailsDto = {
   payerVatId: string | null;
   payerEmail: string | null;
   fromCountry: string;
+  fromAddress: string | null;
   toCountry: string;
+  toAddress: string | null;
   cargoWeightKg: number | null;
   loadingDate: string | null; // ISO
   cargoDescription: string | null;

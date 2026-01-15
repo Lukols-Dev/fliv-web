@@ -41,19 +41,19 @@ export default function OrdersGrid({
             createdAt={createdAt}
             status={item.status}
             from={{
-              city: "—",
-              country: "—",
-              addressLine: "—",
+              country: item.fromCountry ?? "—",
+              addressLine: item.fromAddress ?? "—",
             }}
             to={{
-              city: "—",
-              country: "—",
-              addressLine: "—",
+              country: item.toCountry ?? "—",
+              addressLine: item.toAddress ?? "—",
             }}
             driver={{
               name: driverName,
               roleLabel: "Driver",
               initials: initials(driverName),
+              number: item.driverPhone ?? null,
+              email: item.driverEmail ?? null,
             }}
           />
         );

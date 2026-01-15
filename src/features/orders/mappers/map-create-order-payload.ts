@@ -24,7 +24,9 @@ export function mapCreateOrderValuesToPayload(
     payerEmail: v.payerEmail,
 
     fromCountry: v.fromCountry,
+    fromAddress: v.fromAddress?.trim() || null,
     toCountry: v.toCountry,
+    toAddress: v.toAddress?.trim() || null,
 
     cargoWeightKg: v.cargoWeightKg,
     loadingDate: v.loadingDate,

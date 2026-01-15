@@ -136,7 +136,8 @@
       "startDate": "Data startu"
     },
     "tracking": {
-      "title": "Historia śledzenia"
+      "title": "Historia śledzenia",
+      "empty": "Brak zdarzeń śledzenia"
     },
     "trackingStatus": {
       "waiting": "Oczekuje",
@@ -187,7 +188,9 @@
       "payerVatId": "NIP",
       "payerEmail": "Email",
       "fromCountry": "Z kraju",
+      "fromAddress": "Z adresu",
       "toCountry": "Do kraju",
+      "toAddress": "Do adresu",
       "cargoWeightKg": "Waga (kg)",
       "loadingDate": "Data załadunku",
       "cargoDescription": "Ładunek",
@@ -210,7 +213,9 @@
       "payerVatId": "NIP",
       "payerEmail": "Email",
       "fromCountry": "Polska",
+      "fromAddress": "Wpisz adres z którego ma być wywóz",
       "toCountry": "Polska",
+      "toAddress": "Wpisz adres do którego ma być dostarczenie",
       "cargoWeightKg": "3500",
       "cargoDescription": "Opis",
       "temperatureSensitive": "Tak/Nie",

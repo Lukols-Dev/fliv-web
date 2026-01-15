@@ -45,7 +45,9 @@ export const createCreateOrderSchema = (m: {
       .pipe(z.email({ error: m.emailInvalid })),
 
     fromCountry: z.string().trim().min(1, { error: m.required }),
+    fromAddress: z.string().trim().optional(),
     toCountry: z.string().trim().min(1, { error: m.required }),
+    toAddress: z.string().trim().optional(),
 
     cargoWeightKg: z.coerce
       .number()

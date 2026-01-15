@@ -21,7 +21,7 @@ export function useDeleteOrderMutation() {
       });
 
       for (const [key, data] of previous) {
-        if (!data) continue;
+        if (!data || !data.items) continue;
         queryClient.setQueryData<OrdersPageResult>(key, {
           ...data,
           items: data.items.filter((x) => x.id !== id),

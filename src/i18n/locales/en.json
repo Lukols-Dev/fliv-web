@@ -136,7 +136,8 @@
       "startDate": "Start date"
     },
     "tracking": {
-      "title": "Tracking history"
+      "title": "Tracking history",
+      "empty": "No tracking events"
     },
     "trackingStatus": {
       "waiting": "Waiting",
@@ -187,7 +188,9 @@
       "payerVatId": "Tax ID",
       "payerEmail": "Email",
       "fromCountry": "From country",
+      "fromAddress": "From address",
       "toCountry": "To country",
+      "toAddress": "To address",
       "cargoWeightKg": "Weight (kg)",
       "loadingDate": "Loading date",
       "cargoDescription": "Cargo",
@@ -210,7 +213,9 @@
       "payerVatId": "Tax ID",
       "payerEmail": "Email",
       "fromCountry": "Poland",
+      "fromAddress": "Enter from address",
       "toCountry": "Poland",
+      "toAddress": "Enter to address",
       "cargoWeightKg": "3500",
       "cargoDescription": "Description",
       "temperatureSensitive": "Yes/No",

@@ -68,7 +68,9 @@ const TAB_FIELDS: Record<TabKey, (keyof CreateOrderValues)[]> = {
   ],
   transport: [
     "fromCountry",
+    "fromAddress",
     "toCountry",
+    "toAddress",
     "cargoWeightKg",
     "loadingDate",
     "cargoDescription",
@@ -120,8 +122,10 @@ export default function CreateOrderForm({ onCreated }: Props) {
       payerName: "",
       payerVatId: "",
       payerEmail: "",
-      fromCountry: "PL",
-      toCountry: "PL",
+      fromCountry: "",
+      fromAddress: "",
+      toCountry: "",
+      toAddress: "",
       cargoWeightKg: "" as unknown as number,
       loadingDate: "",
       cargoDescription: "",
@@ -477,6 +481,21 @@ export default function CreateOrderForm({ onCreated }: Props) {
                   )}
                 </Field>
 
+                <Field data-invalid={!!errors.fromAddress}>
+                  <FieldLabel htmlFor="fromAddress">
+                    {t("fields.fromAddress")}
+                  </FieldLabel>
+                  <Input
+                    id="fromAddress"
+                    placeholder={t("placeholders.fromAddress")}
+                    aria-invalid={!!errors.fromAddress}
+                    {...register("fromAddress")}
+                  />
+                  {errors.fromAddress?.message && (
+                    <FieldError>{errors.fromAddress.message}</FieldError>
+                  )}
+                </Field>
+
                 <Field data-invalid={!!errors.toCountry}>
                   <FieldLabel htmlFor="toCountry" required>
                     {t("fields.toCountry")}
@@ -489,6 +508,21 @@ export default function CreateOrderForm({ onCreated }: Props) {
                   />
                   {errors.toCountry?.message && (
                     <FieldError>{errors.toCountry.message}</FieldError>
+                  )}
+                </Field>
+
+                <Field data-invalid={!!errors.toAddress}>
+                  <FieldLabel htmlFor="toAddress">
+                    {t("fields.toAddress")}
+                  </FieldLabel>
+                  <Input
+                    id="toAddress"
+                    placeholder={t("placeholders.toAddress")}
+                    aria-invalid={!!errors.toAddress}
+                    {...register("toAddress")}
+                  />
+                  {errors.toAddress?.message && (
+                    <FieldError>{errors.toAddress.message}</FieldError>
                   )}
                 </Field>
 
