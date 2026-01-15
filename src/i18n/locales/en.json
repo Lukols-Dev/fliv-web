@@ -92,6 +92,10 @@
       "title": "Order",
       "subtitle": "Order details",
       "close": "Close"
+    },
+    "empty": {
+      "title": "No orders",
+      "description": "When new orders are created, you'll see them here."
     }
   },
   "OrderCard": {
@@ -314,5 +318,9 @@
       "required": "This field is required",
       "mustMatch": "Type exactly: {token}"
     }
+  },
+  "Pagination": {
+    "prev": "Previous",
+    "next": "Next"
   }
 }

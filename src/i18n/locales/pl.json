@@ -92,6 +92,10 @@
       "title": "Zlecenie",
       "subtitle": "Szczegóły zlecenia",
       "close": "Zamknij"
+    },
+    "empty": {
+      "title": "Brak zleceń",
+      "description": "Gdy pojawią się nowe zlecenia, zobaczysz je tutaj."
     }
   },
   "OrderCard": {
@@ -314,5 +318,9 @@
       "required": "To pole jest wymagane",
       "mustMatch": "Wpisz dokładnie: {token}"
     }
+  },
+  "Pagination": {
+    "prev": "Poprzednia",
+    "next": "Następna"
   }
 }
