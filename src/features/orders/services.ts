@@ -5,6 +5,7 @@ import type {
   CreateTransportOrderResult,
   DispatcherOrderDto,
   OrderDetailsDto,
+  OrderDocumentDto,
 } from "./types";
 
 type ListDispatcherOrdersParams = {
@@ -76,6 +77,28 @@ export function getOrderById(
     withCredentials: true,
     headers: options.headers,
   });
+}
+
+export function uploadOrderDocument(
+  orderId: string,
+  file: File,
+  title: string,
+  options: { signal?: AbortSignal } = {}
+) {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("title", title);
+
+  return apiFetchPath<OrderDocumentDto>(
+    ordersEndpoints.uploadDocument(orderId),
+    {
+      method: "POST",
+      body: formData,
+      signal: options.signal,
+      withCredentials: true,
+      headers: {}, // Let browser set Content-Type with boundary for FormData
+    }
+  );
 }
 
 export function deleteOrderDocument(

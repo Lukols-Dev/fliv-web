@@ -147,6 +147,7 @@
     },
     "documents": {
       "empty": "No documents",
+      "add": "Add file",
       "actions": {
         "view": "View",
         "delete": "Delete"
@@ -197,6 +198,7 @@
       "toAddress": "To address",
       "cargoWeightKg": "Weight (kg)",
       "loadingDate": "Loading date",
+      "loadingTime": "Loading time",
       "cargoDescription": "Cargo",
       "temperatureSensitive": "Temperature sensitive",
       "attachments": "Files",
@@ -221,6 +223,7 @@
       "toCountry": "Poland",
       "toAddress": "Enter to address",
       "cargoWeightKg": "3500",
+      "loadingTime": "HH:mm",
       "cargoDescription": "Description",
       "temperatureSensitive": "Yes/No",
       "notes": "Add notes…"
@@ -238,6 +241,9 @@
       "attachments": "You can add files later.",
       "attachmentsList": "Attachments list"
     },
+    "documents": {
+      "remove": "Remove document"
+    },
     "buttons": {
       "submit": "Create order",
       "submitting": "Creating…",
@@ -249,7 +255,8 @@
       "phoneInvalid": "Enter a valid phone number",
       "weightInvalid": "Enter a valid weight",
       "dateInvalid": "Enter a valid date",
-      "invalidOption": "Select a valid value"
+      "invalidOption": "Select a valid value",
+      "invalidFile": "Invalid file."
     }
   },
   "Notifications": {
@@ -329,5 +336,41 @@
   "Pagination": {
     "prev": "Previous",
     "next": "Next"
+  },
+  "UploadFileDialog": {
+    "title": "Add file",
+    "subtitle": "Choose a file and set a display name.",
+    "dropzone": {
+      "title": "Drag & drop a file here",
+      "active": "Drop the file to add",
+      "hint": "Or click to pick a file from disk."
+    },
+    "fields": {
+      "title": "Display name",
+      "titlePlaceholder": "e.g. CMR Vienna 11.10"
+    },
+    "selected": {
+      "title": "Selected files"
+    },
+    "limits": {
+      "reachedMany": "Limit reached: max {max} files.",
+      "reachedSingle": "You can add only 1 file."
+    },
+    "actions": {
+      "pickFile": "Pick a file",
+      "remove": "Remove",
+      "cancel": "Cancel",
+      "close": "Close",
+      "confirmOne": "Add file",
+      "confirmMany": "Add files"
+    },
+    "errors": {
+      "title": "Could not add file",
+      "titleRequired": "Please provide a name for each file.",
+      "tooManyFiles": "You can add up to {max} files.",
+      "fileTooLarge": "File is too large. Max: {max}.",
+      "invalidType": "Unsupported file type.",
+      "unknown": "Unexpected error occurred."
+    }
   }
 }

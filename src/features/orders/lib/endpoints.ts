@@ -7,6 +7,8 @@ export const ordersEndpoints = {
     joinPath(apiPaths.v1, `/dispatcher/transport-orders/${id}`),
   deleteById: (id: string) =>
     joinPath(apiPaths.v1, `/dispatcher/transport-orders/${id}`),
+  uploadDocument: (orderId: string) =>
+    joinPath(apiPaths.v1, `/dispatcher/transport-orders/${orderId}/documents`),
   deleteDocument: (orderDocumentId: string) =>
     joinPath(
       apiPaths.v1,
