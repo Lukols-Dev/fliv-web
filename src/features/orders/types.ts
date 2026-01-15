@@ -72,3 +72,49 @@ export type CreateTransportOrderResult = {
   ztNumber: string;
   status: string;
 };
+
+export type OrderDocumentDto = {
+  id: string;
+  title: string | null;
+  createdAt: string; // ISO
+  url: string;
+  mimeType: string;
+  sizeBytes: number;
+  originalFilename: string;
+  description: string | null;
+};
+
+export type OrderEventDto = {
+  id: string;
+  type: string;
+  previousStatus: OrderStatus | null;
+  newStatus: OrderStatus | null;
+  description: string | null;
+  createdAt: string; // ISO
+};
+
+export type OrderDetailsDto = {
+  id: string;
+  ztNumber: string;
+  pwNumber: string | null;
+  status: OrderStatus;
+  vehiclePlate: string;
+  trailerPlate: string | null;
+  driverFirstName: string;
+  driverLastName: string;
+  driverPhone: string;
+  clientName: string;
+  contractNumber: string | null;
+  payerName: string | null;
+  payerVatId: string | null;
+  payerEmail: string | null;
+  fromCountry: string;
+  toCountry: string;
+  cargoWeightKg: number | null;
+  loadingDate: string | null; // ISO
+  cargoDescription: string | null;
+  temperatureSensitive: boolean;
+  notes: string | null;
+  documents: OrderDocumentDto[];
+  events: OrderEventDto[];
+};

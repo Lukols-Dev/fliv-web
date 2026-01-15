@@ -4,6 +4,7 @@ import type {
   CreateTransportOrderPayload,
   CreateTransportOrderResult,
   DispatcherOrderDto,
+  OrderDetailsDto,
 } from "./types";
 
 type ListDispatcherOrdersParams = {
@@ -62,5 +63,17 @@ export function createOrder(
     body: JSON.stringify(payload),
     signal: options.signal,
     withCredentials: true,
+  });
+}
+
+export function getOrderById(
+  id: string,
+  options: { signal?: AbortSignal; headers?: HeadersInit } = {}
+) {
+  return apiFetchPath<OrderDetailsDto>(ordersEndpoints.getById(id), {
+    method: "GET",
+    signal: options.signal,
+    withCredentials: true,
+    headers: options.headers,
   });
 }

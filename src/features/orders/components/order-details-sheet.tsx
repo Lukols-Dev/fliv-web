@@ -28,10 +28,13 @@ import {
 } from "lucide-react";
 import OrderStatusBadge from "./order-status-badge";
 import type { OrderListItem, OrderStatus } from "../types";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { Icons } from "@/components/icons";
 import { useDeleteOrderMutation } from "../hooks/use-delete-order-mutation";
+import { useOrderDetailsQuery } from "../hooks/use-order-details-query";
 import { Spinner } from "@/components/ui/spinner";
+import { formatDatePL, formatTimeHM, formatTimeHMS } from "@/lib/format";
+import { initials } from "@/lib/utils";
 
 type Props = {
   open: boolean;
@@ -39,12 +42,6 @@ type Props = {
   selected: OrderListItem | null;
   onEdit?: () => void;
   onDelete?: () => void;
-};
-
-type TrackingEvent = {
-  status: OrderStatus;
-  time: string; // "10:25:34"
-  date: string; // "11.10.2025"
 };
 
 export default function OrderDetailsSheet({
@@ -55,36 +52,64 @@ export default function OrderDetailsSheet({
   onDelete,
 }: Props) {
   const t = useTranslations("OrdersDetails");
+  const locale = useLocale();
   const del = useDeleteOrderMutation();
 
-  const orderNumber = selected?.number ?? "#ZL-—";
-  const orderStatus = selected?.status ?? "PENDING";
   const orderId = selected?.id;
+  const {
+    data: orderDetails,
+    isPending,
+    isError,
+  } = useOrderDetailsQuery({
+    id: orderId ?? "",
+    enabled: open && !!orderId,
+  });
 
-  const driver = { name: "Jan Nowak", role: t("driver.role"), initials: "JN" };
-  const from = {
-    city: "Piaseczno",
-    country: "Polska",
-    addressLine: "Jana Pawła II 66, 05-500",
-  };
-  const to = {
-    city: "Wiedeń",
-    country: "Austria",
-    addressLine: "Elisabethstraße 1010, Operngasse 3",
-  };
+  const orderNumber = orderDetails?.ztNumber ?? selected?.number ?? "#ZL-—";
+  const orderStatus = (orderDetails?.status ??
+    selected?.status ??
+    "PENDING") as OrderStatus;
 
+  const driverName = orderDetails
+    ? `${orderDetails.driverFirstName ?? ""} ${
+        orderDetails.driverLastName ?? ""
+      }`.trim() || "—"
+    : "—";
+  const driverPhone = orderDetails?.driverPhone ?? null;
+  const driverInitials = driverName !== "—" ? initials(driverName) : "—";
+
+  const fromCountry = orderDetails?.fromCountry ?? "—";
+  const toCountry = orderDetails?.toCountry ?? "—";
+
+  const loadingDate = orderDetails?.loadingDate
+    ? new Date(orderDetails.loadingDate)
+    : null;
   const stats = [
-    { label: t("stats.currentDistance"), value: "10 km" },
-    { label: t("stats.distance"), value: "123 km" },
-    { label: t("stats.startTime"), value: "15:25" },
-    { label: t("stats.startDate"), value: "13.09.2025" },
+    { label: t("stats.currentDistance"), value: "—" },
+    { label: t("stats.distance"), value: "—" },
+    {
+      label: t("stats.startTime"),
+      value: loadingDate ? formatTimeHM(loadingDate, locale) : "—",
+    },
+    {
+      label: t("stats.startDate"),
+      value: loadingDate ? formatDatePL(loadingDate, locale) : "—",
+    },
   ] as const;
 
-  const history: TrackingEvent[] = [
-    { status: "PENDING", time: "10:25:34", date: "11.10.2025" },
-    { status: "ACCEPTED", time: "10:25:34", date: "11.10.2025" },
-    { status: "LOADING", time: "11:10:25", date: "11.10.2025" },
-  ];
+  const history = React.useMemo(() => {
+    if (!orderDetails?.events) return [];
+    return orderDetails.events
+      .filter((ev) => ev.newStatus)
+      .map((ev) => {
+        const date = new Date(ev.createdAt);
+        return {
+          status: ev.newStatus!,
+          time: formatTimeHMS(date, locale),
+          date: formatDatePL(date, locale),
+        };
+      });
+  }, [orderDetails?.events, locale]);
 
   const handleDelete = React.useCallback(async () => {
     if (!orderId || del.isPending) return;
@@ -94,6 +119,12 @@ export default function OrderDetailsSheet({
     onOpenChange(false);
     onDelete?.();
   }, [orderId, del, onOpenChange, onDelete]);
+
+  const handleCall = React.useCallback(() => {
+    if (driverPhone) {
+      window.location.href = `tel:${driverPhone}`;
+    }
+  }, [driverPhone]);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -159,255 +190,313 @@ export default function OrderDetailsSheet({
 
                 {/* INFO TAB */}
                 <TabsContent value="info" className="mt-3">
-                  {/* Driver box */}
-                  <Card className="border border-[#EBE5D4] bg-[#EBE5D4]/18 shadow-none">
-                    <div className="flex items-center justify-between gap-3 px-3">
-                      <div className="flex min-w-0 items-center gap-3">
-                        <Avatar className="h-12 w-12">
-                          <AvatarFallback>{driver.initials}</AvatarFallback>
-                        </Avatar>
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold">
-                            {driver.name}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {driver.role}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <IconActionButton
-                          label={t("driver.call")}
-                          icon={<Phone className="h-4 w-4 text-[#709470]" />}
-                          onAction={() => {}}
-                          className="bg-transparent border border-[#EBE5D4]"
-                        />
-                        <IconActionButton
-                          label={t("driver.message")}
-                          icon={
-                            <MessageSquare className="h-4 w-4 text-[#709470]" />
-                          }
-                          onAction={() => {}}
-                          className="bg-transparent border border-[#EBE5D4]"
-                        />
-                      </div>
+                  {isPending ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Spinner />
                     </div>
-                  </Card>
-
-                  {/* Route section */}
-                  <div className="mt-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-base font-semibold">
-                        {t("route.title")}
-                      </h3>
-                      <Button size="sm" className="h-8 cursor-pointer">
-                        <Icons.pencil className="mr-2 h-4 w-4" />
-                        {t("route.edit")}
-                      </Button>
+                  ) : isError ? (
+                    <div className="py-8 text-center text-sm text-destructive">
+                      Failed to load order details
                     </div>
+                  ) : (
+                    <>
+                      {/* Driver box */}
+                      {orderDetails && (
+                        <Card className="border border-[#EBE5D4] bg-[#EBE5D4]/18 shadow-none">
+                          <div className="flex items-center justify-between gap-3 px-3">
+                            <div className="flex min-w-0 items-center gap-3">
+                              <Avatar className="h-12 w-12">
+                                <AvatarFallback>
+                                  {driverInitials}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-semibold">
+                                  {driverName}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  {t("driver.role")}
+                                </p>
+                              </div>
+                            </div>
 
-                    {/* Map placeholder */}
-                    <Card className="mt-3 overflow-hidden border shadow-none">
-                      <div className="relative aspect-4/3 w-full bg-muted">
-                        <div className="absolute inset-0 grid place-items-center text-xs text-muted-foreground">
-                          {t("route.mapPlaceholder")}
-                        </div>
-                      </div>
-                    </Card>
+                            <div className="flex items-center gap-2">
+                              <IconActionButton
+                                label={t("driver.call")}
+                                icon={
+                                  <Phone className="h-4 w-4 text-[#709470]" />
+                                }
+                                onAction={handleCall}
+                                className="bg-transparent border border-[#EBE5D4]"
+                              />
+                              <IconActionButton
+                                label={t("driver.message")}
+                                icon={
+                                  <MessageSquare className="h-4 w-4 text-[#709470]" />
+                                }
+                                onAction={() => {
+                                  if (driverPhone) {
+                                    window.location.href = `sms:${driverPhone}`;
+                                  }
+                                }}
+                                className="bg-transparent border border-[#EBE5D4]"
+                              />
+                            </div>
+                          </div>
+                        </Card>
+                      )}
 
-                    {/* Route line */}
-                    <div className="mt-6">
-                      <div className="relative flex items-center justify-between">
-                        <span
-                          className={cn(
-                            "inline-flex h-6 w-6 items-center justify-center rounded-full transition-colors",
-                            (orderStatus === "IN_PROGRESS" ||
-                              orderStatus === "LOADING" ||
-                              orderStatus === "UNLOADING") &&
-                              "bg-[#709470]/20",
-                            (orderStatus === "PENDING" ||
-                              orderStatus === "PAUSED" ||
-                              orderStatus === "ACCEPTED") &&
-                              "bg-[#EBE5D4]/40",
-                            orderStatus === "COMPLETED" && "bg-green-500/20",
-                            orderStatus === "PROBLEM" && "bg-destructive/20"
-                          )}
-                        >
-                          <span
-                            className={cn(
-                              "h-3 w-3 transition-colors rounded-full",
-                              (orderStatus === "IN_PROGRESS" ||
-                                orderStatus === "LOADING" ||
-                                orderStatus === "UNLOADING") &&
-                                "bg-[#709470]",
-                              (orderStatus === "PENDING" ||
-                                orderStatus === "PAUSED" ||
-                                orderStatus === "ACCEPTED") &&
-                                "bg-[#EBE5D4]",
-                              orderStatus === "COMPLETED" && "bg-green-500",
-                              orderStatus === "PROBLEM" && "bg-destructive"
-                            )}
-                          />
-                        </span>
-
-                        <div
-                          className={cn(
-                            "mx-2 h-[2px] flex-1 transition-colors",
-                            (orderStatus === "IN_PROGRESS" ||
-                              orderStatus === "UNLOADING") &&
-                              "bg-[#709470]/20",
-                            (orderStatus === "PENDING" ||
-                              orderStatus === "PAUSED" ||
-                              orderStatus === "LOADING" ||
-                              orderStatus === "ACCEPTED") &&
-                              "bg-[#EBE5D4]",
-                            orderStatus === "COMPLETED" && "bg-green-500",
-                            orderStatus === "PROBLEM" && "bg-destructive/20"
-                          )}
-                        />
-
-                        <span
-                          className={cn(
-                            "inline-flex h-8 w-8 items-center justify-center rounded-full transition-colors",
-                            (orderStatus === "IN_PROGRESS" ||
-                              orderStatus === "UNLOADING") &&
-                              "text-[#709470]",
-                            (orderStatus === "PENDING" ||
-                              orderStatus === "PAUSED" ||
-                              orderStatus === "LOADING" ||
-                              orderStatus === "ACCEPTED") &&
-                              "text-[#EBE5D4]",
-                            orderStatus === "COMPLETED" && "text-green-600",
-                            orderStatus === "PROBLEM" && "text-destructive"
-                          )}
-                        >
-                          <Truck className="h-6 w-6" />
-                        </span>
-
-                        <div
-                          className={cn(
-                            "mx-2 h-[2px] flex-1 transition-colors",
-                            (orderStatus === "IN_PROGRESS" ||
-                              orderStatus === "UNLOADING") &&
-                              "bg-[#709470]/20",
-                            (orderStatus === "PENDING" ||
-                              orderStatus === "PAUSED" ||
-                              orderStatus === "LOADING" ||
-                              orderStatus === "ACCEPTED" ||
-                              orderStatus === "IN_PROGRESS") &&
-                              "bg-[#EBE5D4]",
-                            orderStatus === "COMPLETED" && "bg-green-500",
-                            orderStatus === "PROBLEM" && "bg-destructive/20"
-                          )}
-                        />
-
-                        <span
-                          className={cn(
-                            "inline-flex h-6 w-6 items-center justify-center rounded-full transition-colors",
-                            (orderStatus === "IN_PROGRESS" ||
-                              orderStatus === "UNLOADING") &&
-                              "bg-[#709470]/20",
-                            (orderStatus === "PENDING" ||
-                              orderStatus === "PAUSED" ||
-                              orderStatus === "LOADING" ||
-                              orderStatus === "ACCEPTED" ||
-                              orderStatus === "IN_PROGRESS") &&
-                              "bg-[#EBE5D4]/40",
-                            orderStatus === "COMPLETED" && "bg-green-500/20",
-                            orderStatus === "PROBLEM" && "bg-destructive/20"
-                          )}
-                        >
-                          <MapPin
-                            className={cn(
-                              "h-4 w-4 transition-colors",
-                              orderStatus === "UNLOADING" && "text-[#709470]",
-                              (orderStatus === "PENDING" ||
-                                orderStatus === "PAUSED" ||
-                                orderStatus === "LOADING" ||
-                                orderStatus === "ACCEPTED" ||
-                                orderStatus === "IN_PROGRESS") &&
-                                "text-[#EBE5D4]",
-                              orderStatus === "COMPLETED" && "text-green-600",
-                              orderStatus === "PROBLEM" && "text-destructive"
-                            )}
-                          />
-                        </span>
-                      </div>
-
-                      {/* addresses */}
-                      <div className="mt-3 grid grid-cols-2 gap-3 text-[11px] leading-snug">
-                        <div className="min-w-0">
-                          <p className="font-medium">
-                            {from.city}, {from.country}
-                          </p>
-                          <p className="text-muted-foreground">
-                            {from.addressLine}
-                          </p>
+                      {/* Route section */}
+                      <div className="mt-4">
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-base font-semibold">
+                            {t("route.title")}
+                          </h3>
+                          <Button size="sm" className="h-8 cursor-pointer">
+                            <Icons.pencil className="mr-2 h-4 w-4" />
+                            {t("route.edit")}
+                          </Button>
                         </div>
 
-                        <div className="min-w-0 text-right">
-                          <p className="font-medium">
-                            {to.city}, {to.country}
-                          </p>
-                          <p className="text-muted-foreground">
-                            {to.addressLine}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
+                        {/* Map placeholder */}
+                        <Card className="mt-3 overflow-hidden border shadow-none">
+                          <div className="relative aspect-4/3 w-full bg-muted">
+                            <div className="absolute inset-0 grid place-items-center text-xs text-muted-foreground">
+                              {t("route.mapPlaceholder")}
+                            </div>
+                          </div>
+                        </Card>
 
-                    {/* Stats */}
-                    <div className="mt-6 grid grid-cols-4 gap-2">
-                      {stats.map((s, idx) => (
-                        <div
-                          key={s.label}
-                          className={cn(
-                            "px-1",
-                            idx !== 0 && "border-l border-border/60 pl-3"
-                          )}
-                        >
-                          <p className="text-[11px] text-muted-foreground">
-                            {s.label}
-                          </p>
-                          <p className="text-sm font-semibold">{s.value}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                        {/* Route line */}
+                        <div className="mt-6">
+                          <div className="relative flex items-center justify-between">
+                            <span
+                              className={cn(
+                                "inline-flex h-6 w-6 items-center justify-center rounded-full transition-colors",
+                                (orderStatus === "IN_PROGRESS" ||
+                                  orderStatus === "LOADING" ||
+                                  orderStatus === "UNLOADING") &&
+                                  "bg-[#709470]/20",
+                                (orderStatus === "PENDING" ||
+                                  orderStatus === "PAUSED" ||
+                                  orderStatus === "ACCEPTED") &&
+                                  "bg-[#EBE5D4]/40",
+                                orderStatus === "COMPLETED" &&
+                                  "bg-green-500/20",
+                                orderStatus === "PROBLEM" && "bg-destructive/20"
+                              )}
+                            >
+                              <span
+                                className={cn(
+                                  "h-3 w-3 transition-colors rounded-full",
+                                  (orderStatus === "IN_PROGRESS" ||
+                                    orderStatus === "LOADING" ||
+                                    orderStatus === "UNLOADING") &&
+                                    "bg-[#709470]",
+                                  (orderStatus === "PENDING" ||
+                                    orderStatus === "PAUSED" ||
+                                    orderStatus === "ACCEPTED") &&
+                                    "bg-[#EBE5D4]",
+                                  orderStatus === "COMPLETED" && "bg-green-500",
+                                  orderStatus === "PROBLEM" && "bg-destructive"
+                                )}
+                              />
+                            </span>
 
-                  <Separator className="my-5" />
+                            <div
+                              className={cn(
+                                "mx-2 h-[2px] flex-1 transition-colors",
+                                (orderStatus === "IN_PROGRESS" ||
+                                  orderStatus === "UNLOADING") &&
+                                  "bg-[#709470]/20",
+                                (orderStatus === "PENDING" ||
+                                  orderStatus === "PAUSED" ||
+                                  orderStatus === "LOADING" ||
+                                  orderStatus === "ACCEPTED") &&
+                                  "bg-[#EBE5D4]",
+                                orderStatus === "COMPLETED" && "bg-green-500",
+                                orderStatus === "PROBLEM" && "bg-destructive/20"
+                              )}
+                            />
 
-                  {/* Tracking history */}
-                  <div>
-                    <h3 className="text-base font-semibold">
-                      {t("tracking.title")}
-                    </h3>
+                            <span
+                              className={cn(
+                                "inline-flex h-8 w-8 items-center justify-center rounded-full transition-colors",
+                                (orderStatus === "IN_PROGRESS" ||
+                                  orderStatus === "UNLOADING") &&
+                                  "text-[#709470]",
+                                (orderStatus === "PENDING" ||
+                                  orderStatus === "PAUSED" ||
+                                  orderStatus === "LOADING" ||
+                                  orderStatus === "ACCEPTED") &&
+                                  "text-[#EBE5D4]",
+                                orderStatus === "COMPLETED" && "text-green-600",
+                                orderStatus === "PROBLEM" && "text-destructive"
+                              )}
+                            >
+                              <Truck className="h-6 w-6" />
+                            </span>
 
-                    <div className="mt-3 space-y-2">
-                      {history.map((ev, i) => (
-                        <div
-                          key={`${ev.status}-${i}`}
-                          className="flex items-center justify-between"
-                        >
-                          <OrderStatusBadge status={ev.status} />
-                          <div className="text-right text-[11px] text-muted-foreground">
-                            <div>{ev.time}</div>
-                            <div>{ev.date}</div>
+                            <div
+                              className={cn(
+                                "mx-2 h-[2px] flex-1 transition-colors",
+                                (orderStatus === "IN_PROGRESS" ||
+                                  orderStatus === "UNLOADING") &&
+                                  "bg-[#709470]/20",
+                                (orderStatus === "PENDING" ||
+                                  orderStatus === "PAUSED" ||
+                                  orderStatus === "LOADING" ||
+                                  orderStatus === "ACCEPTED" ||
+                                  orderStatus === "IN_PROGRESS") &&
+                                  "bg-[#EBE5D4]",
+                                orderStatus === "COMPLETED" && "bg-green-500",
+                                orderStatus === "PROBLEM" && "bg-destructive/20"
+                              )}
+                            />
+
+                            <span
+                              className={cn(
+                                "inline-flex h-6 w-6 items-center justify-center rounded-full transition-colors",
+                                (orderStatus === "IN_PROGRESS" ||
+                                  orderStatus === "UNLOADING") &&
+                                  "bg-[#709470]/20",
+                                (orderStatus === "PENDING" ||
+                                  orderStatus === "PAUSED" ||
+                                  orderStatus === "LOADING" ||
+                                  orderStatus === "ACCEPTED" ||
+                                  orderStatus === "IN_PROGRESS") &&
+                                  "bg-[#EBE5D4]/40",
+                                orderStatus === "COMPLETED" &&
+                                  "bg-green-500/20",
+                                orderStatus === "PROBLEM" && "bg-destructive/20"
+                              )}
+                            >
+                              <MapPin
+                                className={cn(
+                                  "h-4 w-4 transition-colors",
+                                  orderStatus === "UNLOADING" &&
+                                    "text-[#709470]",
+                                  (orderStatus === "PENDING" ||
+                                    orderStatus === "PAUSED" ||
+                                    orderStatus === "LOADING" ||
+                                    orderStatus === "ACCEPTED" ||
+                                    orderStatus === "IN_PROGRESS") &&
+                                    "text-[#EBE5D4]",
+                                  orderStatus === "COMPLETED" &&
+                                    "text-green-600",
+                                  orderStatus === "PROBLEM" &&
+                                    "text-destructive"
+                                )}
+                              />
+                            </span>
+                          </div>
+
+                          {/* addresses */}
+                          <div className="mt-3 grid grid-cols-2 gap-3 text-[11px] leading-snug">
+                            <div className="min-w-0">
+                              <p className="font-medium">{fromCountry}</p>
+                              <p className="text-muted-foreground">—</p>
+                            </div>
+
+                            <div className="min-w-0 text-right">
+                              <p className="font-medium">{toCountry}</p>
+                              <p className="text-muted-foreground">—</p>
+                            </div>
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  </div>
+
+                        {/* Stats */}
+                        <div className="mt-6 grid grid-cols-4 gap-2">
+                          {stats.map((s, idx) => (
+                            <div
+                              key={s.label}
+                              className={cn(
+                                "px-1",
+                                idx !== 0 && "border-l border-border/60 pl-3"
+                              )}
+                            >
+                              <p className="text-[11px] text-muted-foreground">
+                                {s.label}
+                              </p>
+                              <p className="text-sm font-semibold">{s.value}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <Separator className="my-5" />
+
+                      {/* Tracking history */}
+                      <div>
+                        <h3 className="text-base font-semibold">
+                          {t("tracking.title")}
+                        </h3>
+
+                        <div className="mt-3 space-y-2">
+                          {history.map((ev, i) => (
+                            <div
+                              key={`${ev.status}-${i}`}
+                              className="flex items-center justify-between"
+                            >
+                              <OrderStatusBadge status={ev.status} />
+                              <div className="text-right text-[11px] text-muted-foreground">
+                                <div>{ev.time}</div>
+                                <div>{ev.date}</div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </TabsContent>
 
                 {/* DOCUMENTS TAB */}
                 <TabsContent value="documents" className="mt-3">
-                  <Card className="border shadow-none">
-                    <div className="p-4 text-sm text-muted-foreground">
-                      {t("documents.empty")}
+                  {isPending ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Spinner />
                     </div>
-                  </Card>
+                  ) : isError ? (
+                    <div className="py-8 text-center text-sm text-destructive">
+                      Failed to load documents
+                    </div>
+                  ) : orderDetails && orderDetails.documents.length > 0 ? (
+                    <div className="space-y-2">
+                      {orderDetails.documents.map((doc) => (
+                        <Card key={doc.id} className="border shadow-none p-4">
+                          <div className="flex items-start justify-between">
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-semibold">
+                                {doc.title || doc.originalFilename}
+                              </p>
+                              {doc.description && (
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                  {doc.description}
+                                </p>
+                              )}
+                              <p className="mt-1 text-xs text-muted-foreground">
+                                {formatDatePL(new Date(doc.createdAt), locale)}
+                              </p>
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => window.open(doc.url, "_blank")}
+                            >
+                              View
+                            </Button>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  ) : (
+                    <Card className="border shadow-none">
+                      <div className="p-4 text-sm text-muted-foreground">
+                        {t("documents.empty")}
+                      </div>
+                    </Card>
+                  )}
                 </TabsContent>
               </Tabs>
             </SheetHeader>
