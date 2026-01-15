@@ -37,3 +37,14 @@ export function listDispatcherOrders(params: ListDispatcherOrdersParams = {}) {
     headers: params.headers,
   });
 }
+
+export function deleteOrder(
+  id: string,
+  options: { signal?: AbortSignal } = {}
+) {
+  return apiFetchPath<{ success: boolean }>(ordersEndpoints.deleteById(id), {
+    method: "DELETE",
+    signal: options.signal,
+    withCredentials: true,
+  });
+}

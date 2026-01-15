@@ -30,6 +30,8 @@ import OrderStatusBadge from "./order-status-badge";
 import type { OrderListItem, OrderStatus } from "../types";
 import { useTranslations } from "next-intl";
 import { Icons } from "@/components/icons";
+import { useDeleteOrderMutation } from "../hooks/use-delete-order-mutation";
+import { Spinner } from "@/components/ui/spinner";
 
 type Props = {
   open: boolean;
@@ -53,11 +55,12 @@ export default function OrderDetailsSheet({
   onDelete,
 }: Props) {
   const t = useTranslations("OrdersDetails");
+  const del = useDeleteOrderMutation();
 
   const orderNumber = selected?.number ?? "#ZL-—";
   const orderStatus = selected?.status ?? "PENDING";
+  const orderId = selected?.id;
 
-  // MOCKI – później podepniesz prawdziwe dane z API
   const driver = { name: "Jan Nowak", role: t("driver.role"), initials: "JN" };
   const from = {
     city: "Piaseczno",
@@ -82,6 +85,15 @@ export default function OrderDetailsSheet({
     { status: "ACCEPTED", time: "10:25:34", date: "11.10.2025" },
     { status: "LOADING", time: "11:10:25", date: "11.10.2025" },
   ];
+
+  const handleDelete = React.useCallback(async () => {
+    if (!orderId || del.isPending) return;
+
+    await del.mutateAsync(orderId);
+
+    onOpenChange(false);
+    onDelete?.();
+  }, [orderId, del, onOpenChange, onDelete]);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -119,10 +131,15 @@ export default function OrderDetailsSheet({
                         {t("actions.edit")}
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onClick={onDelete}
+                        onClick={handleDelete}
+                        disabled={!orderId || del.isPending}
                         className="text-destructive focus:text-destructive"
                       >
-                        <Icons.trash className="mr-2 h-4 w-4 text-destructive" />
+                        {del.isPending ? (
+                          <Spinner />
+                        ) : (
+                          <Icons.trash className="mr-2 h-4 w-4 text-destructive" />
+                        )}
                         {t("actions.delete")}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -192,7 +209,7 @@ export default function OrderDetailsSheet({
 
                     {/* Map placeholder */}
                     <Card className="mt-3 overflow-hidden border shadow-none">
-                      <div className="relative aspect-[4/3] w-full bg-muted">
+                      <div className="relative aspect-4/3 w-full bg-muted">
                         <div className="absolute inset-0 grid place-items-center text-xs text-muted-foreground">
                           {t("route.mapPlaceholder")}
                         </div>
