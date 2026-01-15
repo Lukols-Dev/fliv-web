@@ -183,11 +183,18 @@ export default function CreateOrderForm({ onCreated }: Props) {
     setShowTabErrors(false);
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { documents: _docs, ...rest } = values;
+      const { documents, ...rest } = values;
       const payload = mapCreateOrderValuesToPayload(rest);
 
-      await createMut.mutateAsync(payload);
+      const result = await createMut.mutateAsync({
+        payload,
+        documents,
+      });
+
+      if (result.failed.length > 0) {
+        console.log("Some uploads failed:", result.failed);
+        return;
+      }
 
       reset();
       onCreated();
@@ -768,13 +775,13 @@ export default function CreateOrderForm({ onCreated }: Props) {
           <div className="pt-2">
             <Button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || createMut.isPending}
               className={cn(
                 "w-full rounded-xl py-6 text-base",
                 "bg-[#F2542F] hover:bg-[#F2542F]/90"
               )}
             >
-              {isSubmitting ? (
+              {isSubmitting || createMut.isPending ? (
                 <>
                   <Spinner />
                   {t("buttons.submitting")}
