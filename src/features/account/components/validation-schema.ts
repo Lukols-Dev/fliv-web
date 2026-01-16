@@ -1,5 +1,9 @@
 import { z } from "zod";
 
+const avatarFileSchema = z
+  .custom<File>((v) => typeof File !== "undefined" && v instanceof File)
+  .optional();
+
 export const createUpdateAccountSchema = (m: {
   required: string;
   emailInvalid: string;
@@ -19,6 +23,7 @@ export const createUpdateAccountSchema = (m: {
       .trim()
       .optional()
       .refine((v) => !v || v.length >= 8, { message: m.passwordMin }),
+    avatarFile: avatarFileSchema,
   });
 
 export type UpdateAccountValues = z.infer<

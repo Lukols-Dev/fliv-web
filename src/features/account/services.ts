@@ -17,7 +17,6 @@ export type UpdateProfilePayload = {
   firstName?: string;
   lastName?: string;
   phone?: string;
-  // consents?: {...} // jeśli masz w DTO
 };
 
 type GetCurrentUserOptions = {
@@ -49,5 +48,25 @@ export function updateCurrentUserProfile(
     body: JSON.stringify(payload),
     signal: options.signal,
     withCredentials: true,
+  });
+}
+
+export type UploadAvatarResult = {
+  avatarUrl: string;
+};
+
+export function uploadCurrentUserAvatar(
+  file: File,
+  options: { signal?: AbortSignal } = {}
+) {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  return apiFetchPath<UploadAvatarResult>(accountEndpoints.avatar, {
+    method: "POST",
+    body: formData,
+    signal: options.signal,
+    withCredentials: true,
+    headers: {},
   });
 }
