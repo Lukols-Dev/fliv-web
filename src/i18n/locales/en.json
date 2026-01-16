@@ -92,6 +92,10 @@
       "title": "Order",
       "subtitle": "Order details",
       "close": "Close"
+    },
+    "empty": {
+      "title": "No orders",
+      "description": "When new orders are created, you'll see them here."
     }
   },
   "OrderCard": {
@@ -132,7 +136,8 @@
       "startDate": "Start date"
     },
     "tracking": {
-      "title": "Tracking history"
+      "title": "Tracking history",
+      "empty": "No tracking events"
     },
     "trackingStatus": {
       "waiting": "Waiting",
@@ -141,7 +146,12 @@
       "delivered": "Delivered"
     },
     "documents": {
-      "empty": "No documents"
+      "empty": "No documents",
+      "add": "Add file",
+      "actions": {
+        "view": "View",
+        "delete": "Delete"
+      }
     }
   },
   "OrderStatus": {
@@ -156,6 +166,7 @@
   },
   "CreateOrderDialog": {
     "trigger": "Create new order",
+    "editTitle": "Edit transport order",
     "title": "Create transport order",
     "optional": "optional",
     "tabs": {
@@ -169,56 +180,60 @@
     "fields": {
       "ztNumber": "ZT number",
       "pwNumber": "PW number",
-      "status": "Status",
-      "truckPlate": "Truck",
+      "timelinessStatus": "Timeliness status",
+      "vehiclePlate": "Truck",
       "trailerPlate": "Trailer",
       "driver": "Driver",
       "driverFirstName": "First name",
       "driverLastName": "Last name",
       "driverPhone": "Phone",
-      "principal": "Principal",
+      "clientName": "Principal",
       "contractNumber": "Order/Contract",
       "payer": "Payer",
       "payerName": " Payer Name",
-      "payerNip": "Tax ID",
+      "payerVatId": "Tax ID",
       "payerEmail": "Email",
       "fromCountry": "From country",
+      "fromAddress": "From address",
       "toCountry": "To country",
-      "weightKg": "Weight (kg)",
+      "toAddress": "To address",
+      "cargoWeightKg": "Weight (kg)",
       "loadingDate": "Loading date",
+      "loadingTime": "Loading time",
       "cargoDescription": "Cargo",
-      "tempSensitive": "Temperature sensitive",
+      "temperatureSensitive": "Temperature sensitive",
       "attachments": "Files",
       "notes": "Description"
     },
     "placeholders": {
-      "ztNumber": "Number",
-      "pwNumber": "Number",
-      "status": "On-time status",
-      "truckPlate": "Plate number",
+      "ztNumber": "ZT Number",
+      "pwNumber": "PW Number",
+      "timelinessStatus": "Select timeliness status",
+      "vehiclePlate": "Plate number",
       "trailerPlate": "Plate number",
       "driverFirstName": "First name",
       "driverLastName": "Last name",
       "driverPhone": "Phone",
-      "principal": "Principal",
+      "clientName": "Principal",
       "contractNumber": "Number",
       "payerName": "Name",
-      "payerNip": "Tax ID",
+      "payerVatId": "Tax ID",
       "payerEmail": "Email",
-      "fromCountry": "PL",
-      "toCountry": "PL",
-      "weightKg": "3500",
+      "fromCountry": "Poland",
+      "fromAddress": "Enter from address",
+      "toCountry": "Poland",
+      "toAddress": "Enter to address",
+      "cargoWeightKg": "3500",
+      "loadingTime": "HH:mm",
       "cargoDescription": "Description",
-      "tempSensitive": "Yes/No",
+      "temperatureSensitive": "Yes/No",
       "notes": "Add notes…"
     },
     "options": {
-      "status": {
-        "on_time": "On time",
-        "issue": "Issue",
-        "in_progress": "In progress"
+      "timelinessStatus": {
+        "on_time": "On time"
       },
-      "tempSensitive": {
+      "temperatureSensitive": {
         "yes": "Yes",
         "no": "No"
       }
@@ -227,10 +242,15 @@
       "attachments": "You can add files later.",
       "attachmentsList": "Attachments list"
     },
+    "documents": {
+      "remove": "Remove document"
+    },
     "buttons": {
       "submit": "Create order",
       "submitting": "Creating…",
-      "close": "Close"
+      "close": "Close",
+      "save": "Save changes",
+      "saving": "Saving…"
     },
     "validation": {
       "required": "This field is required",
@@ -238,7 +258,8 @@
       "phoneInvalid": "Enter a valid phone number",
       "weightInvalid": "Enter a valid weight",
       "dateInvalid": "Enter a valid date",
-      "invalidOption": "Select a valid value"
+      "invalidOption": "Select a valid value",
+      "invalidFile": "Invalid file."
     }
   },
   "Notifications": {
@@ -313,6 +334,46 @@
     "validation": {
       "required": "This field is required",
       "mustMatch": "Type exactly: {token}"
+    }
+  },
+  "Pagination": {
+    "prev": "Previous",
+    "next": "Next"
+  },
+  "UploadFileDialog": {
+    "title": "Add file",
+    "subtitle": "Choose a file and set a display name.",
+    "dropzone": {
+      "title": "Drag & drop a file here",
+      "active": "Drop the file to add",
+      "hint": "Or click to pick a file from disk."
+    },
+    "fields": {
+      "title": "Display name",
+      "titlePlaceholder": "e.g. CMR Vienna 11.10"
+    },
+    "selected": {
+      "title": "Selected files"
+    },
+    "limits": {
+      "reachedMany": "Limit reached: max {max} files.",
+      "reachedSingle": "You can add only 1 file."
+    },
+    "actions": {
+      "pickFile": "Pick a file",
+      "remove": "Remove",
+      "cancel": "Cancel",
+      "close": "Close",
+      "confirmOne": "Add file",
+      "confirmMany": "Add files"
+    },
+    "errors": {
+      "title": "Could not add file",
+      "titleRequired": "Please provide a name for each file.",
+      "tooManyFiles": "You can add up to {max} files.",
+      "fileTooLarge": "File is too large. Max: {max}.",
+      "invalidType": "Unsupported file type.",
+      "unknown": "Unexpected error occurred."
     }
   }
 }

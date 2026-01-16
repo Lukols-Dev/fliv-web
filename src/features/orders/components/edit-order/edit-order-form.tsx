@@ -1,11 +1,10 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useForm, Controller, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AlertCircle, Plus } from "lucide-react";
-import Image from "next/image";
+import { AlertCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +12,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Field,
-  FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
@@ -28,33 +26,29 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import { cn } from "@/lib/utils";
+import { Spinner } from "@/components/ui/spinner";
+import { useUpdateOrderMutation } from "../../hooks/use-update-order-mutation";
 import {
-  createCreateOrderSchema,
-  type CreateOrderValues,
+  createEditOrderSchema,
+  type EditOrderValues,
   ORDER_STATUSES,
   TEMP_SENSITIVE,
 } from "./validation-schema";
-import { cn } from "@/lib/utils";
-import { useCreateOrderMutation } from "../../hooks/use-create-order-mutation";
-import { mapCreateOrderValuesToPayload } from "../../mappers/map-create-order-payload";
-import { Spinner } from "@/components/ui/spinner";
-import { OrderDocumentUploadDialog } from "../order-document-upload";
-import { Icons } from "@/components/icons";
-import { Card } from "@/components/ui/card";
+
+// ⚠️ dopasuj typ do swojego DTO z query
+import type { OrderDetailsDto } from "../../types";
+import { mapUpdateOrderValuesToPayload } from "../../mappers/map-update-order-playload";
 
 type Props = {
-  onCreated: () => void;
+  orderId: string;
+  initial: OrderDetailsDto; // dane z useOrderDetailsQuery
+  onSaved: () => void;
 };
 
-type TabKey =
-  | "record"
-  | "vehicle"
-  | "payer"
-  | "transport"
-  | "attachments"
-  | "notes";
+type TabKey = "record" | "vehicle" | "payer" | "transport" | "notes";
 
-const TAB_FIELDS: Record<TabKey, (keyof CreateOrderValues)[]> = {
+const TAB_FIELDS: Record<TabKey, (keyof EditOrderValues)[]> = {
   record: ["ztNumber", "pwNumber", "timelinessStatus"],
   vehicle: [
     "vehiclePlate",
@@ -81,26 +75,37 @@ const TAB_FIELDS: Record<TabKey, (keyof CreateOrderValues)[]> = {
     "cargoDescription",
     "temperatureSensitive",
   ],
-  attachments: ["documents"],
   notes: ["notes"],
 };
 
-export default function CreateOrderForm({ onCreated }: Props) {
+function pad2(n: number) {
+  return String(n).padStart(2, "0");
+}
+
+function toDateInputValue(value: string | Date | null | undefined): string {
+  if (!value) return "";
+  const d = typeof value === "string" ? new Date(value) : value;
+  // local date (bez przesunięć UTC)
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
+
+export default function EditOrderForm({ orderId, initial, onSaved }: Props) {
+  // możesz użyć osobnych translacji albo tych samych co Create
   const t = useTranslations("CreateOrderDialog");
+
   const [activeTab, setActiveTab] = useState<TabKey>("record");
   const [showTabErrors, setShowTabErrors] = useState(false);
 
-  const createMut = useCreateOrderMutation();
+  const updateMut = useUpdateOrderMutation();
 
   const schema = useMemo(() => {
-    return createCreateOrderSchema({
+    return createEditOrderSchema({
       required: t("validation.required"),
       emailInvalid: t("validation.emailInvalid"),
       phoneInvalid: t("validation.phoneInvalid"),
       weightInvalid: t("validation.weightInvalid"),
       dateInvalid: t("validation.dateInvalid"),
       invalidOption: t("validation.invalidOption"),
-      invalidFile: t("validation.invalidFile"),
     });
   }, [t]);
 
@@ -110,104 +115,102 @@ export default function CreateOrderForm({ onCreated }: Props) {
     control,
     formState: { errors, isSubmitting },
     reset,
-    watch,
-    setValue,
-  } = useForm<CreateOrderValues>({
+  } = useForm<EditOrderValues>({
     mode: "onSubmit",
-    resolver: zodResolver(schema) as Resolver<CreateOrderValues>,
+    resolver: zodResolver(schema) as Resolver<EditOrderValues>,
     defaultValues: {
       ztNumber: "",
       pwNumber: "",
       timelinessStatus: "",
+
       vehiclePlate: "",
       trailerPlate: "",
       driverFirstName: "",
       driverLastName: "",
       driverPhone: "",
+
       clientName: "",
       contractNumber: "",
       payerName: "",
       payerVatId: "",
       payerEmail: "",
+
       fromCountry: "",
       fromAddress: "",
       toCountry: "",
       toAddress: "",
+
       cargoWeightKg: "" as unknown as number,
       loadingDate: "",
       loadingTime: "",
       cargoDescription: "",
       temperatureSensitive: undefined as "yes" | "no" | undefined,
+
       notes: "",
-      documents: [],
     },
   });
 
-  const documentsRaw = watch("documents");
-  const documents = useMemo(() => documentsRaw ?? [], [documentsRaw]);
-
-  const removeDocument = (index: number) => {
-    const updated = documents.filter((_, i) => i !== index);
-    setValue("documents", updated, {
-      shouldDirty: true,
-      shouldTouch: true,
-    });
-  };
-
-  const isImageFile = (file: File): boolean => {
-    return file.type.startsWith("image/");
-  };
-
-  // Memoize image preview URLs
-  const imagePreviewUrls = useMemo(() => {
-    const urls = new Map<number, string>();
-    documents.forEach((d, idx) => {
-      if (isImageFile(d.file)) {
-        urls.set(idx, URL.createObjectURL(d.file));
-      }
-    });
-    return urls;
-  }, [documents]);
-
-  // Cleanup object URLs when documents change or component unmounts
   useEffect(() => {
-    return () => {
-      imagePreviewUrls.forEach((url) => URL.revokeObjectURL(url));
-    };
-  }, [imagePreviewUrls]);
+    reset(
+      {
+        ztNumber: initial.ztNumber ?? "",
+        pwNumber: initial.pwNumber ?? "",
+        timelinessStatus:
+          initial.timelinessStatus && initial.timelinessStatus.trim() !== ""
+            ? initial.timelinessStatus
+            : "",
+
+        vehiclePlate: initial.vehiclePlate ?? "",
+        trailerPlate: initial.trailerPlate ?? "",
+        driverFirstName: initial.driverFirstName ?? "",
+        driverLastName: initial.driverLastName ?? "",
+        driverPhone: initial.driverPhone ?? "",
+
+        clientName: initial.clientName ?? "",
+        contractNumber: initial.contractNumber ?? "",
+        payerName: initial.payerName ?? "",
+        payerVatId: initial.payerVatId ?? "",
+        payerEmail: initial.payerEmail ?? "",
+
+        fromCountry: initial.fromCountry ?? "",
+        fromAddress: initial.fromAddress ?? "",
+        toCountry: initial.toCountry ?? "",
+        toAddress: initial.toAddress ?? "",
+
+        cargoWeightKg: (initial.cargoWeightKg ?? "") as unknown as number,
+        loadingDate: toDateInputValue(initial.loadingDate),
+        loadingTime: initial.loadingTime ?? "",
+        cargoDescription: initial.cargoDescription ?? "",
+        temperatureSensitive: initial.temperatureSensitive
+          ? ("yes" as const)
+          : ("no" as const),
+
+        notes: initial.notes ?? "",
+      },
+      { keepDirty: false }
+    );
+  }, [initial, reset]);
 
   const tabHasError = (tab: TabKey) => {
     const fields = TAB_FIELDS[tab];
     return fields.some((f) => Boolean((errors as Record<string, unknown>)[f]));
   };
 
-  const onValid = async (values: CreateOrderValues) => {
+  const onValid = async (values: EditOrderValues) => {
     setShowTabErrors(false);
 
     try {
-      const { documents, ...rest } = values;
-      const payload = mapCreateOrderValuesToPayload(rest);
+      const payload = mapUpdateOrderValuesToPayload(values);
 
-      const result = await createMut.mutateAsync({
-        payload,
-        documents,
-      });
+      await updateMut.mutateAsync({ orderId, payload });
 
-      if (result.failed.length > 0) {
-        console.log("Some uploads failed:", result.failed);
-        return;
-      }
-
-      reset();
-      onCreated();
+      onSaved();
     } catch (e) {
       console.log(e);
     }
   };
 
-  const onInvalid = () => {
-    setShowTabErrors(true);
-  };
+  const onInvalid = () => setShowTabErrors(true);
 
   const tabTriggerClass =
     "data-[state=active]:bg-[#F2542F] data-[state=active]:text-white";
@@ -249,12 +252,6 @@ export default function CreateOrderForm({ onCreated }: Props) {
                 showError={showTabErrors && tabHasError("transport")}
               />
               <TabLabel
-                value="attachments"
-                className={tabTriggerClass}
-                label={t("tabs.attachments")}
-                showError={showTabErrors && tabHasError("attachments")}
-              />
-              <TabLabel
                 value="notes"
                 className={tabTriggerClass}
                 label={t("tabs.notes")}
@@ -262,7 +259,7 @@ export default function CreateOrderForm({ onCreated }: Props) {
               />
             </TabsList>
 
-            {/* Ewidencja */}
+            {/* RECORD */}
             <TabsContent value="record" className="mt-6">
               <FieldGroup className="gap-6">
                 <Field data-invalid={!!errors.ztNumber}>
@@ -271,7 +268,6 @@ export default function CreateOrderForm({ onCreated }: Props) {
                   </FieldLabel>
                   <Input
                     id="ztNumber"
-                    placeholder={t("placeholders.ztNumber")}
                     aria-invalid={!!errors.ztNumber}
                     {...register("ztNumber")}
                   />
@@ -286,7 +282,6 @@ export default function CreateOrderForm({ onCreated }: Props) {
                   </FieldLabel>
                   <Input
                     id="pwNumber"
-                    placeholder={t("placeholders.pwNumber")}
                     aria-invalid={!!errors.pwNumber}
                     {...register("pwNumber")}
                   />
@@ -297,31 +292,41 @@ export default function CreateOrderForm({ onCreated }: Props) {
 
                 <Field data-invalid={!!errors.timelinessStatus}>
                   <FieldLabel>{t("fields.timelinessStatus")}</FieldLabel>
-
                   <Controller
                     name="timelinessStatus"
                     control={control}
-                    render={({ field }) => (
-                      <Select
-                        value={field.value || undefined}
-                        onValueChange={field.onChange}
-                      >
-                        <SelectTrigger aria-invalid={!!errors.timelinessStatus}>
-                          <SelectValue
-                            placeholder={t("placeholders.timelinessStatus")}
-                          />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {ORDER_STATUSES.map((s) => (
-                            <SelectItem key={s} value={s}>
-                              {t(`options.timelinessStatus.${s}`)}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
+                    render={({ field }) => {
+                      // Convert empty string to undefined for Select, but keep actual values
+                      const selectValue =
+                        field.value && field.value.trim() !== ""
+                          ? field.value
+                          : undefined;
+                      return (
+                        <Select
+                          key={`timeliness-select-${selectValue || "empty"}-${
+                            initial.timelinessStatus || "no-init"
+                          }`}
+                          value={selectValue}
+                          onValueChange={field.onChange}
+                        >
+                          <SelectTrigger
+                            aria-invalid={!!errors.timelinessStatus}
+                          >
+                            <SelectValue
+                              placeholder={t("placeholders.timelinessStatus")}
+                            />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {ORDER_STATUSES.map((s) => (
+                              <SelectItem key={s} value={s}>
+                                {t(`options.timelinessStatus.${s}`)}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      );
+                    }}
                   />
-
                   {errors.timelinessStatus?.message && (
                     <FieldError>{errors.timelinessStatus.message}</FieldError>
                   )}
@@ -329,7 +334,7 @@ export default function CreateOrderForm({ onCreated }: Props) {
               </FieldGroup>
             </TabsContent>
 
-            {/* Pojazd */}
+            {/* VEHICLE */}
             <TabsContent value="vehicle" className="mt-6">
               <FieldGroup className="gap-6">
                 <Field data-invalid={!!errors.vehiclePlate}>
@@ -338,7 +343,6 @@ export default function CreateOrderForm({ onCreated }: Props) {
                   </FieldLabel>
                   <Input
                     id="vehiclePlate"
-                    placeholder={t("placeholders.vehiclePlate")}
                     aria-invalid={!!errors.vehiclePlate}
                     {...register("vehiclePlate")}
                   />
@@ -353,7 +357,6 @@ export default function CreateOrderForm({ onCreated }: Props) {
                   </FieldLabel>
                   <Input
                     id="trailerPlate"
-                    placeholder={t("placeholders.trailerPlate")}
                     aria-invalid={!!errors.trailerPlate}
                     {...register("trailerPlate")}
                   />
@@ -363,67 +366,52 @@ export default function CreateOrderForm({ onCreated }: Props) {
                 </Field>
 
                 <FieldSeparator />
-                <div className="flex flex-col gap-2">
-                  <span className="text-sm font-medium">
-                    {t("fields.driver")}
-                  </span>
-                  <FieldGroup className="gap-4 border border-[#EBE5D4]/60 p-4 rounded-md">
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                      <Field data-invalid={!!errors.driverFirstName}>
-                        <FieldLabel htmlFor="driverFirstName" required>
-                          {t("fields.driverFirstName")}
-                        </FieldLabel>
-                        <Input
-                          id="driverFirstName"
-                          placeholder={t("placeholders.driverFirstName")}
-                          aria-invalid={!!errors.driverFirstName}
-                          {...register("driverFirstName")}
-                        />
-                        {errors.driverFirstName?.message && (
-                          <FieldError>
-                            {errors.driverFirstName.message}
-                          </FieldError>
-                        )}
-                      </Field>
 
-                      <Field data-invalid={!!errors.driverLastName}>
-                        <FieldLabel htmlFor="driverLastName" required>
-                          {t("fields.driverLastName")}
-                        </FieldLabel>
-                        <Input
-                          id="driverLastName"
-                          placeholder={t("placeholders.driverLastName")}
-                          aria-invalid={!!errors.driverLastName}
-                          {...register("driverLastName")}
-                        />
-                        {errors.driverLastName?.message && (
-                          <FieldError>
-                            {errors.driverLastName.message}
-                          </FieldError>
-                        )}
-                      </Field>
-                    </div>
+                <Field data-invalid={!!errors.driverFirstName}>
+                  <FieldLabel htmlFor="driverFirstName" required>
+                    {t("fields.driverFirstName")}
+                  </FieldLabel>
+                  <Input
+                    id="driverFirstName"
+                    aria-invalid={!!errors.driverFirstName}
+                    {...register("driverFirstName")}
+                  />
+                  {errors.driverFirstName?.message && (
+                    <FieldError>{errors.driverFirstName.message}</FieldError>
+                  )}
+                </Field>
 
-                    <Field data-invalid={!!errors.driverPhone}>
-                      <FieldLabel htmlFor="driverPhone" required>
-                        {t("fields.driverPhone")}
-                      </FieldLabel>
-                      <Input
-                        id="driverPhone"
-                        placeholder={t("placeholders.driverPhone")}
-                        aria-invalid={!!errors.driverPhone}
-                        {...register("driverPhone")}
-                      />
-                      {errors.driverPhone?.message && (
-                        <FieldError>{errors.driverPhone.message}</FieldError>
-                      )}
-                    </Field>
-                  </FieldGroup>
-                </div>
+                <Field data-invalid={!!errors.driverLastName}>
+                  <FieldLabel htmlFor="driverLastName" required>
+                    {t("fields.driverLastName")}
+                  </FieldLabel>
+                  <Input
+                    id="driverLastName"
+                    aria-invalid={!!errors.driverLastName}
+                    {...register("driverLastName")}
+                  />
+                  {errors.driverLastName?.message && (
+                    <FieldError>{errors.driverLastName.message}</FieldError>
+                  )}
+                </Field>
+
+                <Field data-invalid={!!errors.driverPhone}>
+                  <FieldLabel htmlFor="driverPhone" required>
+                    {t("fields.driverPhone")}
+                  </FieldLabel>
+                  <Input
+                    id="driverPhone"
+                    aria-invalid={!!errors.driverPhone}
+                    {...register("driverPhone")}
+                  />
+                  {errors.driverPhone?.message && (
+                    <FieldError>{errors.driverPhone.message}</FieldError>
+                  )}
+                </Field>
               </FieldGroup>
             </TabsContent>
 
-            {/* Płatnik */}
+            {/* PAYER */}
             <TabsContent value="payer" className="mt-6">
               <FieldGroup className="gap-6">
                 <Field data-invalid={!!errors.clientName}>
@@ -432,7 +420,6 @@ export default function CreateOrderForm({ onCreated }: Props) {
                   </FieldLabel>
                   <Input
                     id="clientName"
-                    placeholder={t("placeholders.clientName")}
                     aria-invalid={!!errors.clientName}
                     {...register("clientName")}
                   />
@@ -447,7 +434,6 @@ export default function CreateOrderForm({ onCreated }: Props) {
                   </FieldLabel>
                   <Input
                     id="contractNumber"
-                    placeholder={t("placeholders.contractNumber")}
                     aria-invalid={!!errors.contractNumber}
                     {...register("contractNumber")}
                   />
@@ -457,62 +443,53 @@ export default function CreateOrderForm({ onCreated }: Props) {
                 </Field>
 
                 <FieldSeparator />
-                <div className="flex flex-col gap-2">
-                  <span className="text-sm font-medium">
-                    {t("fields.payer")}
-                  </span>
-                  <FieldGroup className="gap-4 border border-[#EBE5D4]/60 p-4 rounded-md">
-                    <Field data-invalid={!!errors.payerName}>
-                      <FieldLabel htmlFor="payerName" required>
-                        {t("fields.payerName")}
-                      </FieldLabel>
-                      <Input
-                        id="payerName"
-                        placeholder={t("placeholders.payerName")}
-                        aria-invalid={!!errors.payerName}
-                        {...register("payerName")}
-                      />
-                      {errors.payerName?.message && (
-                        <FieldError>{errors.payerName.message}</FieldError>
-                      )}
-                    </Field>
 
-                    <Field data-invalid={!!errors.payerVatId}>
-                      <FieldLabel htmlFor="payerVatId" required>
-                        {t("fields.payerVatId")}
-                      </FieldLabel>
-                      <Input
-                        id="payerVatId"
-                        placeholder={t("placeholders.payerVatId")}
-                        aria-invalid={!!errors.payerVatId}
-                        {...register("payerVatId")}
-                      />
-                      {errors.payerVatId?.message && (
-                        <FieldError>{errors.payerVatId.message}</FieldError>
-                      )}
-                    </Field>
+                <Field data-invalid={!!errors.payerName}>
+                  <FieldLabel htmlFor="payerName" required>
+                    {t("fields.payerName")}
+                  </FieldLabel>
+                  <Input
+                    id="payerName"
+                    aria-invalid={!!errors.payerName}
+                    {...register("payerName")}
+                  />
+                  {errors.payerName?.message && (
+                    <FieldError>{errors.payerName.message}</FieldError>
+                  )}
+                </Field>
 
-                    <Field data-invalid={!!errors.payerEmail}>
-                      <FieldLabel htmlFor="payerEmail" required>
-                        {t("fields.payerEmail")}
-                      </FieldLabel>
-                      <Input
-                        id="payerEmail"
-                        type="email"
-                        placeholder={t("placeholders.payerEmail")}
-                        aria-invalid={!!errors.payerEmail}
-                        {...register("payerEmail")}
-                      />
-                      {errors.payerEmail?.message && (
-                        <FieldError>{errors.payerEmail.message}</FieldError>
-                      )}
-                    </Field>
-                  </FieldGroup>
-                </div>
+                <Field data-invalid={!!errors.payerVatId}>
+                  <FieldLabel htmlFor="payerVatId" required>
+                    {t("fields.payerVatId")}
+                  </FieldLabel>
+                  <Input
+                    id="payerVatId"
+                    aria-invalid={!!errors.payerVatId}
+                    {...register("payerVatId")}
+                  />
+                  {errors.payerVatId?.message && (
+                    <FieldError>{errors.payerVatId.message}</FieldError>
+                  )}
+                </Field>
+
+                <Field data-invalid={!!errors.payerEmail}>
+                  <FieldLabel htmlFor="payerEmail" required>
+                    {t("fields.payerEmail")}
+                  </FieldLabel>
+                  <Input
+                    id="payerEmail"
+                    type="email"
+                    aria-invalid={!!errors.payerEmail}
+                    {...register("payerEmail")}
+                  />
+                  {errors.payerEmail?.message && (
+                    <FieldError>{errors.payerEmail.message}</FieldError>
+                  )}
+                </Field>
               </FieldGroup>
             </TabsContent>
 
-            {/* Transport */}
+            {/* TRANSPORT */}
             <TabsContent value="transport" className="mt-6">
               <FieldGroup className="gap-6">
                 <Field data-invalid={!!errors.fromCountry}>
@@ -521,7 +498,6 @@ export default function CreateOrderForm({ onCreated }: Props) {
                   </FieldLabel>
                   <Input
                     id="fromCountry"
-                    placeholder={t("placeholders.fromCountry")}
                     aria-invalid={!!errors.fromCountry}
                     {...register("fromCountry")}
                   />
@@ -536,7 +512,6 @@ export default function CreateOrderForm({ onCreated }: Props) {
                   </FieldLabel>
                   <Input
                     id="fromAddress"
-                    placeholder={t("placeholders.fromAddress")}
                     aria-invalid={!!errors.fromAddress}
                     {...register("fromAddress")}
                   />
@@ -551,7 +526,6 @@ export default function CreateOrderForm({ onCreated }: Props) {
                   </FieldLabel>
                   <Input
                     id="toCountry"
-                    placeholder={t("placeholders.toCountry")}
                     aria-invalid={!!errors.toCountry}
                     {...register("toCountry")}
                   />
@@ -566,7 +540,6 @@ export default function CreateOrderForm({ onCreated }: Props) {
                   </FieldLabel>
                   <Input
                     id="toAddress"
-                    placeholder={t("placeholders.toAddress")}
                     aria-invalid={!!errors.toAddress}
                     {...register("toAddress")}
                   />
@@ -583,7 +556,6 @@ export default function CreateOrderForm({ onCreated }: Props) {
                     id="cargoWeightKg"
                     type="number"
                     inputMode="numeric"
-                    placeholder={t("placeholders.cargoWeightKg")}
                     aria-invalid={!!errors.cargoWeightKg}
                     {...register("cargoWeightKg")}
                   />
@@ -610,7 +582,7 @@ export default function CreateOrderForm({ onCreated }: Props) {
                 <Field data-invalid={!!errors.loadingTime}>
                   <FieldLabel htmlFor="loadingTime">
                     {t("fields.loadingTime")}
-                    <span className="mt-auto mb-0 text-xs text-muted-foreground">
+                    <span className="ml-1 text-xs text-muted-foreground">
                       ({t("optional")})
                     </span>
                   </FieldLabel>
@@ -628,13 +600,12 @@ export default function CreateOrderForm({ onCreated }: Props) {
                 <Field>
                   <FieldLabel htmlFor="cargoDescription">
                     {t("fields.cargoDescription")}
-                    <span className="mt-auto mb-0 text-xs text-muted-foreground">
+                    <span className="ml-1 text-xs text-muted-foreground">
                       ({t("optional")})
                     </span>
                   </FieldLabel>
                   <Textarea
                     id="cargoDescription"
-                    placeholder={t("placeholders.cargoDescription")}
                     className="resize-none"
                     rows={4}
                     {...register("cargoDescription")}
@@ -679,108 +650,18 @@ export default function CreateOrderForm({ onCreated }: Props) {
               </FieldGroup>
             </TabsContent>
 
-            {/* Załączniki */}
-            <TabsContent value="attachments" className="mt-6">
-              <FieldGroup className="gap-6">
-                <Field>
-                  <div className="flex flex-row w-full justify-between">
-                    <FieldLabel htmlFor="attachments">
-                      {t("fields.attachments")}
-                      <span className=" text-xs text-muted-foreground">
-                        ({t("optional")})
-                      </span>
-                    </FieldLabel>
-                    <OrderDocumentUploadDialog
-                      trigger={
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="flex items-center gap-2"
-                        >
-                          <Plus className="h-4 w-4" />
-                          Dodaj plik
-                        </Button>
-                      }
-                      onAdd={(draft) => {
-                        setValue("documents", [...documents, draft], {
-                          shouldDirty: true,
-                          shouldTouch: true,
-                        });
-                      }}
-                    />
-                  </div>
-                  <FieldDescription>
-                    {t("helpers.attachments")}
-                  </FieldDescription>
-                </Field>
-
-                {documents.length > 0 ? (
-                  <div className="mt-4 space-y-2">
-                    {documents.map((d, idx) => {
-                      const isImage = isImageFile(d.file);
-                      const previewUrl = isImage
-                        ? imagePreviewUrls.get(idx)
-                        : null;
-
-                      return (
-                        <Card
-                          key={`${d.file.name}-${idx}`}
-                          className="border shadow-none p-4"
-                        >
-                          <div className="flex items-center gap-3">
-                            {isImage && previewUrl ? (
-                              <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md border">
-                                <Image
-                                  src={previewUrl}
-                                  alt={d.title}
-                                  fill
-                                  className="object-cover"
-                                  unoptimized
-                                />
-                              </div>
-                            ) : (
-                              <Icons.file className="h-6 w-6 shrink-0 text-[#709470]" />
-                            )}
-                            <div className="min-w-0 flex-1">
-                              <p className="text-sm font-normal truncate">
-                                {d.title}
-                              </p>
-                              <p className="text-xs text-muted-foreground truncate">
-                                {d.file.name}
-                              </p>
-                            </div>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 cursor-pointer text-destructive hover:text-destructive hover:bg-destructive/10"
-                              onClick={() => removeDocument(idx)}
-                              aria-label={t("documents.remove")}
-                            >
-                              <Icons.trash className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </Card>
-                      );
-                    })}
-                  </div>
-                ) : null}
-              </FieldGroup>
-            </TabsContent>
-
-            {/* Uwagi */}
+            {/* NOTES */}
             <TabsContent value="notes" className="mt-6">
               <FieldGroup className="gap-6">
                 <Field>
                   <FieldLabel htmlFor="notes">
                     {t("fields.notes")}
-                    <span className="mt-auto mb-0 text-xs text-muted-foreground">
+                    <span className="ml-1 text-xs text-muted-foreground">
                       ({t("optional")})
                     </span>
                   </FieldLabel>
                   <Textarea
                     id="notes"
-                    placeholder={t("placeholders.notes")}
                     className="resize-none"
                     rows={6}
                     {...register("notes")}
@@ -795,19 +676,19 @@ export default function CreateOrderForm({ onCreated }: Props) {
           <div className="pt-2">
             <Button
               type="submit"
-              disabled={isSubmitting || createMut.isPending}
+              disabled={isSubmitting || updateMut.isPending}
               className={cn(
                 "w-full rounded-xl py-6 text-base",
                 "bg-[#F2542F] hover:bg-[#F2542F]/90"
               )}
             >
-              {isSubmitting || createMut.isPending ? (
+              {isSubmitting || updateMut.isPending ? (
                 <>
                   <Spinner />
-                  {t("buttons.submitting")}
+                  {t("buttons.saving")}
                 </>
               ) : (
-                t("buttons.submit")
+                t("buttons.save")
               )}
             </Button>
           </div>

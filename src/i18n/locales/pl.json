@@ -92,6 +92,10 @@
       "title": "Zlecenie",
       "subtitle": "Szczegóły zlecenia",
       "close": "Zamknij"
+    },
+    "empty": {
+      "title": "Brak zleceń",
+      "description": "Gdy pojawią się nowe zlecenia, zobaczysz je tutaj."
     }
   },
   "OrderCard": {
@@ -132,7 +136,8 @@
       "startDate": "Data startu"
     },
     "tracking": {
-      "title": "Historia śledzenia"
+      "title": "Historia śledzenia",
+      "empty": "Brak zdarzeń śledzenia"
     },
     "trackingStatus": {
       "waiting": "Oczekuje",
@@ -141,7 +146,12 @@
       "delivered": "Dostarczono"
     },
     "documents": {
-      "empty": "Brak dokumentów"
+      "empty": "Brak dokumentów",
+      "add": "Dodaj plik",
+      "actions": {
+        "view": "Podgląd",
+        "delete": "Usuń"
+      }
     }
   },
   "OrderStatus": {
@@ -156,6 +166,7 @@
   },
   "CreateOrderDialog": {
     "trigger": "Utwórz nowe zlecenie",
+    "editTitle": "Edytuj zlecenie transportowe",
     "title": "Tworzenie zlecenia transportowego",
     "optional": "opcjonalne",
     "tabs": {
@@ -169,56 +180,60 @@
     "fields": {
       "ztNumber": "Numer ZT",
       "pwNumber": "Numer PW",
-      "status": "Status",
-      "truckPlate": "Samochód",
+      "timelinessStatus": "Status terminowości",
+      "vehiclePlate": "Samochód",
       "trailerPlate": "Naczepa",
       "driver": "Kierowca",
       "driverFirstName": "Imię",
       "driverLastName": "Nazwisko",
       "driverPhone": "Telefon",
-      "principal": "Zleceniodawca",
+      "clientName": "Zleceniodawca",
       "contractNumber": "Zlecenie/Kontrakt",
       "payer": "Płatnik",
       "payerName": "Nazwa płatnika",
-      "payerNip": "NIP",
+      "payerVatId": "NIP",
       "payerEmail": "Email",
       "fromCountry": "Z kraju",
+      "fromAddress": "Z adresu",
       "toCountry": "Do kraju",
-      "weightKg": "Waga (kg)",
+      "toAddress": "Do adresu",
+      "cargoWeightKg": "Waga (kg)",
       "loadingDate": "Data załadunku",
+      "loadingTime": "Godzina załadunku",
       "cargoDescription": "Ładunek",
-      "tempSensitive": "Wrażliwość na temperaturę",
+      "temperatureSensitive": "Wrażliwość na temperaturę",
       "attachments": "Pliki",
       "notes": "Opis"
     },
     "placeholders": {
       "ztNumber": "Numer",
       "pwNumber": "Numer",
-      "status": "0 - terminowość",
-      "truckPlate": "Numer rejestracyjny",
+      "timelinessStatus": "Wybierz status terminowości",
+      "vehiclePlate": "Numer rejestracyjny",
       "trailerPlate": "Numer rejestracyjny",
       "driverFirstName": "Imię",
       "driverLastName": "Nazwisko",
       "driverPhone": "Telefon",
-      "principal": "Zleceniodawca",
+      "clientName": "Zleceniodawca",
       "contractNumber": "Numer",
       "payerName": "Nazwa",
-      "payerNip": "NIP",
+      "payerVatId": "NIP",
       "payerEmail": "Email",
-      "fromCountry": "PL",
-      "toCountry": "PL",
-      "weightKg": "3500",
+      "fromCountry": "Polska",
+      "fromAddress": "Wpisz adres z którego ma być wywóz",
+      "toCountry": "Polska",
+      "toAddress": "Wpisz adres do którego ma być dostarczenie",
+      "cargoWeightKg": "3500",
+      "loadingTime": "HH:mm",
       "cargoDescription": "Opis",
-      "tempSensitive": "Tak/Nie",
+      "temperatureSensitive": "Tak/Nie",
       "notes": "Dodaj uwagi…"
     },
     "options": {
-      "status": {
-        "on_time": "0 - terminowość",
-        "issue": "Problem",
-        "in_progress": "W realizacji"
+      "timelinessStatus": {
+        "on_time": "Terminowość"
       },
-      "tempSensitive": {
+      "temperatureSensitive": {
         "yes": "Tak",
         "no": "Nie"
       }
@@ -227,10 +242,15 @@
       "attachments": "Możesz dodać pliki później.",
       "attachmentsList": "Lista załączników"
     },
+    "documents": {
+      "remove": "Usuń dokument"
+    },
     "buttons": {
       "submit": "Utwórz zlecenie",
       "submitting": "Tworzenie…",
-      "close": "Zamknij"
+      "close": "Zamknij",
+      "save": "Zapisz zmiany",
+      "saving": "Zapisywanie…"
     },
     "validation": {
       "required": "To pole jest wymagane",
@@ -238,7 +258,8 @@
       "phoneInvalid": "Podaj poprawny numer telefonu",
       "weightInvalid": "Podaj poprawną wagę",
       "dateInvalid": "Podaj poprawną datę",
-      "invalidOption": "Wybierz poprawną wartość"
+      "invalidOption": "Wybierz poprawną wartość",
+      "invalidFile": "Nieprawidłowy plik."
     }
   },
   "Notifications": {
@@ -313,6 +334,46 @@
     "validation": {
       "required": "To pole jest wymagane",
       "mustMatch": "Wpisz dokładnie: {token}"
+    }
+  },
+  "Pagination": {
+    "prev": "Poprzednia",
+    "next": "Następna"
+  },
+  "UploadFileDialog": {
+    "title": "Dodaj plik",
+    "subtitle": "Wybierz plik i nadaj mu nazwę.",
+    "dropzone": {
+      "title": "Przeciągnij plik tutaj",
+      "active": "Upuść plik, aby dodać",
+      "hint": "Możesz też kliknąć i wybrać plik z dysku."
+    },
+    "fields": {
+      "title": "Tytuł",
+      "titlePlaceholder": "Np. CMR Wiedeń 11.10"
+    },
+    "selected": {
+      "title": "Wybrane pliki"
+    },
+    "limits": {
+      "reachedMany": "Osiągnięto limit: maks. {max} plików.",
+      "reachedSingle": "Możesz dodać tylko 1 plik."
+    },
+    "actions": {
+      "pickFile": "Wybierz plik",
+      "remove": "Usuń",
+      "cancel": "Anuluj",
+      "close": "Zamknij",
+      "confirmOne": "Dodaj plik",
+      "confirmMany": "Dodaj pliki"
+    },
+    "errors": {
+      "title": "Nie udało się dodać pliku",
+      "titleRequired": "Podaj nazwę dla każdego pliku.",
+      "tooManyFiles": "Możesz dodać maksymalnie {max} plików.",
+      "fileTooLarge": "Plik jest za duży. Maksymalnie: {max}.",
+      "invalidType": "Nieobsługiwany typ pliku.",
+      "unknown": "Wystąpił nieoczekiwany błąd."
     }
   }
 }

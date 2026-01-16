@@ -1,18 +1,14 @@
 import * as React from "react";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+
 import { cn } from "@/lib/utils";
-import { MapPin, Phone, MessageSquare, Truck } from "lucide-react";
+import { MapPin, Truck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import OrderStatusBadge from "./order-status-badge";
 import type { OrderStatus } from "../types";
+import { DriverActionButtons } from "./driver-action-buttons";
 
 type Props = {
   onClick: () => void;
@@ -22,13 +18,16 @@ type Props = {
   createdAt: string;
   status: OrderStatus;
 
-  from: { city: string; country: string; addressLine: string };
-  to: { city: string; country: string; addressLine: string };
+  from: { country: string; addressLine: string };
+  to: { country: string; addressLine: string };
 
-  driver: { name: string; roleLabel: string; initials?: string };
-
-  onCallDriver?: () => void;
-  onMessageDriver?: () => void;
+  driver: {
+    name: string;
+    roleLabel: string;
+    initials?: string;
+    number?: string | null;
+    email?: string | null;
+  };
 };
 
 export default function OrderCard({
@@ -40,8 +39,6 @@ export default function OrderCard({
   from,
   to,
   driver,
-  onCallDriver,
-  onMessageDriver,
 }: Props) {
   const t = useTranslations("OrderCard");
 
@@ -215,16 +212,12 @@ export default function OrderCard({
           {/* addresses */}
           <div className="mt-3 grid grid-cols-2 gap-3 text-[11px] leading-snug">
             <div className="min-w-0">
-              <p className="font-medium">
-                {from.city}, {from.country}
-              </p>
+              <p className="font-medium">{from.country}</p>
               <p className="text-muted-foreground">{from.addressLine}</p>
             </div>
 
             <div className="min-w-0 text-right">
-              <p className="font-medium">
-                {to.city}, {to.country}
-              </p>
+              <p className="font-medium">{to.country}</p>
               <p className="text-muted-foreground">{to.addressLine}</p>
             </div>
           </div>
@@ -251,59 +244,12 @@ export default function OrderCard({
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <IconActionButton
-              icon={<Phone className="h-4 w-4 text-[#709470]" />}
-              label={t("actions.callDriver")}
-              onAction={onCallDriver}
-            />
-            <IconActionButton
-              icon={<MessageSquare className="h-4 w-4 text-[#709470]" />}
-              label={t("actions.messageDriver")}
-              onAction={onMessageDriver}
-            />
-          </div>
+          <DriverActionButtons
+            phoneNumber={driver.number ?? null}
+            emailAddress={driver.email ?? null}
+          />
         </div>
       </Card>
     </div>
-  );
-}
-
-function IconActionButton({
-  icon,
-  label,
-  onAction,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  onAction?: () => void;
-}) {
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          className="h-9 w-9 rounded-lg border-muted-foreground/20"
-          aria-label={label}
-          onClick={(e) => {
-            e.stopPropagation();
-          }}
-        >
-          {icon}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent
-        className="w-auto p-2"
-        onClick={(e) => {
-          e.stopPropagation();
-          onAction?.();
-        }}
-      >
-        {/* TODO: add content */}
-        <p className="text-sm">{label}</p>
-      </PopoverContent>
-    </Popover>
   );
 }
