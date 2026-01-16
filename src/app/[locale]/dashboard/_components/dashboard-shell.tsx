@@ -20,9 +20,10 @@ type Props = {
 };
 
 export default function DashboardShell({ children, user }: Props) {
+  const { roles } = user;
   return (
     <SidebarProvider className="min-h-svh w-full">
-      <AppSidebar />
+      <AppSidebar userRoles={roles ?? []} />
 
       <SidebarInset className="flex h-svh flex-col overflow-hidden">
         <SiteHeader user={user} />

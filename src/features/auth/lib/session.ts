@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { authEndpoints } from "./endpoints";
 import { ApiError, apiFetchPath } from "@/config/http/api-client";
+import { hasAnyRole, Role } from "./roles";
 
 type SessionPayload = {
   user: {
@@ -61,5 +62,20 @@ export const requireUserOrRedirect = async (returnTo = "/dashboard") => {
     const q = encodeURIComponent(returnTo);
     redirect(`/sign-in?redirect=${q}`);
   }
+  return session;
+};
+
+export const requireRoleOrRedirect = async (
+  roles: Role | Role[],
+  returnTo = "/dashboard",
+  redirectTo = "/dashboard"
+) => {
+  const session = await requireUserOrRedirect(returnTo);
+  const required = Array.isArray(roles) ? roles : [roles];
+
+  if (!hasAnyRole(session.user.roles, required)) {
+    redirect(redirectTo);
+  }
+
   return session;
 };
