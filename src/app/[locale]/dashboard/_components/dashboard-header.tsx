@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils";
 import { UserNav } from "./user-nav";
 import { NotificationPopover } from "@/features/notification/components/notification-popover";
+import { hasAnyRole } from "@/features/auth/lib/roles";
 
 type Props = {
   user: {
@@ -16,6 +17,7 @@ type Props = {
 };
 
 export function SiteHeader({ user }: Props) {
+  const hasRole = hasAnyRole(user.roles, ["DISPATCHER"]);
   return (
     <header
       className={cn(
@@ -23,7 +25,7 @@ export function SiteHeader({ user }: Props) {
       )}
     >
       <div className="ml-auto flex items-center gap-2">
-        <NotificationPopover />
+        {hasRole && <NotificationPopover />}
         <UserNav user={user} />
       </div>
     </header>

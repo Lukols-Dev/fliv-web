@@ -21,10 +21,23 @@ import {
   isNavItemActive,
 } from "../_config/nav";
 import { cn } from "@/lib/utils";
+import { hasAnyRole, Role } from "@/features/auth/lib/roles";
+import { useMemo } from "react";
 
-export function AppSidebar() {
+type Props = {
+  userRoles?: readonly string[];
+};
+
+export function AppSidebar({ userRoles }: Props) {
   const pathname = usePathname();
   const t = useTranslations("DashboardNav");
+
+  const items = useMemo(() => {
+    return dashboardNav.main.filter((item) => {
+      if (!item.roles) return true;
+      return hasAnyRole(userRoles, item.roles as readonly Role[]);
+    });
+  }, [userRoles]);
 
   return (
     <Sidebar
@@ -46,7 +59,7 @@ export function AppSidebar() {
           <SidebarGroupLabel>{t("groups.main")}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {dashboardNav.main.map((item: DashboardNavItem) => {
+              {items.map((item: DashboardNavItem) => {
                 const Icon = item.icon;
                 const active = isNavItemActive(pathname, item);
                 return (
