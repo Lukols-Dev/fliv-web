@@ -24,7 +24,6 @@ export default function AccountPageClient() {
     error,
     refetch,
   } = useCurrentUserQuery();
-  console.log("user api: ", user);
   const updateProfile = useUpdateProfileMutation();
 
   const [isEditing, setIsEditing] = useState(false);
@@ -35,15 +34,11 @@ export default function AccountPageClient() {
 
   const handleSave = useCallback(
     async (values: UpdateAccountValues) => {
-      // backend: PATCH /users/profile -> firstName, lastName, phone
       await updateProfile.mutateAsync({
         firstName: values.firstName,
         lastName: values.lastName,
         phone: values.phone,
       });
-
-      // jeśli chcesz osobno hasło -> tu dopnij osobny flow
-      // if (values.password) { ... }
 
       setIsEditing(false);
     },
@@ -53,15 +48,10 @@ export default function AccountPageClient() {
   const handleDelete = useCallback(async () => {
     const res = await authClient.deleteUser();
     if (res?.error) {
-      // TODO toast
       throw new Error(res.error.message ?? "Delete failed");
     }
-    // opcjonalnie: redirect / refresh
-    // router.push("/")
   }, []);
 
-  // Jeśli masz route-level loading.tsx, tego zwykle nie zobaczysz przy wejściu,
-  // ale warto zostawić jako fallback (np. po hard refresh bez prefetch).
   if (isPending && !user) {
     return (
       <div className="rounded-2xl border bg-white p-6">Ładowanie profilu…</div>
