@@ -11,6 +11,7 @@ type UserPayload = {
   firstName: string;
   lastName: string;
   roles?: string[];
+  avatarUrl?: string | null;
 };
 
 type Props = {

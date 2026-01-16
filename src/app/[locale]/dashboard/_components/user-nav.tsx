@@ -15,7 +15,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useRouter, usePathname } from "@/i18n/navigation";
 import { authClient } from "@/features/auth/lib/auth";
 import { Icons } from "@/components/icons";
@@ -31,6 +31,7 @@ type Props = {
     firstName: string;
     lastName: string;
     roles?: string[];
+    avatarUrl?: string | null;
   };
 };
 
@@ -52,8 +53,7 @@ export function UserNav({ user }: Props) {
       router.refresh();
     });
     if (error) {
-      // TODO: Toast error
-      // console.error(error);
+      console.error(error);
     }
   };
 
@@ -77,6 +77,12 @@ export function UserNav({ user }: Props) {
           disabled={isPending}
         >
           <Avatar className="h-10 w-10">
+            {user.avatarUrl ? (
+              <AvatarImage
+                src={user.avatarUrl}
+                alt={user.firstName + " " + user.lastName}
+              />
+            ) : null}
             <AvatarFallback>
               {initials(user.firstName + " " + user.lastName)}
             </AvatarFallback>

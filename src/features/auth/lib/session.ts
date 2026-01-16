@@ -11,6 +11,7 @@ type SessionPayload = {
     firstName: string;
     lastName: string;
     roles?: string[];
+    avatarUrl?: string | null;
   };
 } | null;
 
