@@ -2,8 +2,6 @@ import { SignUpForm } from "@/features/auth/components/sign-up/sign-up-form";
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 
-// import { UserAuthForm } from "../_components/user-auth-form";
-
 export default function SignUpPage() {
   const t = useTranslations("SignUpPage");
 

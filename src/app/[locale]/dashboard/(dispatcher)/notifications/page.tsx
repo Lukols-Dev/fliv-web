@@ -1,21 +1,39 @@
-import { QueryClient, dehydrate } from "@tanstack/react-query";
-import { HydrationBoundary } from "@tanstack/react-query";
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { cookies } from "next/headers";
 import { notificationsQueryOptions } from "@/features/notification/queries/notifications.query";
 import NotificationsPageClient from "./page.client";
 import { ApiError } from "@/config/http/api-client";
 import { redirect } from "next/navigation";
+import { getQueryClient } from "@/providers/react-query/get-query-client";
 
-export default async function NotificationsPage() {
-  const queryClient = new QueryClient();
+function parsePositiveInt(v: string | undefined, fallback: number) {
+  const n = Number(v);
+  return Number.isFinite(n) && n > 0 ? n : fallback;
+}
+
+export default async function NotificationsPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{ page?: string; limit?: string }>;
+}) {
+  const { locale } = await params;
+  const paramsSearch = await searchParams;
+  const page = parsePositiveInt(paramsSearch.page, 1);
+  const limit = parsePositiveInt(paramsSearch.limit, 12);
 
   const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
+  const headers = { Cookie: cookieStore.toString() };
 
+  const qc = getQueryClient();
   try {
-    await queryClient.prefetchQuery(
+    await qc.prefetchQuery(
       notificationsQueryOptions({
-        headers: { cookie: cookieHeader },
+        page,
+        limit,
+        locale,
+        headers,
       })
     );
   } catch (e) {
@@ -26,7 +44,7 @@ export default async function NotificationsPage() {
   }
 
   return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
+    <HydrationBoundary state={dehydrate(qc)}>
       <NotificationsPageClient />
     </HydrationBoundary>
   );

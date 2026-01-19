@@ -25,3 +25,10 @@ export type NotificationListItem = {
   date: string; // "11.10.2025"
   isUnread?: boolean;
 };
+
+export type NotificationsPageResult = {
+  items: NotificationListItem[];
+  page: number;
+  limit: number;
+  hasNext: boolean;
+};

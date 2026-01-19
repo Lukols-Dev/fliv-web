@@ -1,19 +1,44 @@
-import { queryOptions } from "@tanstack/react-query";
+import { queryOptions, keepPreviousData } from "@tanstack/react-query";
 import { notificationQueryKeys } from "../lib/query-keys";
 import { listNotifications } from "../services";
-import type { Notification } from "../types";
+import type { NotificationsPageResult } from "../types";
 import { ApiError } from "@/config/http/api-client";
-import { mapNotificationDto } from "../mappers/map-notyfication";
+import { mapNotificationDtoToListItem } from "../mappers/map-notification-list-item";
 
-type Params = { headers?: HeadersInit };
+type Params = {
+  page: number;
+  limit: number;
+  locale: string;
+  headers?: HeadersInit;
+};
 
-export function notificationsQueryOptions(params: Params = {}) {
+export function notificationsQueryOptions(params: Params) {
+  const page = params.page > 0 ? params.page : 1;
+  const limit = params.limit > 0 ? params.limit : 12;
+
   return queryOptions({
-    queryKey: notificationQueryKeys.list(),
-    queryFn: async ({ signal }): Promise<Notification[]> => {
-      const dtos = await listNotifications({ signal, headers: params.headers });
-      return dtos.map(mapNotificationDto);
+    queryKey: notificationQueryKeys.list({ page, limit }),
+    queryFn: async ({ signal }): Promise<NotificationsPageResult> => {
+      const dtos = await listNotifications({
+        page,
+        limit: limit + 1,
+        signal,
+        headers: params.headers,
+      });
+
+      const hasNext = dtos.length > limit;
+      const sliced = dtos.slice(0, limit);
+
+      return {
+        items: sliced.map((dto) =>
+          mapNotificationDtoToListItem(dto, params.locale)
+        ),
+        page,
+        limit,
+        hasNext,
+      };
     },
+    placeholderData: keepPreviousData,
     staleTime: 15_000,
     gcTime: 5 * 60_000,
     retry: (count, error) => {

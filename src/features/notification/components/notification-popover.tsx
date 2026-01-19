@@ -13,17 +13,30 @@ import { Icons } from "@/components/icons";
 import { Info, ArrowRight } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
-import type { NotificationItem } from "../types";
+import type { NotificationItem, NotificationListItem } from "../types";
 import { NotificationEmpty } from "./notification-empty";
 import { useNotificationsQuery } from "../hooks/use-notifications-query";
-import { useNotificationPopoverItems } from "../hooks/use-notification-items";
+
+function mapListItemToPopoverItem(
+  item: NotificationListItem
+): NotificationItem {
+  return {
+    id: item.id,
+    title: item.title,
+    dateLabel: `${item.date} - ${item.time}`,
+    isUnread: item.isUnread,
+  };
+}
 
 export function NotificationPopover() {
   const t = useTranslations("Notifications.popover");
   const [open, setOpen] = React.useState(false);
 
-  const { data } = useNotificationsQuery();
-  const items = useNotificationPopoverItems(data);
+  const { data } = useNotificationsQuery({ page: 1, limit: 5 });
+  const items = React.useMemo<NotificationItem[]>(() => {
+    if (!data?.items?.length) return [];
+    return data.items.map(mapListItemToPopoverItem);
+  }, [data?.items]);
 
   const unreadCount = React.useMemo(
     () => items.filter((x) => x.isUnread).length,

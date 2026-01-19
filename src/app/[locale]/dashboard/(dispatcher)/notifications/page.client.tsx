@@ -1,33 +1,57 @@
 "use client";
 
+import { PaginationNav } from "@/components/custom/pagination-nav";
 import { NotificationsList } from "@/features/notification/components/notifications-list";
 import { NotificationsToolbar } from "@/features/notification/components/notifications-toolbar";
 import { useTranslations } from "next-intl";
 import { useNotificationsQuery } from "@/features/notification/hooks/use-notifications-query";
-import { useNotificationListItems } from "@/features/notification/hooks/use-notification-items";
+import { usePathname, useSearchParams } from "next/navigation";
+import { useCallback } from "react";
+import { buildHrefFromSearchParams } from "@/lib/build-href";
+
+function parsePositiveInt(v: string | null, fallback: number) {
+  const n = Number(v);
+  return Number.isFinite(n) && n > 0 ? n : fallback;
+}
 
 export default function NotificationsPageClient() {
   const t = useTranslations("Notifications");
+  const sp = useSearchParams();
+  const pathname = usePathname();
 
-  const { data, isPending, isError, error, refetch } = useNotificationsQuery();
-  const items = useNotificationListItems(data);
+  const page = parsePositiveInt(sp.get("page"), 1);
+  const limit = parsePositiveInt(sp.get("limit"), 10);
 
-  return (
-    <div className="flex flex-1 flex-col">
-      <div className="flex flex-1 flex-col gap-2">
-        <div className="max-w-4xl flex flex-col gap-4 py-6 md:gap-6 md:py-8">
-          <div className="px-4 lg:px-6">
-            <NotificationsToolbar
-              title={t("title")}
-              clearAllLabel={t("clearAll")}
-              hasItems={!isPending && !isError && items.length > 0}
-            />
-          </div>
+  const { data, isPending, isError, error, refetch } = useNotificationsQuery({
+    page,
+    limit,
+  });
 
-          <div className="px-4 lg:px-6">
-            {isPending ? (
+  const getHref = useCallback(
+    (p: number) => buildHrefFromSearchParams(pathname, sp, { page: p }),
+    [pathname, sp]
+  );
+
+  if (isPending && !data) {
+    return (
+      <div className="flex flex-1 flex-col">
+        <div className="flex flex-1 flex-col gap-2">
+          <div className="max-w-4xl flex flex-col gap-4 py-6 md:gap-6 md:py-8">
+            <div className="px-4 lg:px-6">
               <div className="text-sm text-muted-foreground">Loading...</div>
-            ) : isError ? (
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex flex-1 flex-col">
+        <div className="flex flex-1 flex-col gap-2">
+          <div className="max-w-4xl flex flex-col gap-4 py-6 md:gap-6 md:py-8">
+            <div className="px-4 lg:px-6">
               <div className="rounded-xl border bg-background p-4 space-y-3">
                 <p className="text-sm text-destructive">
                   Error loading notifications
@@ -37,8 +61,40 @@ export default function NotificationsPageClient() {
                   Retry
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const items = data?.items ?? [];
+  const hasNext = data?.hasNext ?? false;
+
+  return (
+    <div className="flex flex-1 flex-col">
+      <div className="flex flex-1 flex-col gap-2">
+        <div className="max-w-4xl flex flex-col gap-4 py-6 md:gap-6 md:py-8">
+          <div className="px-4 lg:px-6">
+            <NotificationsToolbar
+              title={t("title")}
+              clearAllLabel={t("clearAll")}
+              hasItems={items.length > 0}
+            />
+          </div>
+
+          <div className="px-4 lg:px-6">
+            {items.length === 0 ? (
+              <div className="text-sm text-muted-foreground">
+                No notifications
+              </div>
             ) : (
-              <NotificationsList items={items} />
+              <>
+                <NotificationsList items={items} />
+                {(page > 1 || hasNext) && (
+                  <PaginationNav page={page} hasNext={hasNext} getHref={getHref} />
+                )}
+              </>
             )}
           </div>
         </div>

@@ -84,7 +84,7 @@ export const SignUpForm = () => {
         setFormError(error.message || t("errors.generic"));
         return;
       }
-      router.replace("/");
+      router.replace("/sign-in");
       reset();
     } catch (err) {
       setFormError(err instanceof Error ? err.message : t("errors.generic"));

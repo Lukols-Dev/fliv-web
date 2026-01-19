@@ -3,14 +3,34 @@ import { notificationEndpoints } from "./lib/endpoints";
 import type { NotificationDto } from "./types";
 
 type ListNotificationsOptions = {
+  page?: number;
+  limit?: number;
   signal?: AbortSignal;
   headers?: HeadersInit;
 };
 
-export function listNotifications(options: ListNotificationsOptions = {}) {
-  const { signal, headers } = options;
+function withQuery(
+  path: string,
+  query: Record<string, string | number | undefined>
+) {
+  const sp = new URLSearchParams();
+  for (const [k, v] of Object.entries(query)) {
+    if (v === undefined) continue;
+    sp.set(k, String(v));
+  }
+  const qs = sp.toString();
+  return qs ? `${path}?${qs}` : path;
+}
 
-  return apiFetchPath<NotificationDto[]>(notificationEndpoints.list, {
+export function listNotifications(options: ListNotificationsOptions = {}) {
+  const { page, limit, signal, headers } = options;
+
+  const path = withQuery(notificationEndpoints.list, {
+    page,
+    limit,
+  });
+
+  return apiFetchPath<NotificationDto[]>(path, {
     method: "GET",
     signal,
     withCredentials: true,
