@@ -277,6 +277,10 @@
     "row": {
       "openMenu": "Otwórz menu",
       "delete": "Usuń"
+    },
+    "messages": {
+      "ORDER_STATUS_CHANGED": "Zlecenie {zTNumber} ma nowy status.",
+      "ORDER_EVENT": "Zlecenie {zTNumber} ma nowe zdarzenie."
     }
   },
   "UserNav": {

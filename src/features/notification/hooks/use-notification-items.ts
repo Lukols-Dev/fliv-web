@@ -21,7 +21,8 @@ export function useNotificationPopoverItems(
       const d = new Date(n.createdAt);
       return {
         id: n.id,
-        title: n.message,
+        type: n.type,
+        data: n.data ?? {},
         dateLabel: `${formatDatePL(d, locale)} - ${formatTimeHM(d, locale)}`,
         isUnread: !n.readAt,
       };
@@ -41,7 +42,8 @@ export function useNotificationListItems(
       const d = new Date(n.createdAt);
       return {
         id: n.id,
-        title: n.message,
+        type: n.type,
+        data: n.data ?? {},
         time: formatTimeHMS(d, locale),
         date: formatDatePL(d, locale),
         isUnread: !n.readAt,

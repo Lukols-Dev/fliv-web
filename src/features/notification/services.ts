@@ -1,6 +1,6 @@
 import { apiFetchPath } from "@/config/http/api-client";
 import { notificationEndpoints } from "./lib/endpoints";
-import type { NotificationDto, NotificationsPageDto } from "./types";
+import type {  NotificationsPageDto } from "./types";
 
 type ListNotificationsOptions = {
   page?: number;

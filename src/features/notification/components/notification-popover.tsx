@@ -22,7 +22,8 @@ function mapListItemToPopoverItem(
 ): NotificationItem {
   return {
     id: item.id,
-    title: item.title,
+    type: item.type,
+    data: item.data ?? {},
     dateLabel: `${item.date} - ${item.time}`,
     isUnread: item.isUnread,
   };
@@ -30,9 +31,12 @@ function mapListItemToPopoverItem(
 
 export function NotificationPopover() {
   const t = useTranslations("Notifications.popover");
+  const tMsg = useTranslations("Notifications.messages");
+
   const [open, setOpen] = React.useState(false);
 
   const { data } = useNotificationsQuery({ page: 1, limit: 5 });
+
   const items = React.useMemo<NotificationItem[]>(() => {
     if (!data?.items?.length) return [];
     return data.items.map(mapListItemToPopoverItem);
@@ -87,7 +91,11 @@ export function NotificationPopover() {
         {hasItems ? (
           <div className="max-h-[520px] overflow-y-auto px-6 py-4">
             {items.map((n) => (
-              <NotificationRow key={n.id} item={n} />
+              <NotificationRow
+                key={n.id}
+                title={tMsg(n.type, { zTNumber: n.data.zTNumber as string })}
+                dateLabel={n.dateLabel}
+              />
             ))}
           </div>
         ) : (
@@ -113,7 +121,7 @@ export function NotificationPopover() {
   );
 }
 
-function NotificationRow({ item }: { item: NotificationItem }) {
+function NotificationRow(props: { title: string; dateLabel: string }) {
   return (
     <div className="flex items-start gap-4 hover:bg-accent/50 rounded-lg p-2 cursor-pointer">
       <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border bg-background">
@@ -122,9 +130,9 @@ function NotificationRow({ item }: { item: NotificationItem }) {
 
       <div className="min-w-0">
         <p className="text-xs font-normal leading-snug text-foreground">
-          {item.title}
+          {props.title}
         </p>
-        <p className="mt-1 text-xs text-muted-foreground">{item.dateLabel}</p>
+        <p className="mt-1 text-xs text-muted-foreground">{props.dateLabel}</p>
       </div>
     </div>
   );

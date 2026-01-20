@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { clearAllNotifications } from "../services";
 import { notificationQueryKeys } from "../lib/query-keys";
-import type { Notification } from "../types";
+import type { NotificationsPageResult } from "../types";
 
 export function useClearNotificationsMutation() {
   const queryClient = useQueryClient();
@@ -15,30 +15,42 @@ export function useClearNotificationsMutation() {
 
     onMutate: async () => {
       await queryClient.cancelQueries({
-        queryKey: notificationQueryKeys.list(),
+        queryKey: notificationQueryKeys.all,
       });
 
-      const previous = queryClient.getQueryData<Notification[]>(
-        notificationQueryKeys.list()
-      );
+      const previous = queryClient.getQueriesData<NotificationsPageResult>({
+        queryKey: notificationQueryKeys.all,
+      });
 
-      queryClient.setQueryData<Notification[]>(
-        notificationQueryKeys.list(),
-        []
+      queryClient.setQueriesData<NotificationsPageResult>(
+        { queryKey: notificationQueryKeys.all },
+        (old) => {
+          if (!old) return old;
+          if (old.totalItems === 0 && old.items.length === 0) return old;
+
+          return {
+            ...old,
+            items: [],
+            totalItems: 0,
+            totalPages: 1,
+            hasNext: false,
+          };
+        }
       );
 
       return { previous };
     },
 
     onError: (_err, _vars, ctx) => {
-      if (ctx?.previous) {
-        queryClient.setQueryData(notificationQueryKeys.list(), ctx.previous);
+      if (!ctx?.previous?.length) return;
+      for (const [queryKey, data] of ctx.previous) {
+        queryClient.setQueryData(queryKey, data);
       }
     },
 
     onSettled: async () => {
       await queryClient.invalidateQueries({
-        queryKey: notificationQueryKeys.list(),
+        queryKey: notificationQueryKeys.all,
       });
     },
   });

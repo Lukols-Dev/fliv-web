@@ -277,6 +277,10 @@
     "row": {
       "openMenu": "Open menu",
       "delete": "Delete"
+    },
+    "messages": {
+      "ORDER_STATUS_CHANGED": "Order {zTNumber} changed status.",
+      "ORDER_EVENT": "Order {zTNumber} has new event."
     }
   },
   "UserNav": {

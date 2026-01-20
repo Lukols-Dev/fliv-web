@@ -20,11 +20,13 @@ type Props = {
 
 export function NotificationRow({ item }: Props) {
   const t = useTranslations("Notifications.row");
+  const tMsg = useTranslations("Notifications.messages");
   const del = useDeleteNotificationMutation();
 
   const onDelete = async () => {
     await del.mutateAsync(item.id);
   };
+
 
   return (
     <Card
@@ -36,9 +38,8 @@ export function NotificationRow({ item }: Props) {
         <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border bg-background">
           <Info className="h-5 w-5 text-[#6E8B6F]" />
         </div>
-
         <p className="truncate text-sm font-medium text-foreground">
-          {item.title}
+          {tMsg(item.type, { zTNumber: item.data.zTNumber as string })}
         </p>
       </div>
 

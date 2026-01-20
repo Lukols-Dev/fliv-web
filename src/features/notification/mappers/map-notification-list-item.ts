@@ -8,7 +8,8 @@ export function mapNotificationDtoToListItem(
   const d = new Date(dto.createdAt);
   return {
     id: dto.id,
-    title: dto.message,
+    type: dto.type,
+    data: dto.data ?? {},
     time: formatTimeHMS(d, locale),
     date: formatDatePL(d, locale),
     isUnread: !dto.readAt,
