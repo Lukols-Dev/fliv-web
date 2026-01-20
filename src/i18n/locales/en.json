@@ -375,5 +375,17 @@
       "invalidType": "Unsupported file type.",
       "unknown": "Unexpected error occurred."
     }
-  }
+  },
+  "OrderEventType": {
+    "STATUS_CHANGED": "Status changed",
+    "INCIDENT_DETOUR": "Detour",
+    "INCIDENT_ACCIDENT": "Accident",
+    "INCIDENT_DELAY": "Incident delay",
+    "ROUTE_PAUSED": "Route paused",
+    "ROUTE_RESUMED": "Route resumed",
+    "ROUTE_FINISHED": "Route finished",
+    "PROBLEM_REPORTED": "Problem reported",
+    "ORDER_ASSIGNED": "Order assigned",
+    "ORDER_COMPLETED": "Order completed"
+   }
 }

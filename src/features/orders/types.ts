@@ -8,6 +8,18 @@ export type OrderStatus =
   | "COMPLETED"
   | "PROBLEM";
 
+  export type OrderEventType =
+  | "STATUS_CHANGED"
+  | "INCIDENT_DETOUR"
+  | "INCIDENT_ACCIDENT"
+  | "INCIDENT_DELAY"
+  | "ROUTE_PAUSED"
+  | "ROUTE_RESUMED"
+  | "ROUTE_FINISHED"
+  | "PROBLEM_REPORTED"
+  | "ORDER_ASSIGNED"
+  | "ORDER_COMPLETED";
+
 export type DispatcherOrderDto = {
   id: string;
   ztNumber: string;
@@ -101,7 +113,7 @@ export type OrderDocumentDto = {
 
 export type OrderEventDto = {
   id: string;
-  type: string;
+  type: OrderEventType;
   previousStatus: OrderStatus | null;
   newStatus: OrderStatus | null;
   description: string | null;
@@ -174,4 +186,12 @@ export type UpdateTransportOrderResult = {
   id: string;
   ztNumber: string;
   status: OrderStatus;
+};
+
+export type TrackingHistoryRow = {
+  status: OrderStatus;
+  eventType: OrderEventType;
+  time: string;
+  date: string;
+  description?: string | null;
 };

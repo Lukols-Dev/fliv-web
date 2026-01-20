@@ -37,6 +37,7 @@ import { OrderDocumentUploadDialog } from "./order-document-upload";
 import Image from "next/image";
 import { Plus } from "lucide-react";
 import EditOrderDialog from "./edit-order/edit-order-dialog";
+import { TrackingHistoryList } from "./tracking-history-list";
 
 type Props = {
   open: boolean;
@@ -75,7 +76,6 @@ export default function OrderDetailsSheet({
     id: orderId ?? "",
     enabled: open && !!orderId,
   });
-
   const details: OrderDetailsDto | undefined = orderDetails as
     | OrderDetailsDto
     | undefined;
@@ -86,8 +86,7 @@ export default function OrderDetailsSheet({
     "PENDING") as OrderStatus;
 
   const driverName = orderDetails
-    ? `${orderDetails.driverFirstName ?? ""} ${
-        orderDetails.driverLastName ?? ""
+    ? `${orderDetails.driverFirstName ?? ""} ${orderDetails.driverLastName ?? ""
       }`.trim() || "—"
     : "—";
   const driverPhone = orderDetails?.driverPhone ?? null;
@@ -132,17 +131,23 @@ export default function OrderDetailsSheet({
 
   const history = React.useMemo(() => {
     if (!orderDetails?.events) return [];
+
     return orderDetails.events
       .filter((ev) => ev.newStatus)
       .map((ev) => {
-        const date = new Date(ev.createdAt);
+        const d = new Date(ev.createdAt);
+
         return {
           status: ev.newStatus!,
-          time: formatTimeHMS(date, locale),
-          date: formatDatePL(date, locale),
+          eventType: ev.type,
+          time: formatTimeHMS(d, locale),
+          date: formatDatePL(d, locale),
+
+          description: ev.newStatus === "PROBLEM" ? ev.description : null,
         };
       });
   }, [orderDetails?.events, locale]);
+
 
   const handleDelete = React.useCallback(async () => {
     if (!orderId || del.isPending) return;
@@ -388,13 +393,13 @@ export default function OrderDetailsSheet({
                                 (orderStatus === "IN_PROGRESS" ||
                                   orderStatus === "LOADING" ||
                                   orderStatus === "UNLOADING") &&
-                                  "bg-[#709470]/20",
+                                "bg-[#709470]/20",
                                 (orderStatus === "PENDING" ||
                                   orderStatus === "PAUSED" ||
                                   orderStatus === "ACCEPTED") &&
-                                  "bg-[#EBE5D4]/40",
+                                "bg-[#EBE5D4]/40",
                                 orderStatus === "COMPLETED" &&
-                                  "bg-green-500/20",
+                                "bg-green-500/20",
                                 orderStatus === "PROBLEM" && "bg-destructive/20"
                               )}
                             >
@@ -404,11 +409,11 @@ export default function OrderDetailsSheet({
                                   (orderStatus === "IN_PROGRESS" ||
                                     orderStatus === "LOADING" ||
                                     orderStatus === "UNLOADING") &&
-                                    "bg-[#709470]",
+                                  "bg-[#709470]",
                                   (orderStatus === "PENDING" ||
                                     orderStatus === "PAUSED" ||
                                     orderStatus === "ACCEPTED") &&
-                                    "bg-[#EBE5D4]",
+                                  "bg-[#EBE5D4]",
                                   orderStatus === "COMPLETED" && "bg-green-500",
                                   orderStatus === "PROBLEM" && "bg-destructive"
                                 )}
@@ -420,12 +425,12 @@ export default function OrderDetailsSheet({
                                 "mx-2 h-[2px] flex-1 transition-colors",
                                 (orderStatus === "IN_PROGRESS" ||
                                   orderStatus === "UNLOADING") &&
-                                  "bg-[#709470]/20",
+                                "bg-[#709470]/20",
                                 (orderStatus === "PENDING" ||
                                   orderStatus === "PAUSED" ||
                                   orderStatus === "LOADING" ||
                                   orderStatus === "ACCEPTED") &&
-                                  "bg-[#EBE5D4]",
+                                "bg-[#EBE5D4]",
                                 orderStatus === "COMPLETED" && "bg-green-500",
                                 orderStatus === "PROBLEM" && "bg-destructive/20"
                               )}
@@ -436,12 +441,12 @@ export default function OrderDetailsSheet({
                                 "inline-flex h-8 w-8 items-center justify-center rounded-full transition-colors",
                                 (orderStatus === "IN_PROGRESS" ||
                                   orderStatus === "UNLOADING") &&
-                                  "text-[#709470]",
+                                "text-[#709470]",
                                 (orderStatus === "PENDING" ||
                                   orderStatus === "PAUSED" ||
                                   orderStatus === "LOADING" ||
                                   orderStatus === "ACCEPTED") &&
-                                  "text-[#EBE5D4]",
+                                "text-[#EBE5D4]",
                                 orderStatus === "COMPLETED" && "text-green-600",
                                 orderStatus === "PROBLEM" && "text-destructive"
                               )}
@@ -454,13 +459,13 @@ export default function OrderDetailsSheet({
                                 "mx-2 h-[2px] flex-1 transition-colors",
                                 (orderStatus === "IN_PROGRESS" ||
                                   orderStatus === "UNLOADING") &&
-                                  "bg-[#709470]/20",
+                                "bg-[#709470]/20",
                                 (orderStatus === "PENDING" ||
                                   orderStatus === "PAUSED" ||
                                   orderStatus === "LOADING" ||
                                   orderStatus === "ACCEPTED" ||
                                   orderStatus === "IN_PROGRESS") &&
-                                  "bg-[#EBE5D4]",
+                                "bg-[#EBE5D4]",
                                 orderStatus === "COMPLETED" && "bg-green-500",
                                 orderStatus === "PROBLEM" && "bg-destructive/20"
                               )}
@@ -471,15 +476,15 @@ export default function OrderDetailsSheet({
                                 "inline-flex h-6 w-6 items-center justify-center rounded-full transition-colors",
                                 (orderStatus === "IN_PROGRESS" ||
                                   orderStatus === "UNLOADING") &&
-                                  "bg-[#709470]/20",
+                                "bg-[#709470]/20",
                                 (orderStatus === "PENDING" ||
                                   orderStatus === "PAUSED" ||
                                   orderStatus === "LOADING" ||
                                   orderStatus === "ACCEPTED" ||
                                   orderStatus === "IN_PROGRESS") &&
-                                  "bg-[#EBE5D4]/40",
+                                "bg-[#EBE5D4]/40",
                                 orderStatus === "COMPLETED" &&
-                                  "bg-green-500/20",
+                                "bg-green-500/20",
                                 orderStatus === "PROBLEM" && "bg-destructive/20"
                               )}
                             >
@@ -487,17 +492,17 @@ export default function OrderDetailsSheet({
                                 className={cn(
                                   "h-4 w-4 transition-colors",
                                   orderStatus === "UNLOADING" &&
-                                    "text-[#709470]",
+                                  "text-[#709470]",
                                   (orderStatus === "PENDING" ||
                                     orderStatus === "PAUSED" ||
                                     orderStatus === "LOADING" ||
                                     orderStatus === "ACCEPTED" ||
                                     orderStatus === "IN_PROGRESS") &&
-                                    "text-[#EBE5D4]",
+                                  "text-[#EBE5D4]",
                                   orderStatus === "COMPLETED" &&
-                                    "text-green-600",
+                                  "text-green-600",
                                   orderStatus === "PROBLEM" &&
-                                    "text-destructive"
+                                  "text-destructive"
                                 )}
                               />
                             </span>
@@ -528,29 +533,7 @@ export default function OrderDetailsSheet({
                           <h3 className="text-base font-semibold">
                             {t("tracking.title")}
                           </h3>
-
-                          {history.length > 0 ? (
-                            <div className="mt-3 space-y-2">
-                              {history.map((ev, i) => (
-                                <div
-                                  key={`${ev.status}-${i}`}
-                                  className="flex items-center justify-between"
-                                >
-                                  <OrderStatusBadge status={ev.status} />
-                                  <div className="text-right text-[11px] text-muted-foreground">
-                                    <div>{ev.time}</div>
-                                    <div>{ev.date}</div>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <Card className="mt-3 border shadow-none">
-                              <div className="p-4 text-sm text-muted-foreground">
-                                {t("tracking.empty")}
-                              </div>
-                            </Card>
-                          )}
+                          <TrackingHistoryList history={history} emptyText={t("tracking.empty")} />
                         </div>
                       </>
                     )}

@@ -6,7 +6,7 @@ import type { OrderStatus } from "../types";
 type Props = {
   status: OrderStatus;
   className?: string;
-  size?: "sm" | "md";
+  size?: "sm" | "md" | "lg";
 };
 
 const STATUS_UI: Record<
@@ -43,7 +43,7 @@ const STATUS_UI: Record<
   },
   PROBLEM: {
     className:
-      "border border-destructive/40 bg-destructive/20 text-destructive",
+      "border border-transparent bg-destructive/20 text-destructive",
     translationKey: "PROBLEM",
   },
 };
@@ -63,7 +63,11 @@ export default function OrderStatusBadge({
       className={cn(
         "whitespace-nowrap font-medium",
         ui.className,
-        size === "md" ? "px-2 py-0.5 text-[11px]" : "px-2.5 py-1 text-xs",
+        size === "lg"
+          ? "px-4 py-2 text-sm"
+          : size === "md"
+            ? "px-2.5 py-1 text-xs"
+            : "px-2.5 py-1 text-xs",
         className
       )}
     >

@@ -375,5 +375,17 @@
       "invalidType": "Nieobsługiwany typ pliku.",
       "unknown": "Wystąpił nieoczekiwany błąd."
     }
-  }
+  },
+  "OrderEventType": {
+    "STATUS_CHANGED": "Zmiana statusu",
+    "INCIDENT_DETOUR": "Zmiana trasy",
+    "INCIDENT_ACCIDENT": "Wypadek",
+    "INCIDENT_DELAY": "Opóźnienie",
+    "ROUTE_PAUSED": "Trasa wstrzymana",
+    "ROUTE_RESUMED": "Trasa wznowiona",
+    "ROUTE_FINISHED": "Trasa zakończona",
+    "PROBLEM_REPORTED": "Zgłoszenie problemu",
+    "ORDER_ASSIGNED": "Zlecenie przydzielone",
+    "ORDER_COMPLETED": "Zlecenie zakończone"
+   }
 }
