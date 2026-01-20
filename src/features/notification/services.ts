@@ -1,6 +1,6 @@
 import { apiFetchPath } from "@/config/http/api-client";
 import { notificationEndpoints } from "./lib/endpoints";
-import type { NotificationDto } from "./types";
+import type { NotificationDto, NotificationsPageDto } from "./types";
 
 type ListNotificationsOptions = {
   page?: number;
@@ -25,12 +25,10 @@ function withQuery(
 export function listNotifications(options: ListNotificationsOptions = {}) {
   const { page, limit, signal, headers } = options;
 
-  const path = withQuery(notificationEndpoints.list, {
-    page,
-    limit,
-  });
+  const path = withQuery(notificationEndpoints.list, { page, limit });
 
-  return apiFetchPath<NotificationDto[]>(path, {
+
+  return apiFetchPath<NotificationsPageDto>(path, {
     method: "GET",
     signal,
     withCredentials: true,

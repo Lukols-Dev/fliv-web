@@ -32,6 +32,10 @@ export default function NotificationsPageClient() {
     [pathname, sp]
   );
 
+  const items = data?.items ?? [];
+  const totalPages = data?.totalPages ?? 0;
+
+
   if (isPending && !data) {
     return (
       <div className="flex flex-1 flex-col">
@@ -68,9 +72,6 @@ export default function NotificationsPageClient() {
     );
   }
 
-  const items = data?.items ?? [];
-  const hasNext = data?.hasNext ?? false;
-
   return (
     <div className="flex flex-1 flex-col">
       <div className="flex flex-1 flex-col gap-2">
@@ -91,9 +92,12 @@ export default function NotificationsPageClient() {
             ) : (
               <>
                 <NotificationsList items={items} />
-                {(page > 1 || hasNext) && (
-                  <PaginationNav page={page} hasNext={hasNext} getHref={getHref} />
-                )}
+                {(totalPages > 1) && (
+                  <PaginationNav
+                    page={page}
+                    totalPages={totalPages}
+                    getHref={getHref}
+                  />)}
               </>
             )}
           </div>

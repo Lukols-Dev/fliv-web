@@ -30,5 +30,16 @@ export type NotificationsPageResult = {
   items: NotificationListItem[];
   page: number;
   limit: number;
+  totalItems: number;
+  totalPages: number;
+  hasNext: boolean;
+};
+
+export type NotificationsPageDto = {
+  items: NotificationDto[];
+  page: number;
+  limit: number;
+  totalItems: number;
+  totalPages: number;
   hasNext: boolean;
 };

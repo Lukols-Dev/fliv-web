@@ -17,25 +17,24 @@ export function notificationsQueryOptions(params: Params) {
   const limit = params.limit > 0 ? params.limit : 12;
 
   return queryOptions({
-    queryKey: notificationQueryKeys.list({ page, limit }),
+    queryKey: notificationQueryKeys.list({ page, limit, locale: params.locale }),
     queryFn: async ({ signal }): Promise<NotificationsPageResult> => {
-      const dtos = await listNotifications({
+      const res = await listNotifications({
         page,
-        limit: limit + 1,
+        limit,
         signal,
         headers: params.headers,
       });
 
-      const hasNext = dtos.length > limit;
-      const sliced = dtos.slice(0, limit);
-
       return {
-        items: sliced.map((dto) =>
+        page: res.page,
+        limit: res.limit,
+        totalItems: res.totalItems,
+        totalPages: res.totalPages,
+        hasNext: res.hasNext,
+        items: res.items.map((dto) =>
           mapNotificationDtoToListItem(dto, params.locale)
         ),
-        page,
-        limit,
-        hasNext,
       };
     },
     placeholderData: keepPreviousData,
