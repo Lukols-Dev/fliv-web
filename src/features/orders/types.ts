@@ -52,10 +52,21 @@ export type OrderListItem = {
   toAddress?: string | null;
 };
 
+export type OrdersPageDto = {
+  items: DispatcherOrderDto[];
+  page: number;
+  limit: number;
+  totalItems: number;
+  totalPages: number;
+  hasNext: boolean;
+};
+
 export type OrdersPageResult = {
   items: OrderListItem[];
   page: number;
   limit: number;
+  totalItems: number;
+  totalPages: number;
   hasNext: boolean;
   status?: string;
 };

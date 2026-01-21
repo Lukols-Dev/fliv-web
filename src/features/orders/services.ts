@@ -3,9 +3,9 @@ import { ordersEndpoints } from "./lib/endpoints";
 import type {
   CreateTransportOrderPayload,
   CreateTransportOrderResult,
-  DispatcherOrderDto,
   OrderDetailsDto,
   OrderDocumentDto,
+  OrdersPageDto,
   UpdateTransportOrderPayload,
   UpdateTransportOrderResult,
 } from "./types";
@@ -38,7 +38,7 @@ export function listDispatcherOrders(params: ListDispatcherOrdersParams = {}) {
     limit: params.limit,
   });
 
-  return apiFetchPath<DispatcherOrderDto[]>(path, {
+  return apiFetchPath<OrdersPageDto>(path, {
     method: "GET",
     signal: params.signal,
     withCredentials: true,

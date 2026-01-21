@@ -20,22 +20,21 @@ export function dispatcherOrdersQueryOptions(params: Params) {
     queryKey: ordersQueryKeys.list({ status: params.status, page, limit }),
 
     queryFn: async ({ signal }): Promise<OrdersPageResult> => {
-      const dtos = await listDispatcherOrders({
+      const res = await listDispatcherOrders({
         status: params.status,
         page,
-        limit: limit + 1,
+        limit,
         signal,
         headers: params.headers,
       });
 
-      const hasNext = dtos.length > limit;
-      const sliced = dtos.slice(0, limit);
-
       return {
-        items: sliced.map(mapDispatcherOrderToListItem),
-        page,
-        limit,
-        hasNext,
+        items: res.items.map(mapDispatcherOrderToListItem),
+        page: res.page,
+        limit: res.limit,
+        totalItems: res.totalItems,
+        totalPages: res.totalPages,
+        hasNext: res.hasNext,
         status: params.status,
       };
     },

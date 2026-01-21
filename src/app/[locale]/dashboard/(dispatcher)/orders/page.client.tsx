@@ -48,7 +48,7 @@ export default function OrdersPageClient() {
   }
 
   const items = data?.items ?? [];
-  const hasNext = data?.hasNext ?? false;
+  const totalPages = data?.totalPages ?? 0;
 
   if (items.length === 0) {
     return <OrdersEmpty />;
@@ -59,9 +59,12 @@ export default function OrdersPageClient() {
       <OrdersView
         items={items}
       />
-      {hasNext && (
-        <PaginationNav page={page} hasNext={hasNext} getHref={getHref} />
-      )}
+      {(totalPages > 1) && (
+        <PaginationNav
+          page={page}
+          totalPages={totalPages}
+          getHref={getHref}
+        />)}
     </>
   );
 }
