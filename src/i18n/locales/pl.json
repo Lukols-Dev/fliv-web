@@ -120,7 +120,7 @@
       "delete": "Usuń"
     },
     "driver": {
-      "role": "Driver",
+      "role": "Kierowca",
       "call": "Zadzwoń",
       "message": "Wiadomość"
     },
@@ -146,6 +146,8 @@
       "delivered": "Dostarczono"
     },
     "documents": {
+      "error": "Nie udało się załadować dokumentów",
+      "title": "Dokumenty",
       "empty": "Brak dokumentów",
       "add": "Dodaj plik",
       "actions": {
@@ -157,8 +159,8 @@
   "OrderStatus": {
     "PENDING": "Oczekuje",
     "ACCEPTED": "Przyjęto",
-    "IN_PROGRESS": "W trakcie",
-    "LOADING": "Ładowanie",
+    "IN_PROGRESS": "W trasie",
+    "LOADING": "Załadunek",
     "UNLOADING": "Rozładunek",
     "PAUSED": "Wstrzymane",
     "COMPLETED": "Zakończone",
@@ -345,15 +347,15 @@
     "next": "Następna"
   },
   "UploadFileDialog": {
-    "title": "Dodaj plik",
+    "title": "Dodaj dokument",
     "subtitle": "Wybierz plik i nadaj mu nazwę.",
     "dropzone": {
-      "title": "Przeciągnij plik tutaj",
-      "active": "Upuść plik, aby dodać",
+      "title": "Przeciągnij dokument tutaj",
+      "active": "Upuść dokument, aby dodać",
       "hint": "Możesz też kliknąć i wybrać plik z dysku."
     },
     "fields": {
-      "title": "Tytuł",
+      "title": "Nazwa pliku",
       "titlePlaceholder": "Np. CMR Wiedeń 11.10"
     },
     "selected": {
@@ -368,12 +370,14 @@
       "remove": "Usuń",
       "cancel": "Anuluj",
       "close": "Zamknij",
+      "changeFile": "Zmień plik",
       "confirmOne": "Dodaj plik",
       "confirmMany": "Dodaj pliki"
     },
     "errors": {
       "title": "Nie udało się dodać pliku",
-      "titleRequired": "Podaj nazwę dla każdego pliku.",
+      "titleRequired": "Podaj nazwę pliku.",
+      "fileRequired": "Podaj plik.",
       "tooManyFiles": "Możesz dodać maksymalnie {max} plików.",
       "fileTooLarge": "Plik jest za duży. Maksymalnie: {max}.",
       "invalidType": "Nieobsługiwany typ pliku.",
@@ -391,5 +395,8 @@
     "PROBLEM_REPORTED": "Zgłoszenie problemu",
     "ORDER_ASSIGNED": "Zlecenie przydzielone",
     "ORDER_COMPLETED": "Zlecenie zakończone"
+   },
+   "OrdersGrid": {
+    "driver": "Kierowca"
    }
 }

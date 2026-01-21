@@ -63,7 +63,7 @@ export const SignInForm = () => {
           setFormError(t("errors.accountNotActive"));
           return;
         }
-        setFormError(error.message || t("errors.generic"));
+        setFormError(t("errors.generic"));
         return;
       }
 

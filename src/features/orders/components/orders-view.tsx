@@ -7,14 +7,10 @@ import OrderDetailsSheet from "./order-details-sheet";
 
 type Props = {
   items: OrderListItem[];
-  i18n: {
-    detailsTitle: string;
-    detailsSubtitle: string;
-    close: string;
-  };
+
 };
 
-export default function OrdersView({ items, i18n }: Props) {
+export default function OrdersView({ items }: Props) {
   const [open, setOpen] = React.useState(false);
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
 
@@ -45,11 +41,6 @@ export default function OrdersView({ items, i18n }: Props) {
         open={open}
         onOpenChange={onOpenChange}
         selected={selected}
-        i18n={{
-          title: i18n.detailsTitle,
-          subtitle: i18n.detailsSubtitle,
-          close: i18n.close,
-        }}
       />
     </>
   );

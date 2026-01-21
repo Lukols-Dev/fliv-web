@@ -6,6 +6,7 @@ import { Upload, X, Image as ImageIcon, AlertTriangle } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { useTranslations } from "next-intl";
 
 type Props = {
   value: File | null;
@@ -29,6 +30,7 @@ export function UploadFileDialog({
   maxSizeBytes = 10 * 1024 * 1024,
   validateFile,
 }: Props) {
+  const t = useTranslations("UploadFileDialog");
   const [error, setError] = React.useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = React.useState<string | null>(null);
 
@@ -75,9 +77,9 @@ export function UploadFileDialog({
       for (const r of rejections) {
         for (const e of r.errors) {
           if (e.code === "file-too-large") {
-            msgs.push(`Plik jest za duży (max ${formatBytes(maxSizeBytes)}).`);
+            msgs.push(t("errors.fileTooLarge", { max: formatBytes(maxSizeBytes) }));
           } else if (e.code === "file-invalid-type") {
-            msgs.push("Nieobsługiwany typ pliku. Dozwolone tylko zdjęcia.");
+            msgs.push(t("errors.invalidType"));
           } else {
             msgs.push(e.message);
           }
@@ -86,7 +88,7 @@ export function UploadFileDialog({
 
       setError(dedupe(msgs).join(" "));
     },
-    [maxSizeBytes]
+    [maxSizeBytes, t]
   );
 
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
@@ -126,8 +128,8 @@ export function UploadFileDialog({
             <div className="flex flex-col items-center justify-center min-w-0">
               <p className="text-sm font-medium">
                 {isDragActive
-                  ? "Upuść zdjęcie, aby dodać"
-                  : "Przeciągnij zdjęcie tutaj"}
+                  ? t("dropzone.active")
+                  : t("dropzone.title")}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
                 PNG / JPG / JPEG / WEBP • max {formatBytes(maxSizeBytes)}
@@ -144,7 +146,7 @@ export function UploadFileDialog({
                   disabled={disabled}
                   className="cursor-pointer"
                 >
-                  Wybierz zdjęcie
+                  {t("actions.pickFile")}
                 </Button>
               </div>
             </div>
@@ -182,7 +184,7 @@ export function UploadFileDialog({
                   }}
                   disabled={disabled}
                 >
-                  Zmień zdjęcie
+                  {t("actions.changeFile")}
                 </Button>
 
                 <Button
@@ -195,7 +197,7 @@ export function UploadFileDialog({
                   disabled={disabled}
                 >
                   <X className="mr-2 h-4 w-4" />
-                  Usuń
+                  {t("actions.remove")}
                 </Button>
               </div>
             </div>
@@ -207,7 +209,7 @@ export function UploadFileDialog({
         <div className="rounded-xl border bg-background p-3 text-sm text-destructive">
           <div className="flex items-center gap-2 font-medium">
             <AlertTriangle className="h-4 w-4" />
-            <span>Błąd</span>
+            <span>{t("errors.title")}</span>
           </div>
           <p className="mt-2">{error}</p>
         </div>

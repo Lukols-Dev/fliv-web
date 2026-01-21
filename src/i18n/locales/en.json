@@ -146,6 +146,8 @@
       "delivered": "Delivered"
     },
     "documents": {
+      "error": "Failed to load documents",
+      "title": "Documents",
       "empty": "No documents",
       "add": "Add file",
       "actions": {
@@ -353,7 +355,7 @@
       "hint": "Or click to pick a file from disk."
     },
     "fields": {
-      "title": "Display name",
+      "title": "File name",
       "titlePlaceholder": "e.g. CMR Vienna 11.10"
     },
     "selected": {
@@ -364,16 +366,18 @@
       "reachedSingle": "You can add only 1 file."
     },
     "actions": {
-      "pickFile": "Pick a file",
+      "pickFile": "Select a file",
       "remove": "Remove",
       "cancel": "Cancel",
       "close": "Close",
+      "changeFile": "Change file",
       "confirmOne": "Add file",
       "confirmMany": "Add files"
     },
     "errors": {
       "title": "Could not add file",
       "titleRequired": "Please provide a name for each file.",
+      "fileRequired": "Please provide a file.",
       "tooManyFiles": "You can add up to {max} files.",
       "fileTooLarge": "File is too large. Max: {max}.",
       "invalidType": "Unsupported file type.",
@@ -391,5 +395,8 @@
     "PROBLEM_REPORTED": "Problem reported",
     "ORDER_ASSIGNED": "Order assigned",
     "ORDER_COMPLETED": "Order completed"
+   },
+   "OrdersGrid": {
+    "driver": "Driver"
    }
 }

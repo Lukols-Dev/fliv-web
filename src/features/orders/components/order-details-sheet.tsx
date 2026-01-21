@@ -547,14 +547,14 @@ export default function OrderDetailsSheet({
                       </div>
                     ) : isError ? (
                       <div className="py-8 text-center text-sm text-destructive">
-                        Failed to load documents
+                        {t("documents.error")}
                       </div>
                     ) : (
                       <div className="space-y-2">
                         {/* TODO:add translate */}
                         <div className="flex items-center justify-between my-2">
                           <h2 className="truncate text-lg font-semibold">
-                            Dokumenty
+                            {t("documents.title")}
                           </h2>
                           {orderId && (
                             <OrderDocumentUploadDialog

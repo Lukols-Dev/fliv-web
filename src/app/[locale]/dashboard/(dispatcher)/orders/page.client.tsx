@@ -13,20 +13,12 @@ function parsePositiveInt(v: string | null, fallback: number) {
   return Number.isFinite(n) && n > 0 ? n : fallback;
 }
 
-export default function OrdersPageClient({
-  i18n,
-}: {
-  i18n: {
-    detailsTitle: string;
-    detailsSubtitle: string;
-    close: string;
-  };
-}) {
+export default function OrdersPageClient() {
   const sp = useSearchParams();
   const pathname = usePathname();
 
   const page = parsePositiveInt(sp.get("page"), 1);
-  const limit = parsePositiveInt(sp.get("limit"), 12);
+  const limit = parsePositiveInt(sp.get("limit"), 8);
   const status = sp.get("status") ?? undefined;
 
   const { data, isPending, isError, error } = useDispatcherOrdersQuery({
@@ -66,11 +58,6 @@ export default function OrdersPageClient({
     <>
       <OrdersView
         items={items}
-        i18n={{
-          detailsTitle: i18n.detailsTitle,
-          detailsSubtitle: i18n.detailsSubtitle,
-          close: i18n.close,
-        }}
       />
       {hasNext && (
         <PaginationNav page={page} hasNext={hasNext} getHref={getHref} />

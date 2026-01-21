@@ -1,4 +1,4 @@
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import type { OrderListItem } from "../types";
 import OrderCard from "./order-card";
 import { initials } from "@/lib/utils";
@@ -14,6 +14,7 @@ export default function OrdersGrid({
   onOpenDetails,
   selectedId,
 }: Props) {
+  const t = useTranslations("OrdersGrid");
   const locale = useLocale();
 
   return (
@@ -24,10 +25,10 @@ export default function OrdersGrid({
       {items.map((item) => {
         const createdAt = item.loadingDate
           ? new Intl.DateTimeFormat(locale, {
-              year: "numeric",
-              month: "2-digit",
-              day: "2-digit",
-            }).format(new Date(item.loadingDate))
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+          }).format(new Date(item.loadingDate))
           : "-";
 
         const driverName = item.driverName?.trim() || "-";
@@ -50,7 +51,7 @@ export default function OrdersGrid({
             }}
             driver={{
               name: driverName,
-              roleLabel: "Driver",
+              roleLabel: t("driver"),
               initials: initials(driverName),
               number: item.driverPhone ?? null,
               email: item.driverEmail ?? null,

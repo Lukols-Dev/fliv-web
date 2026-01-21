@@ -39,11 +39,6 @@ export default async function OrdersPage({
 
       <HydrationBoundary state={dehydrate(qc)}>
         <OrdersPageClient
-          i18n={{
-            detailsTitle: t("details.title"),
-            detailsSubtitle: t("details.subtitle"),
-            close: t("details.close"),
-          }}
         />
       </HydrationBoundary>
     </>

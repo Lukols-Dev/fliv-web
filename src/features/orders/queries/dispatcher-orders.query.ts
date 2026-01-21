@@ -14,7 +14,7 @@ type Params = {
 
 export function dispatcherOrdersQueryOptions(params: Params) {
   const page = params.page > 0 ? params.page : 1;
-  const limit = params.limit > 0 ? params.limit : 12;
+  const limit = params.limit > 0 ? params.limit : 10;
 
   return queryOptions({
     queryKey: ordersQueryKeys.list({ status: params.status, page, limit }),
