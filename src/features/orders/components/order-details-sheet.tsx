@@ -358,7 +358,9 @@ export default function OrderDetailsSheet({
                           {/* Map preview */}
                           <Card className="mt-3 py-0 overflow-hidden border shadow-none p">
                             <div className="relative aspect-4/3 w-full bg-muted">
-                              <HereStaticMap />
+                              <HereStaticMap
+                                routePoints={orderDetails?.routePoints ?? []}
+                              />
                             </div>
                           </Card>
 

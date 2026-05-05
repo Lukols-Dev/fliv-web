@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import type { TransportOrderRoutePointDto } from "../types";
 
 const HARDCODED_CENTER = { lat: 52.2297, lng: 21.0122 };
 const HARDCODED_ZOOM = 12;
@@ -27,10 +28,25 @@ type HereDefaultLayers = {
 
 type HereMap = {
   addObject(object: unknown): void;
+  removeObject(object: unknown): void;
   dispose(): void;
   getViewPort(): {
     resize(): void;
   };
+  getViewModel(): {
+    setLookAtData(data: {
+      bounds?: unknown;
+      position?: HereMapPoint;
+      zoom?: number;
+    }): void;
+  };
+  setCenter(point: HereMapPoint): void;
+  setZoom(zoom: number): void;
+};
+
+type HereMapGroup = {
+  addObject(object: unknown): void;
+  getBoundingBox(): unknown;
 };
 
 type HereNamespace = {
@@ -54,8 +70,20 @@ type HereNamespace = {
     };
   };
   map: {
-    Marker: new (point: HereMapPoint) => unknown;
+    Group: new () => HereMapGroup;
+    Icon: new (
+      bitmap: string,
+      options?: {
+        anchor?: { x: number; y: number };
+        size?: { w: number; h: number };
+      }
+    ) => unknown;
+    Marker: new (point: HereMapPoint, options?: { icon?: unknown }) => unknown;
   };
+};
+
+type Props = {
+  routePoints: TransportOrderRoutePointDto[];
 };
 
 declare global {
@@ -65,16 +93,30 @@ declare global {
   }
 }
 
-export function HereStaticMap() {
+export function HereStaticMap({ routePoints }: Props) {
   const mapRef = React.useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = React.useRef<HereMap | null>(null);
+  const hereRef = React.useRef<HereNamespace | null>(null);
+  const routeGroupRef = React.useRef<HereMapGroup | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+  const [mapReady, setMapReady] = React.useState(false);
+  const sortedPoints = React.useMemo(
+    () =>
+      routePoints
+        .filter(
+          (point) =>
+            Number.isFinite(point.latitude) && Number.isFinite(point.longitude)
+        )
+        .slice()
+        .sort((a, b) => a.sequence - b.sequence),
+    [routePoints]
+  );
 
   React.useEffect(() => {
     const apiKey = process.env.NEXT_PUBLIC_HERE_MAPS_API_KEY;
 
     if (!apiKey) {
-      setError("Missing NEXT_PUBLIC_HERE_MAPS_API_KEY");
+      setError("Missing NEXT_PUBLIC_HERE_MAPS_API_KEY"); //TODO: remove
       return;
     }
 
@@ -101,9 +143,10 @@ export function HereStaticMap() {
 
         new H.mapevents.Behavior(new H.mapevents.MapEvents(map));
         H.ui.UI.createDefault(map, defaultLayers);
-        map.addObject(new H.map.Marker(HARDCODED_CENTER));
 
+        hereRef.current = H;
         mapInstanceRef.current = map;
+        setMapReady(true);
         window.addEventListener("resize", handleResize);
       })
       .catch(() => {
@@ -116,9 +159,65 @@ export function HereStaticMap() {
       cancelled = true;
       window.removeEventListener("resize", handleResize);
       mapInstanceRef.current?.dispose();
+      routeGroupRef.current = null;
       mapInstanceRef.current = null;
+      hereRef.current = null;
     };
   }, []);
+
+  React.useEffect(() => {
+    if (!mapReady) return;
+
+    const H = hereRef.current;
+    const map = mapInstanceRef.current;
+    if (!H || !map) return;
+
+    if (routeGroupRef.current) {
+      map.removeObject(routeGroupRef.current);
+      routeGroupRef.current = null;
+    }
+
+    if (!sortedPoints.length) {
+      map.setCenter(HARDCODED_CENTER);
+      map.setZoom(HARDCODED_ZOOM);
+      return;
+    }
+
+    const group = new H.map.Group();
+
+    sortedPoints.forEach((point, index) => {
+      group.addObject(
+        new H.map.Marker(
+          {
+            lat: point.latitude,
+            lng: point.longitude,
+          },
+          { icon: createNumberedIcon(H, index + 1, point.type) }
+        )
+      );
+    });
+
+    map.addObject(group);
+    routeGroupRef.current = group;
+
+    if (sortedPoints.length === 1) {
+      map.setCenter({
+        lat: sortedPoints[0].latitude,
+        lng: sortedPoints[0].longitude,
+      });
+      map.setZoom(13);
+      return;
+    }
+
+    map.getViewModel().setLookAtData({ bounds: group.getBoundingBox() });
+
+    return () => {
+      if (routeGroupRef.current === group) {
+        map.removeObject(group);
+        routeGroupRef.current = null;
+      }
+    };
+  }, [mapReady, sortedPoints]);
 
   if (error) {
     return (
@@ -128,7 +227,37 @@ export function HereStaticMap() {
     );
   }
 
-  return <div ref={mapRef} className="absolute inset-0" />;
+  return (
+    <>
+      <div ref={mapRef} className="absolute inset-0" />
+      {!sortedPoints.length && (
+        <div className="pointer-events-none absolute left-3 top-3 rounded-md border bg-background/90 px-2 py-1 text-[11px] text-muted-foreground shadow-sm">
+          Brak punktów trasy
+        </div>
+      )}
+    </>
+  );
+}
+
+function createNumberedIcon(
+  H: HereNamespace,
+  number: number,
+  type: TransportOrderRoutePointDto["type"]
+) {
+  const color =
+    type === "LOADING" ? "#2563eb" : type === "UNLOADING" ? "#16a34a" : "#52525b";
+  const svg = encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="40" viewBox="0 0 32 40">
+      <path d="M16 39C12 32 4 25 4 15.5C4 8.6 9.4 3 16 3s12 5.6 12 12.5C28 25 20 32 16 39Z" fill="${color}" stroke="white" stroke-width="2"/>
+      <circle cx="16" cy="15.5" r="8.5" fill="white"/>
+      <text x="16" y="19" text-anchor="middle" font-size="11" font-family="Arial, sans-serif" font-weight="700" fill="${color}">${number}</text>
+    </svg>
+  `);
+
+  return new H.map.Icon(`data:image/svg+xml;charset=UTF-8,${svg}`, {
+    size: { w: 32, h: 40 },
+    anchor: { x: 16, y: 39 },
+  });
 }
 
 function loadHereMaps(): Promise<HereNamespace> {
