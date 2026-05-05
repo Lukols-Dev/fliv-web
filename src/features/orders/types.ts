@@ -20,13 +20,21 @@ export type OrderEventType =
   | "ORDER_ASSIGNED"
   | "ORDER_COMPLETED";
 
-export type TransportOrderRoutePointType = "LOADING" | "UNLOADING" | "VIA";
+export type TransportOrderRoutePointType =
+  | "LOADING"
+  | "UNLOADING"
+  | "FUEL"
+  | "PARKING"
+  | "SERVICE"
+  | "OTHER";
+export type TransportOrderRoutePointBehavior = "STOP" | "PASS_THROUGH";
 export type TransportOrderRoutePointSource = "DISPATCHER" | "SYSTEM" | "HERE";
 
 export type TransportOrderRoutePointDto = {
   id: string;
   sequence: number;
   type: TransportOrderRoutePointType;
+  behavior: TransportOrderRoutePointBehavior;
   source: TransportOrderRoutePointSource;
   isManual: boolean;
   label: string | null;
@@ -39,6 +47,93 @@ export type TransportOrderRoutePointPayload = Omit<
   TransportOrderRoutePointDto,
   "id"
 >;
+
+export type HazardousGood =
+  | "explosive"
+  | "gas"
+  | "flammable"
+  | "combustible"
+  | "organic"
+  | "poison"
+  | "radioactive"
+  | "corrosive"
+  | "poisonousInhalation"
+  | "harmfulToWater"
+  | "other";
+
+export type RoutingProfile = {
+  transportMode: "truck";
+  routingMode: "fast";
+  trafficMode: "default" | "disabled";
+  avoidTolls: boolean;
+  avoidFerries: boolean;
+  avoidMotorways: boolean;
+};
+
+export type VehicleSpec = {
+  heightCm?: number | null;
+  widthCm?: number | null;
+  lengthCm?: number | null;
+  currentWeightKg?: number | null;
+  grossWeightKg?: number | null;
+  weightPerAxleKg?: number | null;
+  axleCount?: number | null;
+  trailerCount?: number | null;
+  hazardousGoods?: HazardousGood[] | null;
+};
+
+export type TransportOrderRoutePlanDto = {
+  routingProfile: RoutingProfile;
+  vehicleSpec: VehicleSpec | null;
+  distanceMeters: number;
+  durationSeconds: number;
+  polyline: string;
+  calculationHash: string;
+  calculatedAt: string;
+};
+
+export type TransportOrderRouteDto = {
+  routePoints: TransportOrderRoutePointDto[];
+  routePlan: TransportOrderRoutePlanDto | null;
+  routingProfile: RoutingProfile;
+  vehicleSpec: VehicleSpec | null;
+};
+
+export type RoutePointDraft = TransportOrderRoutePointPayload;
+
+export type CalculateTransportOrderRoutePayload = {
+  routePoints: RoutePointDraft[];
+  routingProfile: RoutingProfile;
+  vehicleSpec: VehicleSpec | null;
+};
+
+export type CalculateTransportOrderRouteResult = {
+  routePreviewId: string;
+  calculationHash: string;
+  polyline: string;
+  distanceMeters: number;
+  durationSeconds: number;
+  calculatedAt: string;
+};
+
+export type SaveTransportOrderRoutePayload =
+  CalculateTransportOrderRoutePayload & {
+    routePreviewId: string;
+    calculationHash: string;
+  };
+
+export type SaveTransportOrderRouteResult = {
+  success: boolean;
+  routePlan: TransportOrderRoutePlanDto;
+};
+
+export type RouteGeocodeResult = {
+  latitude: number;
+  longitude: number;
+  title: string;
+  address?: string | null;
+  hereId?: string | null;
+};
 
 export type DispatcherOrderDto = {
   id: string;
@@ -179,6 +274,7 @@ export type OrderDetailsDto = {
   temperatureSensitive: boolean;
   notes: string | null;
   routePoints: TransportOrderRoutePointDto[];
+  routePlan: TransportOrderRoutePlanDto | null;
   documents: OrderDocumentDto[];
   events: OrderEventDto[];
 };

@@ -1,11 +1,17 @@
 import { apiFetchPath } from "@/config/http/api-client";
 import { ordersEndpoints } from "./lib/endpoints";
 import type {
+  CalculateTransportOrderRoutePayload,
+  CalculateTransportOrderRouteResult,
   CreateTransportOrderPayload,
   CreateTransportOrderResult,
   OrderDetailsDto,
   OrderDocumentDto,
   OrdersPageDto,
+  RouteGeocodeResult,
+  SaveTransportOrderRoutePayload,
+  SaveTransportOrderRouteResult,
+  TransportOrderRouteDto,
   UpdateTransportOrderPayload,
   UpdateTransportOrderResult,
 } from "./types";
@@ -124,6 +130,62 @@ export function updateOrder(
 ) {
   return apiFetchPath<UpdateTransportOrderResult>(
     ordersEndpoints.updateById(orderId),
+    {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+      signal: options.signal,
+      withCredentials: true,
+    }
+  );
+}
+
+export function getOrderRoute(
+  orderId: string,
+  options: { signal?: AbortSignal } = {}
+) {
+  return apiFetchPath<TransportOrderRouteDto>(ordersEndpoints.routeById(orderId), {
+    method: "GET",
+    signal: options.signal,
+    withCredentials: true,
+  });
+}
+
+export function geocodeRoutePoint(
+  query: string,
+  options: { signal?: AbortSignal } = {}
+) {
+  const path = withQuery(ordersEndpoints.routeGeocode, { q: query });
+
+  return apiFetchPath<{ items: RouteGeocodeResult[] }>(path, {
+    method: "GET",
+    signal: options.signal,
+    withCredentials: true,
+  });
+}
+
+export function calculateOrderRoute(
+  orderId: string,
+  payload: CalculateTransportOrderRoutePayload,
+  options: { signal?: AbortSignal } = {}
+) {
+  return apiFetchPath<CalculateTransportOrderRouteResult>(
+    ordersEndpoints.routeCalculateById(orderId),
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+      signal: options.signal,
+      withCredentials: true,
+    }
+  );
+}
+
+export function saveOrderRoute(
+  orderId: string,
+  payload: SaveTransportOrderRoutePayload,
+  options: { signal?: AbortSignal } = {}
+) {
+  return apiFetchPath<SaveTransportOrderRouteResult>(
+    ordersEndpoints.routeById(orderId),
     {
       method: "PATCH",
       body: JSON.stringify(payload),

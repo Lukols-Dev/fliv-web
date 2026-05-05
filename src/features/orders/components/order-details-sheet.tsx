@@ -37,6 +37,7 @@ import { OrderDocumentUploadDialog } from "./order-document-upload";
 import Image from "next/image";
 import { Plus } from "lucide-react";
 import EditOrderDialog from "./edit-order/edit-order-dialog";
+import { EditRouteDialog } from "./edit-route-dialog";
 import { TrackingHistoryList } from "./tracking-history-list";
 import { HereStaticMap } from "./here-static-map";
 
@@ -66,11 +67,9 @@ export default function OrderDetailsSheet({
   const [selectedImageUrl, setSelectedImageUrl] = React.useState<string | null>(
     null
   );
-  const [routeDistanceMeters, setRouteDistanceMeters] = React.useState<
-    number | null
-  >(null);
 
   const [editOpen, setEditOpen] = React.useState(false);
+  const [routeEditOpen, setRouteEditOpen] = React.useState(false);
 
   const {
     data: orderDetails,
@@ -120,15 +119,13 @@ export default function OrderDetailsSheet({
     return "—";
   }, [loadingTime, loadingDate, locale]);
 
-  React.useEffect(() => {
-    setRouteDistanceMeters(null);
-  }, [orderId]);
-
   const stats = [
     { label: t("stats.currentDistance"), value: "—" },
     {
       label: t("stats.distance"),
-      value: formatDistance(routeDistanceMeters, locale),
+      value: orderDetails?.routePlan
+        ? formatDistance(orderDetails.routePlan.distanceMeters, locale)
+        : "—",
     },
     {
       label: t("stats.startTime"),
@@ -208,6 +205,13 @@ export default function OrderDetailsSheet({
           onOpenChange={setEditOpen}
           orderId={orderId}
           initial={details}
+        />
+      ) : null}
+      {details ? (
+        <EditRouteDialog
+          open={routeEditOpen}
+          onOpenChange={setRouteEditOpen}
+          orderId={orderId}
         />
       ) : null}
 
@@ -359,7 +363,11 @@ export default function OrderDetailsSheet({
                             <h3 className="text-base font-semibold">
                               {t("route.title")}
                             </h3>
-                            <Button size="sm" className="h-8 cursor-pointer">
+                            <Button
+                              size="sm"
+                              className="h-8 cursor-pointer"
+                              onClick={() => setRouteEditOpen(true)}
+                            >
                               <Icons.pencil className="mr-2 h-4 w-4" />
                               {t("route.edit")}
                             </Button>
@@ -370,7 +378,8 @@ export default function OrderDetailsSheet({
                             <div className="relative aspect-4/3 w-full bg-muted">
                               <HereStaticMap
                                 routePoints={orderDetails?.routePoints ?? []}
-                                onDistanceMetersChange={setRouteDistanceMeters}
+                                polyline={orderDetails?.routePlan?.polyline}
+                                showUiControls={false}
                               />
                             </div>
                           </Card>
@@ -691,11 +700,7 @@ export default function OrderDetailsSheet({
   );
 }
 
-function formatDistance(distanceMeters: number | null, locale: string): string {
-  if (!distanceMeters || distanceMeters <= 0) {
-    return "—";
-  }
-
+function formatDistance(distanceMeters: number, locale: string): string {
   if (distanceMeters < 1000) {
     return `${Math.round(distanceMeters)} m`;
   }
