@@ -8,7 +8,7 @@ export type OrderStatus =
   | "COMPLETED"
   | "PROBLEM";
 
-  export type OrderEventType =
+export type OrderEventType =
   | "STATUS_CHANGED"
   | "INCIDENT_DETOUR"
   | "INCIDENT_ACCIDENT"
@@ -19,6 +19,26 @@ export type OrderStatus =
   | "PROBLEM_REPORTED"
   | "ORDER_ASSIGNED"
   | "ORDER_COMPLETED";
+
+export type TransportOrderRoutePointType = "LOADING" | "UNLOADING" | "VIA";
+export type TransportOrderRoutePointSource = "DISPATCHER" | "SYSTEM" | "HERE";
+
+export type TransportOrderRoutePointDto = {
+  id: string;
+  sequence: number;
+  type: TransportOrderRoutePointType;
+  source: TransportOrderRoutePointSource;
+  isManual: boolean;
+  label: string | null;
+  address: string | null;
+  latitude: number;
+  longitude: number;
+};
+
+export type TransportOrderRoutePointPayload = Omit<
+  TransportOrderRoutePointDto,
+  "id"
+>;
 
 export type DispatcherOrderDto = {
   id: string;
@@ -103,6 +123,7 @@ export type CreateTransportOrderPayload = {
   temperatureSensitive: boolean;
 
   notes?: string;
+  routePoints?: TransportOrderRoutePointPayload[];
 };
 
 export type CreateTransportOrderResult = {
@@ -157,6 +178,7 @@ export type OrderDetailsDto = {
   cargoDescription: string | null;
   temperatureSensitive: boolean;
   notes: string | null;
+  routePoints: TransportOrderRoutePointDto[];
   documents: OrderDocumentDto[];
   events: OrderEventDto[];
 };
@@ -191,6 +213,7 @@ export type UpdateTransportOrderPayload = Partial<{
   cargoDescription: string;
   temperatureSensitive: boolean;
   notes: string;
+  routePoints: TransportOrderRoutePointPayload[];
 }>;
 
 export type UpdateTransportOrderResult = {
