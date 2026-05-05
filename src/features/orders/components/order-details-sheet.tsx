@@ -66,6 +66,9 @@ export default function OrderDetailsSheet({
   const [selectedImageUrl, setSelectedImageUrl] = React.useState<string | null>(
     null
   );
+  const [routeDistanceMeters, setRouteDistanceMeters] = React.useState<
+    number | null
+  >(null);
 
   const [editOpen, setEditOpen] = React.useState(false);
 
@@ -117,9 +120,16 @@ export default function OrderDetailsSheet({
     return "—";
   }, [loadingTime, loadingDate, locale]);
 
+  React.useEffect(() => {
+    setRouteDistanceMeters(null);
+  }, [orderId]);
+
   const stats = [
     { label: t("stats.currentDistance"), value: "—" },
-    { label: t("stats.distance"), value: "—" },
+    {
+      label: t("stats.distance"),
+      value: formatDistance(routeDistanceMeters, locale),
+    },
     {
       label: t("stats.startTime"),
       value: formattedLoadingTime,
@@ -360,6 +370,7 @@ export default function OrderDetailsSheet({
                             <div className="relative aspect-4/3 w-full bg-muted">
                               <HereStaticMap
                                 routePoints={orderDetails?.routePoints ?? []}
+                                onDistanceMetersChange={setRouteDistanceMeters}
                               />
                             </div>
                           </Card>
@@ -678,4 +689,18 @@ export default function OrderDetailsSheet({
       </Sheet>
     </>
   );
+}
+
+function formatDistance(distanceMeters: number | null, locale: string): string {
+  if (!distanceMeters || distanceMeters <= 0) {
+    return "—";
+  }
+
+  if (distanceMeters < 1000) {
+    return `${Math.round(distanceMeters)} m`;
+  }
+
+  return `${new Intl.NumberFormat(locale, {
+    maximumFractionDigits: distanceMeters >= 100_000 ? 0 : 1,
+  }).format(distanceMeters / 1000)} km`;
 }

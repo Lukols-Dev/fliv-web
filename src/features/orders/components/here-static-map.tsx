@@ -26,6 +26,27 @@ type HereDefaultLayers = {
   };
 };
 
+type HereRouteSection = {
+  polyline?: string;
+  summary?: {
+    length?: number;
+  };
+};
+
+type HereRoutingResult = {
+  routes?: Array<{
+    sections?: HereRouteSection[];
+  }>;
+};
+
+type HereRouter = {
+  calculateRoute(
+    params: Record<string, unknown>,
+    onSuccess: (result: HereRoutingResult) => void,
+    onError: () => void
+  ): void;
+};
+
 type HereMap = {
   addObject(object: unknown): void;
   removeObject(object: unknown): void;
@@ -46,6 +67,7 @@ type HereMap = {
 
 type HereMapGroup = {
   addObject(object: unknown): void;
+  addObjects(objects: unknown[]): void;
   getBoundingBox(): unknown;
 };
 
@@ -53,6 +75,10 @@ type HereNamespace = {
   service: {
     Platform: new (options: { apikey: string }) => {
       createDefaultLayers(): HereDefaultLayers;
+      getRoutingService(serviceParams?: unknown, version?: number): HereRouter;
+    };
+    Url: {
+      MultiValueQueryParameter: new (values: string[]) => unknown;
     };
   };
   Map: new (
@@ -79,11 +105,26 @@ type HereNamespace = {
       }
     ) => unknown;
     Marker: new (point: HereMapPoint, options?: { icon?: unknown }) => unknown;
+    Polyline: new (
+      lineString: unknown,
+      options?: {
+        style?: {
+          lineWidth?: number;
+          strokeColor?: string;
+        };
+      }
+    ) => unknown;
+  };
+  geo: {
+    LineString: {
+      fromFlexiblePolyline(polyline: string): unknown;
+    };
   };
 };
 
 type Props = {
   routePoints: TransportOrderRoutePointDto[];
+  onDistanceMetersChange?: (distanceMeters: number | null) => void;
 };
 
 declare global {
@@ -93,12 +134,17 @@ declare global {
   }
 }
 
-export function HereStaticMap({ routePoints }: Props) {
+export function HereStaticMap({
+  routePoints,
+  onDistanceMetersChange,
+}: Props) {
   const mapRef = React.useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = React.useRef<HereMap | null>(null);
   const hereRef = React.useRef<HereNamespace | null>(null);
+  const routerRef = React.useRef<HereRouter | null>(null);
   const routeGroupRef = React.useRef<HereMapGroup | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+  const [routeError, setRouteError] = React.useState<string | null>(null);
   const [mapReady, setMapReady] = React.useState(false);
   const sortedPoints = React.useMemo(
     () =>
@@ -145,6 +191,7 @@ export function HereStaticMap({ routePoints }: Props) {
         H.ui.UI.createDefault(map, defaultLayers);
 
         hereRef.current = H;
+        routerRef.current = platform.getRoutingService(null, 8);
         mapInstanceRef.current = map;
         setMapReady(true);
         window.addEventListener("resize", handleResize);
@@ -162,6 +209,7 @@ export function HereStaticMap({ routePoints }: Props) {
       routeGroupRef.current = null;
       mapInstanceRef.current = null;
       hereRef.current = null;
+      routerRef.current = null;
     };
   }, []);
 
@@ -170,7 +218,11 @@ export function HereStaticMap({ routePoints }: Props) {
 
     const H = hereRef.current;
     const map = mapInstanceRef.current;
+    const router = routerRef.current;
     if (!H || !map) return;
+
+    let cancelled = false;
+    setRouteError(null);
 
     if (routeGroupRef.current) {
       map.removeObject(routeGroupRef.current);
@@ -178,46 +230,126 @@ export function HereStaticMap({ routePoints }: Props) {
     }
 
     if (!sortedPoints.length) {
+      onDistanceMetersChange?.(null);
       map.setCenter(HARDCODED_CENTER);
       map.setZoom(HARDCODED_ZOOM);
       return;
     }
 
-    const group = new H.map.Group();
-
-    sortedPoints.forEach((point, index) => {
-      group.addObject(
-        new H.map.Marker(
-          {
-            lat: point.latitude,
-            lng: point.longitude,
-          },
-          { icon: createNumberedIcon(H, index + 1, point.type) }
-        )
-      );
-    });
-
-    map.addObject(group);
-    routeGroupRef.current = group;
-
     if (sortedPoints.length === 1) {
+      onDistanceMetersChange?.(null);
+      const group = createRoutePointsGroup(H, sortedPoints);
+      map.addObject(group);
+      routeGroupRef.current = group;
       map.setCenter({
         lat: sortedPoints[0].latitude,
         lng: sortedPoints[0].longitude,
       });
       map.setZoom(13);
+      return () => {
+        if (routeGroupRef.current === group) {
+          map.removeObject(group);
+          routeGroupRef.current = null;
+        }
+      };
+    }
+
+    if (!router) {
+      onDistanceMetersChange?.(null);
+      setRouteError("Nie udało się wyznaczyć trasy");
+      const group = createRoutePointsGroup(H, sortedPoints);
+      map.addObject(group);
+      routeGroupRef.current = group;
+      map.getViewModel().setLookAtData({ bounds: group.getBoundingBox() });
       return;
     }
 
-    map.getViewModel().setLookAtData({ bounds: group.getBoundingBox() });
+    const origin = sortedPoints[0];
+    const destination = sortedPoints[sortedPoints.length - 1];
+    const viaPoints = sortedPoints.slice(1, -1);
+    const routingParameters: Record<string, unknown> = {
+      routingMode: "fast",
+      transportMode: "truck",
+      origin: formatRoutePoint(origin),
+      destination: formatRoutePoint(destination),
+      return: "polyline,summary",
+    };
+
+    if (viaPoints.length) {
+      routingParameters.via = new H.service.Url.MultiValueQueryParameter(
+        viaPoints.map(formatRoutePoint)
+      );
+    }
+
+    router.calculateRoute(
+      routingParameters,
+      (result) => {
+        if (cancelled) return;
+
+        const sections = result.routes?.[0]?.sections ?? [];
+        const lineStrings = sections
+          .map((section) =>
+            section.polyline
+              ? H.geo.LineString.fromFlexiblePolyline(section.polyline)
+              : null
+          )
+          .filter((lineString): lineString is unknown => lineString !== null);
+
+        if (!lineStrings.length) {
+          onDistanceMetersChange?.(null);
+          setRouteError("Nie udało się wyznaczyć trasy");
+          const fallbackGroup = createRoutePointsGroup(H, sortedPoints);
+          map.addObject(fallbackGroup);
+          routeGroupRef.current = fallbackGroup;
+          map
+            .getViewModel()
+            .setLookAtData({ bounds: fallbackGroup.getBoundingBox() });
+          return;
+        }
+
+        const routeLines = lineStrings.map(
+          (lineString) =>
+            new H.map.Polyline(lineString, {
+              style: {
+                lineWidth: 5,
+                strokeColor: "rgba(37, 99, 235, 0.85)",
+              },
+            })
+        );
+        const group = createRoutePointsGroup(H, sortedPoints, routeLines);
+
+        map.addObject(group);
+        routeGroupRef.current = group;
+        map.getViewModel().setLookAtData({ bounds: group.getBoundingBox() });
+
+        const distanceMeters = sections.reduce(
+          (sum, section) => sum + (section.summary?.length ?? 0),
+          0
+        );
+        onDistanceMetersChange?.(distanceMeters > 0 ? distanceMeters : null);
+      },
+      () => {
+        if (cancelled) return;
+
+        onDistanceMetersChange?.(null);
+        setRouteError("Nie udało się wyznaczyć trasy");
+        const fallbackGroup = createRoutePointsGroup(H, sortedPoints);
+        map.addObject(fallbackGroup);
+        routeGroupRef.current = fallbackGroup;
+        map
+          .getViewModel()
+          .setLookAtData({ bounds: fallbackGroup.getBoundingBox() });
+      }
+    );
 
     return () => {
-      if (routeGroupRef.current === group) {
-        map.removeObject(group);
+      cancelled = true;
+      if (routeGroupRef.current) {
+        map.removeObject(routeGroupRef.current);
         routeGroupRef.current = null;
       }
     };
-  }, [mapReady, sortedPoints]);
+  }, [mapReady, onDistanceMetersChange, sortedPoints]);
 
   if (error) {
     return (
@@ -235,8 +367,44 @@ export function HereStaticMap({ routePoints }: Props) {
           Brak punktów trasy
         </div>
       )}
+      {routeError && (
+        <div className="pointer-events-none absolute left-3 top-3 rounded-md border bg-background/90 px-2 py-1 text-[11px] text-muted-foreground shadow-sm">
+          {routeError}
+        </div>
+      )}
     </>
   );
+}
+
+function createRoutePointsGroup(
+  H: HereNamespace,
+  points: TransportOrderRoutePointDto[],
+  routeLines: unknown[] = []
+) {
+  const group = new H.map.Group();
+
+  if (routeLines.length) {
+    group.addObjects(routeLines);
+  }
+
+  group.addObjects(
+    points.map(
+      (point, index) =>
+        new H.map.Marker(
+          {
+            lat: point.latitude,
+            lng: point.longitude,
+          },
+          { icon: createNumberedIcon(H, index + 1, point.type) }
+        )
+    )
+  );
+
+  return group;
+}
+
+function formatRoutePoint(point: TransportOrderRoutePointDto): string {
+  return `${point.latitude},${point.longitude}`;
 }
 
 function createNumberedIcon(
