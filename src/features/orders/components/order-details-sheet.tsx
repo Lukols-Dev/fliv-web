@@ -38,6 +38,7 @@ import Image from "next/image";
 import { Plus } from "lucide-react";
 import EditOrderDialog from "./edit-order/edit-order-dialog";
 import { TrackingHistoryList } from "./tracking-history-list";
+import { HereStaticMap } from "./here-static-map";
 
 type Props = {
   open: boolean;
@@ -354,12 +355,10 @@ export default function OrderDetailsSheet({
                             </Button>
                           </div>
 
-                          {/* Map placeholder */}
-                          <Card className="mt-3 overflow-hidden border shadow-none">
+                          {/* Map preview */}
+                          <Card className="mt-3 py-0 overflow-hidden border shadow-none p">
                             <div className="relative aspect-4/3 w-full bg-muted">
-                              <div className="absolute inset-0 grid place-items-center text-xs text-muted-foreground">
-                                {t("route.mapPlaceholder")}
-                              </div>
+                              <HereStaticMap />
                             </div>
                           </Card>
 
