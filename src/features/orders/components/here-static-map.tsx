@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { ROUTE_POINT_ICON_PATHS } from "../lib/route-point-icons";
 import type { TransportOrderRoutePointDto } from "../types";
 
 const HARDCODED_CENTER = { lat: 52.2297, lng: 21.0122 };
@@ -12,6 +13,13 @@ const HERE_SCRIPT_URLS = [
   "https://js.api.here.com/v3/3.2/mapsjs-ui.js",
 ] as const;
 const HERE_UI_CSS_URL = "https://js.api.here.com/v3/3.2/mapsjs-ui.css";
+const iconCache = new WeakMap<HereNamespace, Map<string, unknown>>();
+
+export type HereMapMarkerMode = "numbered" | "typed";
+type HereMapRoutePoint = Omit<TransportOrderRoutePointDto, "id"> & {
+  id?: string;
+  markerMode?: HereMapMarkerMode;
+};
 
 type HereMapPoint = {
   lat: number;
@@ -98,7 +106,7 @@ type HereNamespace = {
 };
 
 type Props = {
-  routePoints: TransportOrderRoutePointDto[];
+  routePoints: HereMapRoutePoint[];
   polyline?: string | null;
   showUiControls?: boolean;
 };
@@ -251,7 +259,7 @@ export function HereStaticMap({
 
 function createRouteObjectsGroup(
   H: HereNamespace,
-  points: TransportOrderRoutePointDto[],
+  points: HereMapRoutePoint[],
   polyline?: string | null
 ) {
   const group = new H.map.Group();
@@ -269,7 +277,12 @@ function createRouteObjectsGroup(
             lat: point.latitude,
             lng: point.longitude,
           },
-          { icon: createNumberedIcon(H, index + 1, point.type) }
+          {
+            icon:
+              point.markerMode === "typed"
+                ? createTypedIcon(H, point.type)
+                : createNumberedIcon(H, index + 1, point.type),
+          }
         )
     )
   );
@@ -295,35 +308,77 @@ function decodePolyline(H: HereNamespace, polyline?: string | null) {
     });
 }
 
+function getCachedIcon(
+  H: HereNamespace,
+  key: string,
+  factory: () => unknown
+) {
+  let cache = iconCache.get(H);
+
+  if (!cache) {
+    cache = new Map();
+    iconCache.set(H, cache);
+  }
+
+  const cached = cache.get(key);
+  if (cached) return cached;
+
+  const icon = factory();
+  cache.set(key, icon);
+  return icon;
+}
+
 function createNumberedIcon(
   H: HereNamespace,
   number: number,
   type: TransportOrderRoutePointDto["type"]
 ) {
-  const color =
-    type === "LOADING"
-      ? "#2563eb"
-      : type === "UNLOADING"
-      ? "#16a34a"
-      : type === "FUEL"
-      ? "#ea580c"
-      : type === "PARKING"
-      ? "#0891b2"
-      : type === "SERVICE"
-      ? "#7c3aed"
-      : "#52525b";
-  const svg = encodeURIComponent(`
-    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="40" viewBox="0 0 32 40">
-      <path d="M16 39C12 32 4 25 4 15.5C4 8.6 9.4 3 16 3s12 5.6 12 12.5C28 25 20 32 16 39Z" fill="${color}" stroke="white" stroke-width="2"/>
-      <circle cx="16" cy="15.5" r="8.5" fill="white"/>
-      <text x="16" y="19" text-anchor="middle" font-size="11" font-family="Arial, sans-serif" font-weight="700" fill="${color}">${number}</text>
-    </svg>
-  `);
+  const key = `numbered:${type}:${number}`;
 
-  return new H.map.Icon(`data:image/svg+xml;charset=UTF-8,${svg}`, {
-    size: { w: 32, h: 40 },
-    anchor: { x: 16, y: 39 },
+  return getCachedIcon(H, key, () => {
+    const color = getRoutePointColor(type);
+    const svg = encodeURIComponent(`
+      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="40" viewBox="0 0 32 40">
+        <path d="M16 39C12 32 4 25 4 15.5C4 8.6 9.4 3 16 3s12 5.6 12 12.5C28 25 20 32 16 39Z" fill="${color}" stroke="white" stroke-width="2"/>
+        <circle cx="16" cy="15.5" r="8.5" fill="white"/>
+        <text x="16" y="19" text-anchor="middle" font-size="11" font-family="Arial, sans-serif" font-weight="700" fill="${color}">${number}</text>
+      </svg>
+    `);
+
+    return new H.map.Icon(`data:image/svg+xml;charset=UTF-8,${svg}`, {
+      size: { w: 32, h: 40 },
+      anchor: { x: 16, y: 39 },
+    });
   });
+}
+
+function createTypedIcon(
+  H: HereNamespace,
+  type: TransportOrderRoutePointDto["type"]
+) {
+  const iconPath = ROUTE_POINT_ICON_PATHS[type];
+  const key = `typed:${type}:${iconPath}`;
+
+  return getCachedIcon(H, key, () =>
+    new H.map.Icon(iconPath, {
+      size: { w: 40, h: 48 },
+      anchor: { x: 20, y: 47 },
+    })
+  );
+}
+
+function getRoutePointColor(type: TransportOrderRoutePointDto["type"]) {
+  return type === "LOADING"
+    ? "#2563eb"
+    : type === "UNLOADING"
+    ? "#16a34a"
+    : type === "FUEL"
+    ? "#ea580c"
+    : type === "PARKING"
+    ? "#0891b2"
+    : type === "SERVICE"
+    ? "#7c3aed"
+    : "#52525b";
 }
 
 function loadHereMaps(): Promise<HereNamespace> {

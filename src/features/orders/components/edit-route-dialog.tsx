@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ChevronDown, Loader2, Plus, Save, Search } from "lucide-react";
+import { ChevronDown, Loader2, Save, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -23,6 +23,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { HereStaticMap } from "./here-static-map";
+import type { HereMapMarkerMode } from "./here-static-map";
 import { Spinner } from "@/components/ui/spinner";
 import { useOrderRouteQuery } from "../hooks/use-order-route-query";
 import {
@@ -37,7 +38,6 @@ import type {
   RoutePointDraft,
   RoutingProfile,
   TransportOrderRoutePointBehavior,
-  TransportOrderRoutePointDto,
   TransportOrderRoutePointType,
   VehicleSpec,
 } from "../types";
@@ -70,6 +70,14 @@ const ROUTING_MODES: Array<{
     { value: "short", label: "Short" },
   ];
 
+const POINT_MARKER_MODES: Array<{
+  value: HereMapMarkerMode;
+  label: string;
+}> = [
+  { value: "numbered", label: "Numer" },
+  { value: "typed", label: "Ikona" },
+];
+
 const HAZARDOUS_GOODS: Array<{ value: HazardousGood; label: string }> = [
   { value: "explosive", label: "Wybuchowe" },
   { value: "gas", label: "Gaz" },
@@ -86,6 +94,7 @@ const HAZARDOUS_GOODS: Array<{ value: HazardousGood; label: string }> = [
 
 type LocalRoutePoint = RoutePointDraft & {
   clientId: string;
+  markerMode: HereMapMarkerMode;
 };
 
 type Props = {
@@ -126,6 +135,7 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
     const loadedRoutePoints = routeQuery.data.routePoints.map((point) => ({
       ...point,
       clientId: point.id,
+      markerMode: "numbered" as const,
     }));
     const loadedRoutingProfile =
       routeQuery.data.routingProfile ?? defaultRoutingProfile();
@@ -162,6 +172,10 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
 
   const routePointPayload = React.useMemo(
     () => normalizeForPayload(routePoints),
+    [routePoints]
+  );
+  const mapRoutePoints = React.useMemo(
+    () => normalizeForMap(routePoints),
     [routePoints]
   );
   const vehicleSpecPayload = React.useMemo(
@@ -208,6 +222,7 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
   const handleSelectGeocode = (result: RouteGeocodeResult) => {
     addPoint({
       clientId: crypto.randomUUID(),
+      markerMode: "numbered",
       type: "OTHER",
       behavior: "STOP",
       source: "HERE",
@@ -301,7 +316,7 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
         <div className="flex h-full min-h-0 bg-background">
           <div className="relative min-w-0 flex-1 bg-muted">
             <HereStaticMap
-              routePoints={routePointPayload as TransportOrderRoutePointDto[]}
+              routePoints={mapRoutePoints}
               polyline={visiblePolyline}
             />
           </div>
@@ -321,7 +336,7 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
                 onClick={() => onOpenChange(false)}
                 className="h-8 w-8"
               >
-                <Search className="h-4 w-4" />
+                <X className="h-4 w-4" />
               </Button>
             </div>
 
@@ -360,7 +375,7 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
                           {geocodeMutation.isPending ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
                           ) : (
-                            <Plus className="h-4 w-4" />
+                            <Search className="h-4 w-4" />
                           )}
                         </Button>
                       </div>
@@ -611,7 +626,7 @@ function RoutePointRow({
           }
           placeholder="Adres opisowy"
         />
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-3 gap-2">
           <Select
             value={point.type}
             onValueChange={(value) =>
@@ -646,6 +661,26 @@ function RoutePointRow({
             <SelectContent>
               <SelectItem value="STOP">Postój</SelectItem>
               <SelectItem value="PASS_THROUGH">Przebieg</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={point.markerMode}
+            onValueChange={(value) =>
+              onUpdate(point.clientId, {
+                markerMode: value as HereMapMarkerMode,
+              })
+            }
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {POINT_MARKER_MODES.map((item) => (
+                <SelectItem key={item.value} value={item.value}>
+                  {item.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -933,6 +968,26 @@ function normalizeForPayload(points: LocalRoutePoint[]): RoutePointDraft[] {
       address: point.address ?? null,
       latitude: point.latitude,
       longitude: point.longitude,
+    }));
+}
+
+function normalizeForMap(
+  points: LocalRoutePoint[]
+): Array<RoutePointDraft & { markerMode: HereMapMarkerMode }> {
+  return points
+    .slice()
+    .sort((a, b) => a.sequence - b.sequence)
+    .map((point, index) => ({
+      sequence: index + 1,
+      type: point.type,
+      behavior: point.behavior,
+      source: point.source,
+      isManual: point.isManual,
+      label: point.label ?? null,
+      address: point.address ?? null,
+      latitude: point.latitude,
+      longitude: point.longitude,
+      markerMode: point.markerMode,
     }));
 }
 
