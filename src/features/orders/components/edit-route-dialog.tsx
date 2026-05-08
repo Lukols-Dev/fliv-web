@@ -54,6 +54,14 @@ const POINT_TYPES: Array<{
   { value: "OTHER", label: "Inne" },
 ];
 
+const TRANSPORT_MODES: Array<{
+  value: RoutingProfile["transportMode"];
+  label: string;
+}> = [
+  { value: "car", label: "Car" },
+  { value: "truck", label: "Truck" },
+];
+
 const HAZARDOUS_GOODS: Array<{ value: HazardousGood; label: string }> = [
   { value: "explosive", label: "Wybuchowe" },
   { value: "gas", label: "Gaz" },
@@ -136,7 +144,7 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
         ? buildCalculationSignature(
             normalizeForPayload(loadedRoutePoints),
             loadedRoutingProfile,
-            loadedVehicleSpec
+            getVehicleSpecPayload(loadedRoutingProfile, loadedVehicleSpec)
           )
         : null
     );
@@ -148,10 +156,18 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
     () => normalizeForPayload(routePoints),
     [routePoints]
   );
+  const vehicleSpecPayload = React.useMemo(
+    () => getVehicleSpecPayload(routingProfile, vehicleSpec),
+    [routingProfile, vehicleSpec]
+  );
   const calculationSignature = React.useMemo(
     () =>
-      buildCalculationSignature(routePointPayload, routingProfile, vehicleSpec),
-    [routePointPayload, routingProfile, vehicleSpec]
+      buildCalculationSignature(
+        routePointPayload,
+        routingProfile,
+        vehicleSpecPayload
+      ),
+    [routePointPayload, routingProfile, vehicleSpecPayload]
   );
   const previewIsCurrent =
     !!preview &&
@@ -249,7 +265,7 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
     const result = await calculateMutation.mutateAsync({
       routePoints: routePointPayload,
       routingProfile,
-      vehicleSpec: normalizeVehicleSpec(vehicleSpec),
+      vehicleSpec: vehicleSpecPayload,
     });
     setPreview(result);
     setLastCalculationSignature(calculationSignature);
@@ -260,7 +276,7 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
     await saveMutation.mutateAsync({
       routePoints: routePointPayload,
       routingProfile,
-      vehicleSpec: normalizeVehicleSpec(vehicleSpec),
+      vehicleSpec: vehicleSpecPayload,
       routePreviewId: preview.routePreviewId,
       calculationHash: preview.calculationHash,
     });
@@ -392,21 +408,23 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
                     />
                   </PanelSection>
 
-                  <PanelSection
-                    title="Parametry ciężarówki"
-                    open={sectionOpen.vehicle}
-                    onOpenChange={(value) =>
-                      setSectionOpen((prev) => ({ ...prev, vehicle: value }))
-                    }
-                  >
-                    <VehicleSettings
-                      value={vehicleSpec}
-                      onChange={(value) => {
-                        setVehicleSpec(value);
-                        setLastCalculationSignature(null);
-                      }}
-                    />
-                  </PanelSection>
+                  {routingProfile.transportMode === "truck" ? (
+                    <PanelSection
+                      title="Parametry ciężarówki"
+                      open={sectionOpen.vehicle}
+                      onOpenChange={(value) =>
+                        setSectionOpen((prev) => ({ ...prev, vehicle: value }))
+                      }
+                    >
+                      <VehicleSettings
+                        value={vehicleSpec}
+                        onChange={(value) => {
+                          setVehicleSpec(value);
+                          setLastCalculationSignature(null);
+                        }}
+                      />
+                    </PanelSection>
+                  ) : null}
 
                   <PanelSection
                     title="Podsumowanie"
@@ -654,12 +672,24 @@ function RoutingSettings({
   return (
     <div className="space-y-3">
       <FieldRow label="Transport">
-        <Select value={value.transportMode} onValueChange={() => undefined}>
+        <Select
+          value={value.transportMode}
+          onValueChange={(next) =>
+            onChange({
+              ...value,
+              transportMode: next as RoutingProfile["transportMode"],
+            })
+          }
+        >
           <SelectTrigger className="w-full">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="truck">Truck</SelectItem>
+            {TRANSPORT_MODES.map((item) => (
+              <SelectItem key={item.value} value={item.value}>
+                {item.label}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </FieldRow>
@@ -919,10 +949,19 @@ function normalizeVehicleSpec(vehicleSpec: VehicleSpec): VehicleSpec {
   };
 }
 
+function getVehicleSpecPayload(
+  routingProfile: RoutingProfile,
+  vehicleSpec: VehicleSpec
+): VehicleSpec | null {
+  return routingProfile.transportMode === "truck"
+    ? normalizeVehicleSpec(vehicleSpec)
+    : null;
+}
+
 function buildCalculationSignature(
   routePoints: RoutePointDraft[],
   routingProfile: RoutingProfile,
-  vehicleSpec: VehicleSpec
+  vehicleSpec: VehicleSpec | null
 ): string {
   return stableStringify({
     routePoints: routePoints.map((point) => ({
@@ -932,7 +971,7 @@ function buildCalculationSignature(
       behavior: point.behavior,
     })),
     routingProfile,
-    vehicleSpec: normalizeVehicleSpec(vehicleSpec),
+    vehicleSpec,
   });
 }
 
