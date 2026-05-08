@@ -107,14 +107,18 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
   React.useEffect(() => {
     if (!routeQuery.data || !open) return;
 
-    setRoutePoints(
-      routeQuery.data.routePoints.map((point) => ({
-        ...point,
-        clientId: point.id,
-      }))
-    );
-    setRoutingProfile(routeQuery.data.routingProfile ?? defaultRoutingProfile());
-    setVehicleSpec(routeQuery.data.vehicleSpec ?? defaultVehicleSpec());
+    const loadedRoutePoints = routeQuery.data.routePoints.map((point) => ({
+      ...point,
+      clientId: point.id,
+    }));
+    const loadedRoutingProfile =
+      routeQuery.data.routingProfile ?? defaultRoutingProfile();
+    const loadedVehicleSpec =
+      routeQuery.data.vehicleSpec ?? defaultVehicleSpec();
+
+    setRoutePoints(loadedRoutePoints);
+    setRoutingProfile(loadedRoutingProfile);
+    setVehicleSpec(loadedVehicleSpec);
     setPreview(
       routeQuery.data.routePlan
         ? {
@@ -127,7 +131,15 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
           }
         : null
     );
-    setLastCalculationSignature(null);
+    setLastCalculationSignature(
+      routeQuery.data.routePlan
+        ? buildCalculationSignature(
+            normalizeForPayload(loadedRoutePoints),
+            loadedRoutingProfile,
+            loadedVehicleSpec
+          )
+        : null
+    );
     setGeocodeResults([]);
     setAddressQuery("");
   }, [open, routeQuery.data]);
@@ -138,16 +150,7 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
   );
   const calculationSignature = React.useMemo(
     () =>
-      stableStringify({
-        routePoints: routePointPayload.map((point) => ({
-          sequence: point.sequence,
-          latitude: point.latitude,
-          longitude: point.longitude,
-          behavior: point.behavior,
-        })),
-        routingProfile,
-        vehicleSpec: normalizeVehicleSpec(vehicleSpec),
-      }),
+      buildCalculationSignature(routePointPayload, routingProfile, vehicleSpec),
     [routePointPayload, routingProfile, vehicleSpec]
   );
   const previewIsCurrent =
@@ -914,6 +917,23 @@ function normalizeVehicleSpec(vehicleSpec: VehicleSpec): VehicleSpec {
       ? vehicleSpec.hazardousGoods
       : null,
   };
+}
+
+function buildCalculationSignature(
+  routePoints: RoutePointDraft[],
+  routingProfile: RoutingProfile,
+  vehicleSpec: VehicleSpec
+): string {
+  return stableStringify({
+    routePoints: routePoints.map((point) => ({
+      sequence: point.sequence,
+      latitude: point.latitude,
+      longitude: point.longitude,
+      behavior: point.behavior,
+    })),
+    routingProfile,
+    vehicleSpec: normalizeVehicleSpec(vehicleSpec),
+  });
 }
 
 function stableStringify(value: unknown): string {
