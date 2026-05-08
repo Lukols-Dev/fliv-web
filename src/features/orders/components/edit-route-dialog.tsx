@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ChevronDown, Loader2, Plus, Save, X } from "lucide-react";
+import { ChevronDown, Loader2, Plus, Save, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -46,29 +46,29 @@ const POINT_TYPES: Array<{
   value: TransportOrderRoutePointType;
   label: string;
 }> = [
-  { value: "LOADING", label: "Załadunek" },
-  { value: "UNLOADING", label: "Rozładunek" },
-  { value: "FUEL", label: "Tankowanie" },
-  { value: "PARKING", label: "Parking" },
-  { value: "SERVICE", label: "Serwis" },
-  { value: "OTHER", label: "Inne" },
-];
+    { value: "LOADING", label: "Załadunek" },
+    { value: "UNLOADING", label: "Rozładunek" },
+    { value: "FUEL", label: "Tankowanie" },
+    { value: "PARKING", label: "Parking" },
+    { value: "SERVICE", label: "Serwis" },
+    { value: "OTHER", label: "Inne" },
+  ];
 
 const TRANSPORT_MODES: Array<{
   value: RoutingProfile["transportMode"];
   label: string;
 }> = [
-  { value: "car", label: "Car" },
-  { value: "truck", label: "Truck" },
-];
+    { value: "car", label: "Car" },
+    { value: "truck", label: "Truck" },
+  ];
 
 const ROUTING_MODES: Array<{
   value: RoutingProfile["routingMode"];
   label: string;
 }> = [
-  { value: "fast", label: "Fast" },
-  { value: "short", label: "Short" },
-];
+    { value: "fast", label: "Fast" },
+    { value: "short", label: "Short" },
+  ];
 
 const HAZARDOUS_GOODS: Array<{ value: HazardousGood; label: string }> = [
   { value: "explosive", label: "Wybuchowe" },
@@ -138,22 +138,22 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
     setPreview(
       routeQuery.data.routePlan
         ? {
-            routePreviewId: "",
-            calculationHash: routeQuery.data.routePlan.calculationHash,
-            polyline: routeQuery.data.routePlan.polyline,
-            distanceMeters: routeQuery.data.routePlan.distanceMeters,
-            durationSeconds: routeQuery.data.routePlan.durationSeconds,
-            calculatedAt: routeQuery.data.routePlan.calculatedAt,
-          }
+          routePreviewId: "",
+          calculationHash: routeQuery.data.routePlan.calculationHash,
+          polyline: routeQuery.data.routePlan.polyline,
+          distanceMeters: routeQuery.data.routePlan.distanceMeters,
+          durationSeconds: routeQuery.data.routePlan.durationSeconds,
+          calculatedAt: routeQuery.data.routePlan.calculatedAt,
+        }
         : null
     );
     setLastCalculationSignature(
       routeQuery.data.routePlan
         ? buildCalculationSignature(
-            normalizeForPayload(loadedRoutePoints),
-            loadedRoutingProfile,
-            getVehicleSpecPayload(loadedRoutingProfile, loadedVehicleSpec)
-          )
+          normalizeForPayload(loadedRoutePoints),
+          loadedRoutingProfile,
+          getVehicleSpecPayload(loadedRoutingProfile, loadedVehicleSpec)
+        )
         : null
     );
     setGeocodeResults([]);
@@ -321,7 +321,7 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
                 onClick={() => onOpenChange(false)}
                 className="h-8 w-8"
               >
-                <X className="h-4 w-4" />
+                <Search className="h-4 w-4" />
               </Button>
             </div>
 
@@ -460,8 +460,8 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
                           previewIsCurrent
                             ? "Aktualna"
                             : preview
-                            ? "Wymaga przeliczenia"
-                            : "Nieprzeliczona"
+                              ? "Wymaga przeliczenia"
+                              : "Nieprzeliczona"
                         }
                       />
                       <SummaryItem label="Punkty" value={String(routePoints.length)} />
@@ -761,7 +761,7 @@ function VehicleSettings({
   onChange: (value: VehicleSpec) => void;
 }) {
   const hazardousGoods = value.hazardousGoods ?? [];
-  const hasHazardousGoods = hazardousGoods.length > 0;
+  const adrEnabled = Array.isArray(value.hazardousGoods);
 
   const setNumber = (key: keyof VehicleSpec, nextValue: number | null) => {
     onChange({ ...value, [key]: nextValue });
@@ -796,25 +796,27 @@ function VehicleSettings({
 
       <FieldRow label="ADR">
         <RadioGroup
-          value={hasHazardousGoods ? "yes" : "no"}
+          value={adrEnabled ? "yes" : "no"}
           onValueChange={(next) =>
             onChange({
               ...value,
-              hazardousGoods: next === "yes" ? hazardousGoods : null,
+              hazardousGoods: next === "yes" ? [] : null,
             })
           }
           className="flex gap-4"
         >
-          <label className="flex items-center gap-2 text-sm">
-            <RadioGroupItem value="no" /> Nie
-          </label>
-          <label className="flex items-center gap-2 text-sm">
-            <RadioGroupItem value="yes" /> Tak
-          </label>
+          <div className="flex items-center gap-2">
+            <RadioGroupItem id="adr-no" value="no" />
+            <Label htmlFor="adr-no">Nie</Label>
+          </div>
+          <div className="flex items-center gap-2">
+            <RadioGroupItem id="adr-yes" value="yes" />
+            <Label htmlFor="adr-yes">Tak</Label>
+          </div>
         </RadioGroup>
       </FieldRow>
 
-      {hasHazardousGoods ? (
+      {adrEnabled ? (
         <div className="space-y-2">
           <Label className="text-xs">Towary niebezpieczne</Label>
           <div className="grid grid-cols-1 gap-2 rounded-md border p-2">
@@ -823,10 +825,10 @@ function VehicleSettings({
                 <Checkbox
                   checked={hazardousGoods.includes(item.value)}
                   onCheckedChange={(checked) => {
-                    const next = checked
+                    const next = checked === true
                       ? [...hazardousGoods, item.value]
                       : hazardousGoods.filter((value) => value !== item.value);
-                    onChange({ ...value, hazardousGoods: next.length ? next : [] });
+                    onChange({ ...value, hazardousGoods: next });
                   }}
                 />
                 {item.label}
@@ -1016,8 +1018,8 @@ function formatDistance(distanceMeters: number): string {
   return distanceMeters < 1000
     ? `${Math.round(distanceMeters)} m`
     : `${new Intl.NumberFormat("pl-PL", {
-        maximumFractionDigits: distanceMeters >= 100_000 ? 0 : 1,
-      }).format(distanceMeters / 1000)} km`;
+      maximumFractionDigits: distanceMeters >= 100_000 ? 0 : 1,
+    }).format(distanceMeters / 1000)} km`;
 }
 
 function formatDuration(durationSeconds: number): string {
