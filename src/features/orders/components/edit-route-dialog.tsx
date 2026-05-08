@@ -62,6 +62,14 @@ const TRANSPORT_MODES: Array<{
   { value: "truck", label: "Truck" },
 ];
 
+const ROUTING_MODES: Array<{
+  value: RoutingProfile["routingMode"];
+  label: string;
+}> = [
+  { value: "fast", label: "Fast" },
+  { value: "short", label: "Short" },
+];
+
 const HAZARDOUS_GOODS: Array<{ value: HazardousGood; label: string }> = [
   { value: "explosive", label: "Wybuchowe" },
   { value: "gas", label: "Gaz" },
@@ -694,12 +702,24 @@ function RoutingSettings({
         </Select>
       </FieldRow>
       <FieldRow label="Routing">
-        <Select value={value.routingMode} onValueChange={() => undefined}>
+        <Select
+          value={value.routingMode}
+          onValueChange={(next) =>
+            onChange({
+              ...value,
+              routingMode: next as RoutingProfile["routingMode"],
+            })
+          }
+        >
           <SelectTrigger className="w-full">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="fast">Fast</SelectItem>
+            {ROUTING_MODES.map((item) => (
+              <SelectItem key={item.value} value={item.value}>
+                {item.label}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </FieldRow>

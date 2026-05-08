@@ -63,7 +63,7 @@ export type HazardousGood =
 
 export type RoutingProfile = {
   transportMode: "car" | "truck";
-  routingMode: "fast";
+  routingMode: "fast" | "short";
   trafficMode: "default" | "disabled";
   avoidTolls: boolean;
   avoidFerries: boolean;
