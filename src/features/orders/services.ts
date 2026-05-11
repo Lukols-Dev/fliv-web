@@ -3,15 +3,20 @@ import { ordersEndpoints } from "./lib/endpoints";
 import type {
   CalculateTransportOrderRoutePayload,
   CalculateTransportOrderRouteResult,
+  CreatePartnerPoiPayload,
   CreateTransportOrderPayload,
   CreateTransportOrderResult,
+  ListPartnerPoisParams,
   OrderDetailsDto,
   OrderDocumentDto,
   OrdersPageDto,
+  PartnerPoiDto,
+  PartnerPoisListDto,
   RouteGeocodeResult,
   SaveTransportOrderRoutePayload,
   SaveTransportOrderRouteResult,
   TransportOrderRouteDto,
+  UpdatePartnerPoiPayload,
   UpdateTransportOrderPayload,
   UpdateTransportOrderResult,
 } from "./types";
@@ -193,4 +198,57 @@ export function saveOrderRoute(
       withCredentials: true,
     }
   );
+}
+
+export function listPartnerPois(params: ListPartnerPoisParams) {
+  const path = withQuery(ordersEndpoints.partnerPois, {
+    north: params.bbox.north,
+    south: params.bbox.south,
+    east: params.bbox.east,
+    west: params.bbox.west,
+    isActive:
+      params.isActive === undefined ? undefined : String(params.isActive),
+  });
+
+  return apiFetchPath<PartnerPoisListDto>(path, {
+    method: "GET",
+    signal: params.signal,
+    withCredentials: true,
+  });
+}
+
+export function createPartnerPoi(
+  payload: CreatePartnerPoiPayload,
+  options: { signal?: AbortSignal } = {}
+) {
+  return apiFetchPath<PartnerPoiDto>(ordersEndpoints.partnerPois, {
+    method: "POST",
+    body: JSON.stringify(payload),
+    signal: options.signal,
+    withCredentials: true,
+  });
+}
+
+export function updatePartnerPoi(
+  id: string,
+  payload: UpdatePartnerPoiPayload,
+  options: { signal?: AbortSignal } = {}
+) {
+  return apiFetchPath<PartnerPoiDto>(ordersEndpoints.partnerPoiById(id), {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+    signal: options.signal,
+    withCredentials: true,
+  });
+}
+
+export function deletePartnerPoi(
+  id: string,
+  options: { signal?: AbortSignal } = {}
+) {
+  return apiFetchPath<{ success: boolean }>(ordersEndpoints.partnerPoiById(id), {
+    method: "DELETE",
+    signal: options.signal,
+    withCredentials: true,
+  });
 }

@@ -1,7 +1,17 @@
 "use client";
 
 import * as React from "react";
-import { ChevronDown, Loader2, Save, Search, X } from "lucide-react";
+import {
+  ChevronDown,
+  Loader2,
+  MapPin,
+  Pencil,
+  Plus,
+  Save,
+  Search,
+  Trash2,
+  X,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -27,6 +37,12 @@ import type { HereMapMarkerMode } from "./here-static-map";
 import { Spinner } from "@/components/ui/spinner";
 import { useOrderRouteQuery } from "../hooks/use-order-route-query";
 import {
+  useCreatePartnerPoiMutation,
+  useDeletePartnerPoiMutation,
+  useUpdatePartnerPoiMutation,
+} from "../hooks/use-partner-poi-mutations";
+import { usePartnerPoisQuery } from "../hooks/use-partner-pois-query";
+import {
   useCalculateRouteMutation,
   useRouteGeocodeMutation,
   useSaveRouteMutation,
@@ -34,6 +50,9 @@ import {
 import type {
   CalculateTransportOrderRouteResult,
   HazardousGood,
+  PartnerPoiBbox,
+  PartnerPoiDto,
+  PartnerPoiType,
   RouteGeocodeResult,
   RoutePointDraft,
   RoutingProfile,
@@ -53,6 +72,16 @@ const POINT_TYPES: Array<{
     { value: "SERVICE", label: "Serwis" },
     { value: "OTHER", label: "Inne" },
   ];
+
+const PARTNER_POI_TYPES: Array<{
+  value: PartnerPoiType;
+  label: string;
+}> = [
+  { value: "FUEL", label: "Stacja paliw" },
+  { value: "PARKING", label: "Parking" },
+  { value: "SERVICE", label: "Serwis" },
+  { value: "OTHER", label: "Inne" },
+];
 
 const TRANSPORT_MODES: Array<{
   value: RoutingProfile["transportMode"];
@@ -97,6 +126,13 @@ type LocalRoutePoint = RoutePointDraft & {
   markerMode: HereMapMarkerMode;
 };
 
+type PartnerPoiFormState = {
+  name: string;
+  type: PartnerPoiType;
+  address: string;
+  isActive: boolean;
+};
+
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -108,6 +144,9 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
   const geocodeMutation = useRouteGeocodeMutation();
   const calculateMutation = useCalculateRouteMutation(orderId);
   const saveMutation = useSaveRouteMutation(orderId);
+  const createPartnerPoiMutation = useCreatePartnerPoiMutation();
+  const updatePartnerPoiMutation = useUpdatePartnerPoiMutation();
+  const deletePartnerPoiMutation = useDeletePartnerPoiMutation();
 
   const [routePoints, setRoutePoints] = React.useState<LocalRoutePoint[]>([]);
   const [routingProfile, setRoutingProfile] =
@@ -122,11 +161,23 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
   const [geocodeResults, setGeocodeResults] = React.useState<
     RouteGeocodeResult[]
   >([]);
+  const [showPartnerPois, setShowPartnerPois] = React.useState(true);
+  const [partnerPoiBbox, setPartnerPoiBbox] =
+    React.useState<PartnerPoiBbox | null>(null);
+  const [partnerPoiForm, setPartnerPoiForm] =
+    React.useState<PartnerPoiFormState>(defaultPartnerPoiForm);
+  const [editingPartnerPoiId, setEditingPartnerPoiId] =
+    React.useState<string | null>(null);
   const [sectionOpen, setSectionOpen] = React.useState({
     points: true,
+    partnerPois: true,
     routing: true,
     vehicle: false,
     summary: true,
+  });
+  const partnerPoisQuery = usePartnerPoisQuery({
+    bbox: partnerPoiBbox,
+    enabled: open && !!partnerPoiBbox,
   });
 
   React.useEffect(() => {
@@ -168,6 +219,8 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
     );
     setGeocodeResults([]);
     setAddressQuery("");
+    setPartnerPoiForm(defaultPartnerPoiForm());
+    setEditingPartnerPoiId(null);
   }, [open, routeQuery.data]);
 
   const routePointPayload = React.useMemo(
@@ -203,6 +256,25 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
     !!preview.routePreviewId &&
     !!preview.calculationHash &&
     !saveMutation.isPending;
+  const partnerPois = partnerPoisQuery.data?.items ?? [];
+  const visiblePartnerPois = showPartnerPois
+    ? partnerPois.filter((poi) => poi.isActive)
+    : [];
+
+  const handlePartnerPoiBboxChange = React.useCallback(
+    (bbox: PartnerPoiBbox) => {
+      setPartnerPoiBbox((current) =>
+        current &&
+        current.north === bbox.north &&
+        current.south === bbox.south &&
+        current.east === bbox.east &&
+        current.west === bbox.west
+          ? current
+          : bbox
+      );
+    },
+    []
+  );
 
   const addPoint = React.useCallback((point: Omit<LocalRoutePoint, "sequence">) => {
     setRoutePoints((current) => [
@@ -211,6 +283,68 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
     ]);
     setLastCalculationSignature(null);
   }, []);
+
+  const handleAddPartnerPoiToRoute = React.useCallback((poi: PartnerPoiDto) => {
+    setRoutePoints((current) => {
+      const nextPoint: LocalRoutePoint = {
+        clientId: crypto.randomUUID(),
+        markerMode: "typed",
+        sequence: 0,
+        type: poi.type,
+        behavior: "STOP",
+        source: "DISPATCHER",
+        isManual: true,
+        label: poi.name || getPartnerPoiTypeLabel(poi.type),
+        address: poi.address,
+        latitude: poi.latitude,
+        longitude: poi.longitude,
+      };
+      const next = current.slice();
+      const unloadIndex = next.findIndex((point) => point.type === "UNLOADING");
+      next.splice(unloadIndex >= 0 ? unloadIndex : next.length, 0, nextPoint);
+      return next.map((point, index) => ({ ...point, sequence: index + 1 }));
+    });
+    setLastCalculationSignature(null);
+  }, []);
+
+  const handleSubmitPartnerPoi = async () => {
+    const address = partnerPoiForm.address.trim();
+    if (!address) return;
+
+    const payload = {
+      name: partnerPoiForm.name.trim() || null,
+      type: partnerPoiForm.type,
+      address,
+      isActive: partnerPoiForm.isActive,
+    };
+
+    if (editingPartnerPoiId) {
+      await updatePartnerPoiMutation.mutateAsync({
+        id: editingPartnerPoiId,
+        payload,
+      });
+    } else {
+      await createPartnerPoiMutation.mutateAsync(payload);
+    }
+
+    setPartnerPoiForm(defaultPartnerPoiForm());
+    setEditingPartnerPoiId(null);
+  };
+
+  const handleEditPartnerPoi = (poi: PartnerPoiDto) => {
+    setEditingPartnerPoiId(poi.id);
+    setPartnerPoiForm({
+      name: poi.name ?? "",
+      type: poi.type,
+      address: poi.address,
+      isActive: poi.isActive,
+    });
+  };
+
+  const handleCancelPartnerPoiEdit = () => {
+    setEditingPartnerPoiId(null);
+    setPartnerPoiForm(defaultPartnerPoiForm());
+  };
 
   const handleGeocode = async () => {
     const query = addressQuery.trim();
@@ -318,6 +452,9 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
             <HereStaticMap
               routePoints={mapRoutePoints}
               polyline={visiblePolyline}
+              partnerPois={visiblePartnerPois}
+              onPartnerPoiAddToRoute={handleAddPartnerPoiToRoute}
+              onViewportBboxChange={handlePartnerPoiBboxChange}
             />
           </div>
 
@@ -413,6 +550,50 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
                         ))}
                       </div>
                     </div>
+                  </PanelSection>
+
+                  <PanelSection
+                    title="Punkty partnerskie"
+                    open={sectionOpen.partnerPois}
+                    onOpenChange={(value) =>
+                      setSectionOpen((prev) => ({
+                        ...prev,
+                        partnerPois: value,
+                      }))
+                    }
+                  >
+                    <PartnerPoiSection
+                      items={partnerPois}
+                      form={partnerPoiForm}
+                      editingId={editingPartnerPoiId}
+                      showOnMap={showPartnerPois}
+                      bboxReady={!!partnerPoiBbox}
+                      isLoading={partnerPoisQuery.isPending}
+                      isError={partnerPoisQuery.isError}
+                      isSubmitting={
+                        createPartnerPoiMutation.isPending ||
+                        updatePartnerPoiMutation.isPending
+                      }
+                      deletingId={
+                        deletePartnerPoiMutation.variables &&
+                        deletePartnerPoiMutation.isPending
+                          ? deletePartnerPoiMutation.variables
+                          : null
+                      }
+                      onShowOnMapChange={setShowPartnerPois}
+                      onFormChange={setPartnerPoiForm}
+                      onSubmit={handleSubmitPartnerPoi}
+                      onCancelEdit={handleCancelPartnerPoiEdit}
+                      onEdit={handleEditPartnerPoi}
+                      onDelete={(id) => deletePartnerPoiMutation.mutate(id)}
+                      onToggleActive={(poi) =>
+                        updatePartnerPoiMutation.mutate({
+                          id: poi.id,
+                          payload: { isActive: !poi.isActive },
+                        })
+                      }
+                      onAddToRoute={handleAddPartnerPoiToRoute}
+                    />
                   </PanelSection>
 
                   <PanelSection
@@ -700,6 +881,216 @@ function RoutePointRow({
             placeholder="Longitude"
           />
         </div>
+      </div>
+    </div>
+  );
+}
+
+function PartnerPoiSection({
+  items,
+  form,
+  editingId,
+  showOnMap,
+  bboxReady,
+  isLoading,
+  isError,
+  isSubmitting,
+  deletingId,
+  onShowOnMapChange,
+  onFormChange,
+  onSubmit,
+  onCancelEdit,
+  onEdit,
+  onDelete,
+  onToggleActive,
+  onAddToRoute,
+}: {
+  items: PartnerPoiDto[];
+  form: PartnerPoiFormState;
+  editingId: string | null;
+  showOnMap: boolean;
+  bboxReady: boolean;
+  isLoading: boolean;
+  isError: boolean;
+  isSubmitting: boolean;
+  deletingId: string | null;
+  onShowOnMapChange: (value: boolean) => void;
+  onFormChange: (value: PartnerPoiFormState) => void;
+  onSubmit: () => void;
+  onCancelEdit: () => void;
+  onEdit: (poi: PartnerPoiDto) => void;
+  onDelete: (id: string) => void;
+  onToggleActive: (poi: PartnerPoiDto) => void;
+  onAddToRoute: (poi: PartnerPoiDto) => void;
+}) {
+  const canSubmit = !!form.address.trim() && !isSubmitting;
+
+  return (
+    <div className="space-y-4">
+      <label className="flex items-center justify-between gap-3 text-sm">
+        <span className="flex items-center gap-2">
+          <MapPin className="h-4 w-4" />
+          Pokaż markery POI
+        </span>
+        <Switch checked={showOnMap} onCheckedChange={onShowOnMapChange} />
+      </label>
+
+      <div className="space-y-2 rounded-md border p-3">
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-semibold">
+            {editingId ? "Edytuj punkt" : "Dodaj punkt"}
+          </p>
+          {editingId ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={onCancelEdit}
+            >
+              Anuluj
+            </Button>
+          ) : null}
+        </div>
+
+        <Input
+          value={form.name}
+          onChange={(event) =>
+            onFormChange({ ...form, name: event.target.value })
+          }
+          placeholder="Nazwa punktu"
+        />
+        <div className="grid grid-cols-[1fr_auto] gap-2">
+          <Select
+            value={form.type}
+            onValueChange={(value) =>
+              onFormChange({ ...form, type: value as PartnerPoiType })
+            }
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {PARTNER_POI_TYPES.map((item) => (
+                <SelectItem key={item.value} value={item.value}>
+                  {item.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <label className="flex items-center gap-2 rounded-md border px-2 text-xs">
+            <Switch
+              checked={form.isActive}
+              onCheckedChange={(checked) =>
+                onFormChange({ ...form, isActive: checked })
+              }
+            />
+            Aktywny
+          </label>
+        </div>
+        <Input
+          value={form.address}
+          onChange={(event) =>
+            onFormChange({ ...form, address: event.target.value })
+          }
+          placeholder="Adres do geokodowania HERE"
+        />
+        <Button
+          type="button"
+          className="w-full"
+          onClick={onSubmit}
+          disabled={!canSubmit}
+        >
+          {isSubmitting ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : editingId ? (
+            <Save className="mr-2 h-4 w-4" />
+          ) : (
+            <Plus className="mr-2 h-4 w-4" />
+          )}
+          {editingId ? "Zapisz punkt" : "Dodaj punkt"}
+        </Button>
+      </div>
+
+      <div className="space-y-2">
+        {!bboxReady ? (
+          <p className="rounded-md border p-3 text-xs text-muted-foreground">
+            Punkty zostaną pobrane po załadowaniu obszaru mapy.
+          </p>
+        ) : isLoading ? (
+          <div className="flex items-center gap-2 rounded-md border p-3 text-xs text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Ładowanie punktów partnerskich...
+          </div>
+        ) : isError ? (
+          <p className="rounded-md border p-3 text-xs text-destructive">
+            Nie udało się pobrać punktów partnerskich.
+          </p>
+        ) : items.length === 0 ? (
+          <p className="rounded-md border p-3 text-xs text-muted-foreground">
+            Brak punktów partnerskich w tym obszarze.
+          </p>
+        ) : (
+          items.map((poi) => (
+            <div key={poi.id} className="rounded-md border p-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold">
+                    {poi.name || getPartnerPoiTypeLabel(poi.type)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {getPartnerPoiTypeLabel(poi.type)}
+                    {!poi.isActive ? " · ukryty" : ""}
+                  </p>
+                  <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                    {poi.address}
+                  </p>
+                </div>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-1">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onAddToRoute(poi)}
+                >
+                  <Plus className="mr-1 h-3.5 w-3.5" />
+                  Do trasy
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onEdit(poi)}
+                >
+                  <Pencil className="mr-1 h-3.5 w-3.5" />
+                  Edytuj
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onToggleActive(poi)}
+                >
+                  {poi.isActive ? "Ukryj" : "Pokaż"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={deletingId === poi.id}
+                  onClick={() => onDelete(poi.id)}
+                >
+                  {deletingId === poi.id ? (
+                    <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Trash2 className="mr-1 h-3.5 w-3.5" />
+                  )}
+                  Usuń
+                </Button>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
@@ -1014,6 +1405,25 @@ function defaultVehicleSpec(): VehicleSpec {
     trailerCount: 1,
     hazardousGoods: null,
   };
+}
+
+function defaultPartnerPoiForm(): PartnerPoiFormState {
+  return {
+    name: "",
+    type: "FUEL",
+    address: "",
+    isActive: true,
+  };
+}
+
+function getPartnerPoiTypeLabel(type: PartnerPoiType): string {
+  return type === "FUEL"
+    ? "Stacja paliw"
+    : type === "PARKING"
+    ? "Parking"
+    : type === "SERVICE"
+    ? "Serwis"
+    : "Inne";
 }
 
 function normalizeVehicleSpec(vehicleSpec: VehicleSpec): VehicleSpec {

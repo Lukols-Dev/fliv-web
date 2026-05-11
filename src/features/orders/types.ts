@@ -29,6 +29,7 @@ export type TransportOrderRoutePointType =
   | "OTHER";
 export type TransportOrderRoutePointBehavior = "STOP" | "PASS_THROUGH";
 export type TransportOrderRoutePointSource = "DISPATCHER" | "SYSTEM" | "HERE";
+export type PartnerPoiType = "FUEL" | "PARKING" | "SERVICE" | "OTHER";
 
 export type TransportOrderRoutePointDto = {
   id: string;
@@ -134,6 +135,44 @@ export type RouteGeocodeResult = {
   address?: string | null;
   hereId?: string | null;
 };
+
+export type PartnerPoiDto = {
+  id: string;
+  name: string | null;
+  type: PartnerPoiType;
+  address: string;
+  latitude: number;
+  longitude: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type PartnerPoiBbox = {
+  north: number;
+  south: number;
+  east: number;
+  west: number;
+};
+
+export type ListPartnerPoisParams = {
+  bbox: PartnerPoiBbox;
+  isActive?: boolean;
+  signal?: AbortSignal;
+};
+
+export type PartnerPoisListDto = {
+  items: PartnerPoiDto[];
+};
+
+export type CreatePartnerPoiPayload = {
+  name?: string | null;
+  type?: PartnerPoiType;
+  address: string;
+  isActive?: boolean;
+};
+
+export type UpdatePartnerPoiPayload = Partial<CreatePartnerPoiPayload>;
 
 export type DispatcherOrderDto = {
   id: string;

@@ -24,4 +24,7 @@ export const ordersEndpoints = {
       apiPaths.v1,
       `/dispatcher/transport-orders/documents/${orderDocumentId}`
     ),
+  partnerPois: joinPath(apiPaths.v1, "/dispatcher/partner-pois"),
+  partnerPoiById: (id: string) =>
+    joinPath(apiPaths.v1, `/dispatcher/partner-pois/${id}`),
 } as const;

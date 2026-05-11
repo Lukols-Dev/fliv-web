@@ -2,7 +2,11 @@
 
 import * as React from "react";
 import { ROUTE_POINT_ICON_PATHS } from "../lib/route-point-icons";
-import type { TransportOrderRoutePointDto } from "../types";
+import type {
+  PartnerPoiBbox,
+  PartnerPoiDto,
+  TransportOrderRoutePointDto,
+} from "../types";
 
 const HARDCODED_CENTER = { lat: 52.2297, lng: 21.0122 };
 const HARDCODED_ZOOM = 12;
@@ -37,11 +41,16 @@ type HereDefaultLayers = {
 type HereMap = {
   addObject(object: unknown): void;
   removeObject(object: unknown): void;
+  addEventListener(type: string, listener: () => void): void;
+  removeEventListener(type: string, listener: () => void): void;
   dispose(): void;
   getViewPort(): {
     resize(): void;
   };
   getViewModel(): {
+    getLookAtData(): {
+      bounds?: unknown;
+    };
     setLookAtData(data: {
       bounds?: unknown;
       position?: HereMapPoint;
@@ -56,6 +65,15 @@ type HereMapGroup = {
   addObject(object: unknown): void;
   addObjects(objects: unknown[]): void;
   getBoundingBox(): unknown;
+};
+
+type HereMapMarker = {
+  addEventListener(type: string, listener: () => void): void;
+};
+
+type HereUi = {
+  addBubble(bubble: unknown): void;
+  removeBubble(bubble: unknown): void;
 };
 
 type HereNamespace = {
@@ -75,8 +93,12 @@ type HereNamespace = {
   };
   ui: {
     UI: {
-      createDefault(map: HereMap, layers: HereDefaultLayers): unknown;
+      createDefault(map: HereMap, layers: HereDefaultLayers): HereUi;
     };
+    InfoBubble: new (
+      point: HereMapPoint,
+      options: { content: string | HTMLElement }
+    ) => unknown;
   };
   map: {
     Group: new () => HereMapGroup;
@@ -87,7 +109,10 @@ type HereNamespace = {
         size?: { w: number; h: number };
       }
     ) => unknown;
-    Marker: new (point: HereMapPoint, options?: { icon?: unknown }) => unknown;
+    Marker: new (
+      point: HereMapPoint,
+      options?: { icon?: unknown }
+    ) => HereMapMarker;
     Polyline: new (
       lineString: unknown,
       options?: {
@@ -108,7 +133,10 @@ type HereNamespace = {
 type Props = {
   routePoints: HereMapRoutePoint[];
   polyline?: string | null;
+  partnerPois?: PartnerPoiDto[];
   showUiControls?: boolean;
+  onPartnerPoiAddToRoute?: (poi: PartnerPoiDto) => void;
+  onViewportBboxChange?: (bbox: PartnerPoiBbox) => void;
 };
 
 declare global {
@@ -121,12 +149,18 @@ declare global {
 export function HereStaticMap({
   routePoints,
   polyline,
+  partnerPois = [],
   showUiControls = true,
+  onPartnerPoiAddToRoute,
+  onViewportBboxChange,
 }: Props) {
   const mapRef = React.useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = React.useRef<HereMap | null>(null);
   const hereRef = React.useRef<HereNamespace | null>(null);
+  const uiRef = React.useRef<HereUi | null>(null);
   const routeGroupRef = React.useRef<HereMapGroup | null>(null);
+  const poiGroupRef = React.useRef<HereMapGroup | null>(null);
+  const infoBubbleRef = React.useRef<unknown | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [mapReady, setMapReady] = React.useState(false);
   const sortedPoints = React.useMemo(
@@ -139,6 +173,113 @@ export function HereStaticMap({
         .slice()
         .sort((a, b) => a.sequence - b.sequence),
     [routePoints]
+  );
+  const activePartnerPois = React.useMemo(
+    () =>
+      partnerPois.filter(
+        (poi) =>
+          poi.isActive &&
+          Number.isFinite(poi.latitude) &&
+          Number.isFinite(poi.longitude)
+      ),
+    [partnerPois]
+  );
+
+  const closePartnerPoiBubble = React.useCallback(() => {
+    const ui = uiRef.current;
+    const bubble = infoBubbleRef.current;
+    if (ui && bubble) {
+      ui.removeBubble(bubble);
+    }
+    infoBubbleRef.current = null;
+  }, []);
+
+  const openPartnerPoiBubble = React.useCallback(
+    (poi: PartnerPoiDto) => {
+      const H = hereRef.current;
+      const ui = uiRef.current;
+      if (!H || !ui || !onPartnerPoiAddToRoute) return;
+
+      closePartnerPoiBubble();
+
+      const content = document.createElement("div");
+      content.className = "min-w-[180px] space-y-2 text-sm";
+
+      const title = document.createElement("div");
+      title.className = "font-semibold";
+      title.textContent = poi.name || getPartnerPoiTypeLabel(poi.type);
+      content.appendChild(title);
+
+      const address = document.createElement("div");
+      address.className = "text-xs text-muted-foreground";
+      address.textContent = poi.address;
+      content.appendChild(address);
+
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className =
+        "rounded-md bg-primary px-2 py-1 text-xs font-medium text-primary-foreground";
+      button.textContent = "Dodaj do trasy";
+      button.addEventListener("click", () => {
+        onPartnerPoiAddToRoute(poi);
+        closePartnerPoiBubble();
+      });
+      content.appendChild(button);
+
+      const bubble = new H.ui.InfoBubble(
+        { lat: poi.latitude, lng: poi.longitude },
+        { content }
+      );
+      ui.addBubble(bubble);
+      infoBubbleRef.current = bubble;
+    },
+    [closePartnerPoiBubble, onPartnerPoiAddToRoute]
+  );
+
+  const openRoutePointBubble = React.useCallback(
+    (point: HereMapRoutePoint, index: number) => {
+      const H = hereRef.current;
+      const ui = uiRef.current;
+      if (!H || !ui) return;
+
+      closePartnerPoiBubble();
+
+      const content = document.createElement("div");
+      content.className = "min-w-[200px] space-y-2 text-sm";
+
+      const title = document.createElement("div");
+      title.className = "font-semibold";
+      title.textContent =
+        point.label || `${index + 1}. ${getRoutePointTypeLabel(point.type)}`;
+      content.appendChild(title);
+
+      const type = document.createElement("div");
+      type.className = "text-xs text-muted-foreground";
+      type.textContent = `${getRoutePointTypeLabel(point.type)} · ${
+        point.behavior === "PASS_THROUGH" ? "Przebieg" : "Postój"
+      }`;
+      content.appendChild(type);
+
+      if (point.address) {
+        const address = document.createElement("div");
+        address.className = "text-xs text-muted-foreground";
+        address.textContent = point.address;
+        content.appendChild(address);
+      }
+
+      const coords = document.createElement("div");
+      coords.className = "text-[11px] text-muted-foreground";
+      coords.textContent = `${point.latitude.toFixed(5)}, ${point.longitude.toFixed(5)}`;
+      content.appendChild(coords);
+
+      const bubble = new H.ui.InfoBubble(
+        { lat: point.latitude, lng: point.longitude },
+        { content }
+      );
+      ui.addBubble(bubble);
+      infoBubbleRef.current = bubble;
+    },
+    [closePartnerPoiBubble]
   );
 
   React.useEffect(() => {
@@ -172,12 +313,13 @@ export function HereStaticMap({
 
         new H.mapevents.Behavior(new H.mapevents.MapEvents(map));
         if (showUiControls) {
-          H.ui.UI.createDefault(map, defaultLayers);
+          uiRef.current = H.ui.UI.createDefault(map, defaultLayers);
         }
 
         hereRef.current = H;
         mapInstanceRef.current = map;
         setMapReady(true);
+        emitViewportBbox(map, onViewportBboxChange);
         window.addEventListener("resize", handleResize);
       })
       .catch(() => {
@@ -189,12 +331,32 @@ export function HereStaticMap({
     return () => {
       cancelled = true;
       window.removeEventListener("resize", handleResize);
+      closePartnerPoiBubble();
       mapInstanceRef.current?.dispose();
       routeGroupRef.current = null;
+      poiGroupRef.current = null;
       mapInstanceRef.current = null;
       hereRef.current = null;
+      uiRef.current = null;
     };
-  }, [showUiControls]);
+  }, [closePartnerPoiBubble, onViewportBboxChange, showUiControls]);
+
+  React.useEffect(() => {
+    if (!mapReady || !onViewportBboxChange) return;
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    const handleViewChangeEnd = () => {
+      emitViewportBbox(map, onViewportBboxChange);
+    };
+
+    map.addEventListener("mapviewchangeend", handleViewChangeEnd);
+    handleViewChangeEnd();
+
+    return () => {
+      map.removeEventListener("mapviewchangeend", handleViewChangeEnd);
+    };
+  }, [mapReady, onViewportBboxChange]);
 
   React.useEffect(() => {
     if (!mapReady) return;
@@ -202,6 +364,8 @@ export function HereStaticMap({
     const H = hereRef.current;
     const map = mapInstanceRef.current;
     if (!H || !map) return;
+
+    closePartnerPoiBubble();
 
     if (routeGroupRef.current) {
       map.removeObject(routeGroupRef.current);
@@ -211,10 +375,16 @@ export function HereStaticMap({
     if (!sortedPoints.length) {
       map.setCenter(HARDCODED_CENTER);
       map.setZoom(HARDCODED_ZOOM);
+      emitViewportBbox(map, onViewportBboxChange);
       return;
     }
 
-    const group = createRouteObjectsGroup(H, sortedPoints, polyline);
+    const group = createRouteObjectsGroup(
+      H,
+      sortedPoints,
+      polyline,
+      openRoutePointBubble
+    );
     map.addObject(group);
     routeGroupRef.current = group;
 
@@ -224,10 +394,12 @@ export function HereStaticMap({
         lng: sortedPoints[0].longitude,
       });
       map.setZoom(13);
+      emitViewportBbox(map, onViewportBboxChange);
       return;
     }
 
     map.getViewModel().setLookAtData({ bounds: group.getBoundingBox() });
+    emitViewportBbox(map, onViewportBboxChange);
 
     return () => {
       if (routeGroupRef.current === group) {
@@ -235,7 +407,54 @@ export function HereStaticMap({
         routeGroupRef.current = null;
       }
     };
-  }, [mapReady, polyline, sortedPoints]);
+  }, [
+    closePartnerPoiBubble,
+    mapReady,
+    onViewportBboxChange,
+    openRoutePointBubble,
+    polyline,
+    sortedPoints,
+  ]);
+
+  React.useEffect(() => {
+    if (!mapReady) return;
+
+    const H = hereRef.current;
+    const map = mapInstanceRef.current;
+    if (!H || !map) return;
+
+    closePartnerPoiBubble();
+
+    if (poiGroupRef.current) {
+      map.removeObject(poiGroupRef.current);
+      poiGroupRef.current = null;
+    }
+
+    if (!activePartnerPois.length || !onPartnerPoiAddToRoute) {
+      return;
+    }
+
+    const group = createPartnerPoiObjectsGroup(
+      H,
+      activePartnerPois,
+      openPartnerPoiBubble
+    );
+    map.addObject(group);
+    poiGroupRef.current = group;
+
+    return () => {
+      if (poiGroupRef.current === group) {
+        map.removeObject(group);
+        poiGroupRef.current = null;
+      }
+    };
+  }, [
+    activePartnerPois,
+    closePartnerPoiBubble,
+    mapReady,
+    onPartnerPoiAddToRoute,
+    openPartnerPoiBubble,
+  ]);
 
   if (error) {
     return (
@@ -260,7 +479,8 @@ export function HereStaticMap({
 function createRouteObjectsGroup(
   H: HereNamespace,
   points: HereMapRoutePoint[],
-  polyline?: string | null
+  polyline?: string | null,
+  onMarkerTap?: (point: HereMapRoutePoint, index: number) => void
 ) {
   const group = new H.map.Group();
   const routeLines = decodePolyline(H, polyline);
@@ -270,21 +490,45 @@ function createRouteObjectsGroup(
   }
 
   group.addObjects(
-    points.map(
-      (point, index) =>
-        new H.map.Marker(
-          {
-            lat: point.latitude,
-            lng: point.longitude,
-          },
-          {
-            icon:
-              point.markerMode === "typed"
-                ? createTypedIcon(H, point.type)
-                : createNumberedIcon(H, index + 1, point.type),
-          }
-        )
-    )
+    points.map((point, index) => {
+      const marker = new H.map.Marker(
+        {
+          lat: point.latitude,
+          lng: point.longitude,
+        },
+        {
+          icon:
+            point.markerMode === "typed"
+              ? createTypedIcon(H, point.type)
+              : createNumberedIcon(H, index + 1, point.type),
+        }
+      );
+      if (onMarkerTap) {
+        marker.addEventListener("tap", () => onMarkerTap(point, index));
+      }
+      return marker;
+    })
+  );
+
+  return group;
+}
+
+function createPartnerPoiObjectsGroup(
+  H: HereNamespace,
+  partnerPois: PartnerPoiDto[],
+  onMarkerTap: (poi: PartnerPoiDto) => void
+) {
+  const group = new H.map.Group();
+
+  group.addObjects(
+    partnerPois.map((poi) => {
+      const marker = new H.map.Marker(
+        { lat: poi.latitude, lng: poi.longitude },
+        { icon: createPartnerPoiIcon(H, poi.type) }
+      );
+      marker.addEventListener("tap", () => onMarkerTap(poi));
+      return marker;
+    })
   );
 
   return group;
@@ -367,6 +611,10 @@ function createTypedIcon(
   );
 }
 
+function createPartnerPoiIcon(H: HereNamespace, type: PartnerPoiDto["type"]) {
+  return createTypedIcon(H, type as TransportOrderRoutePointDto["type"]);
+}
+
 function getRoutePointColor(type: TransportOrderRoutePointDto["type"]) {
   return type === "LOADING"
     ? "#2563eb"
@@ -379,6 +627,105 @@ function getRoutePointColor(type: TransportOrderRoutePointDto["type"]) {
     : type === "SERVICE"
     ? "#7c3aed"
     : "#52525b";
+}
+
+function getRoutePointTypeLabel(type: TransportOrderRoutePointDto["type"]) {
+  return type === "LOADING"
+    ? "Załadunek"
+    : type === "UNLOADING"
+    ? "Rozładunek"
+    : type === "FUEL"
+    ? "Tankowanie"
+    : type === "PARKING"
+    ? "Parking"
+    : type === "SERVICE"
+    ? "Serwis"
+    : "Inne";
+}
+
+function emitViewportBbox(
+  map: HereMap,
+  onViewportBboxChange?: (bbox: PartnerPoiBbox) => void
+) {
+  if (!onViewportBboxChange) return;
+
+  window.requestAnimationFrame(() => {
+    const bounds = map.getViewModel().getLookAtData().bounds;
+    const bbox = extractBbox(bounds);
+    if (bbox) {
+      onViewportBboxChange(bbox);
+    }
+  });
+}
+
+function extractBbox(bounds: unknown): PartnerPoiBbox | null {
+  if (!bounds || typeof bounds !== "object") return null;
+
+  const source = hasMethod(bounds, "getBoundingBox")
+    ? bounds.getBoundingBox()
+    : bounds;
+
+  if (!source || typeof source !== "object") return null;
+
+  const north = readBoundsNumber(source, "getTop", "top");
+  const south = readBoundsNumber(source, "getBottom", "bottom");
+  const west = readBoundsNumber(source, "getLeft", "left");
+  const east = readBoundsNumber(source, "getRight", "right");
+
+  if (
+    north === null ||
+    south === null ||
+    west === null ||
+    east === null
+  ) {
+    return null;
+  }
+
+  return {
+    north: roundBboxCoordinate(north),
+    south: roundBboxCoordinate(south),
+    east: roundBboxCoordinate(east),
+    west: roundBboxCoordinate(west),
+  };
+}
+
+function hasMethod<T extends string>(
+  value: object,
+  method: T
+): value is Record<T, () => unknown> {
+  return method in value && typeof value[method as keyof typeof value] === "function";
+}
+
+function readBoundsNumber(
+  source: object,
+  method: string,
+  property: string
+): number | null {
+  if (hasMethod(source, method)) {
+    const value = source[method]();
+    return typeof value === "number" && Number.isFinite(value) ? value : null;
+  }
+
+  if (property in source) {
+    const value = source[property as keyof typeof source];
+    return typeof value === "number" && Number.isFinite(value) ? value : null;
+  }
+
+  return null;
+}
+
+function roundBboxCoordinate(value: number): number {
+  return Number(value.toFixed(5));
+}
+
+function getPartnerPoiTypeLabel(type: PartnerPoiDto["type"]) {
+  return type === "FUEL"
+    ? "Stacja paliw"
+    : type === "PARKING"
+    ? "Parking"
+    : type === "SERVICE"
+    ? "Serwis"
+    : "Punkt partnerski";
 }
 
 function loadHereMaps(): Promise<HereNamespace> {
