@@ -21,8 +21,11 @@ const iconCache = new WeakMap<HereNamespace, Map<string, unknown>>();
 
 export type HereMapMarkerMode = "numbered" | "typed";
 type HereMapRoutePoint = Omit<TransportOrderRoutePointDto, "id"> & {
+  clientId?: string;
   id?: string;
   markerMode?: HereMapMarkerMode;
+  partnerPoiId?: string;
+  partnerPoiName?: string | null;
 };
 
 type HereMapPoint = {
@@ -135,7 +138,8 @@ type Props = {
   polyline?: string | null;
   partnerPois?: PartnerPoiDto[];
   showUiControls?: boolean;
-  onPartnerPoiAddToRoute?: (poi: PartnerPoiDto) => void;
+  onPartnerPoiAddToRoute?: (poi: PartnerPoiDto) => void | Promise<void>;
+  onPartnerPoiDetachFromRoute?: (clientId: string) => void | Promise<void>;
   onViewportBboxChange?: (bbox: PartnerPoiBbox) => void;
 };
 
@@ -152,6 +156,7 @@ export function HereStaticMap({
   partnerPois = [],
   showUiControls = true,
   onPartnerPoiAddToRoute,
+  onPartnerPoiDetachFromRoute,
   onViewportBboxChange,
 }: Props) {
   const mapRef = React.useRef<HTMLDivElement | null>(null);
@@ -161,6 +166,9 @@ export function HereStaticMap({
   const routeGroupRef = React.useRef<HereMapGroup | null>(null);
   const poiGroupRef = React.useRef<HereMapGroup | null>(null);
   const infoBubbleRef = React.useRef<unknown | null>(null);
+  const infoBubbleModeRef = React.useRef<"click" | "hover" | null>(null);
+  const hoverCloseTimeoutRef = React.useRef<number | null>(null);
+  const lastRouteViewportSignatureRef = React.useRef<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [mapReady, setMapReady] = React.useState(false);
   const sortedPoints = React.useMemo(
@@ -174,6 +182,10 @@ export function HereStaticMap({
         .sort((a, b) => a.sequence - b.sequence),
     [routePoints]
   );
+  const routeViewportSignature = React.useMemo(
+    () => buildRouteViewportSignature(sortedPoints, polyline),
+    [polyline, sortedPoints]
+  );
   const activePartnerPois = React.useMemo(
     () =>
       partnerPois.filter(
@@ -185,44 +197,87 @@ export function HereStaticMap({
     [partnerPois]
   );
 
+  const cancelPendingHoverClose = React.useCallback(() => {
+    if (hoverCloseTimeoutRef.current !== null) {
+      window.clearTimeout(hoverCloseTimeoutRef.current);
+      hoverCloseTimeoutRef.current = null;
+    }
+  }, []);
+
   const closePartnerPoiBubble = React.useCallback(() => {
+    cancelPendingHoverClose();
     const ui = uiRef.current;
     const bubble = infoBubbleRef.current;
     if (ui && bubble) {
       ui.removeBubble(bubble);
     }
     infoBubbleRef.current = null;
-  }, []);
+    infoBubbleModeRef.current = null;
+  }, [cancelPendingHoverClose]);
+
+  const closeHoverBubble = React.useCallback(() => {
+    cancelPendingHoverClose();
+    hoverCloseTimeoutRef.current = window.setTimeout(() => {
+      if (infoBubbleModeRef.current === "hover") {
+        closePartnerPoiBubble();
+      }
+    }, 120);
+  }, [cancelPendingHoverClose, closePartnerPoiBubble]);
 
   const openPartnerPoiBubble = React.useCallback(
-    (poi: PartnerPoiDto) => {
+    (poi: PartnerPoiDto, mode: "click" | "hover" = "click") => {
       const H = hereRef.current;
       const ui = uiRef.current;
       if (!H || !ui || !onPartnerPoiAddToRoute) return;
 
+      cancelPendingHoverClose();
       closePartnerPoiBubble();
 
       const content = document.createElement("div");
       content.className = "min-w-[180px] space-y-2 text-sm";
+      if (mode === "hover") {
+        content.addEventListener("pointerenter", cancelPendingHoverClose);
+        content.addEventListener("pointerleave", closeHoverBubble);
+      }
 
       const title = document.createElement("div");
       title.className = "font-semibold";
       title.textContent = poi.name || getPartnerPoiTypeLabel(poi.type);
       content.appendChild(title);
 
+      const type = document.createElement("div");
+      type.className = "text-xs text-muted-foreground";
+      type.textContent = getPartnerPoiTypeLabel(poi.type);
+      content.appendChild(type);
+
       const address = document.createElement("div");
       address.className = "text-xs text-muted-foreground";
       address.textContent = poi.address;
       content.appendChild(address);
 
+      const coords = document.createElement("div");
+      coords.className = "text-[11px] text-muted-foreground";
+      coords.textContent = `${poi.latitude.toFixed(5)}, ${poi.longitude.toFixed(5)}`;
+      content.appendChild(coords);
+
       const button = document.createElement("button");
       button.type = "button";
       button.className =
         "rounded-md bg-primary px-2 py-1 text-xs font-medium text-primary-foreground";
-      button.textContent = "Dodaj do trasy";
+      button.textContent = "Dodaj jako punkt trasy";
       button.addEventListener("click", () => {
-        onPartnerPoiAddToRoute(poi);
-        closePartnerPoiBubble();
+        button.setAttribute("disabled", "true");
+        button.textContent = "Przeliczanie...";
+        Promise.resolve(onPartnerPoiAddToRoute(poi))
+          .then(() => {
+            if (infoBubbleRef.current) {
+              closePartnerPoiBubble();
+            }
+          })
+          .catch(() => {
+            button.removeAttribute("disabled");
+            button.textContent = "Dodaj jako punkt trasy";
+          });
       });
       content.appendChild(button);
 
@@ -232,20 +287,35 @@ export function HereStaticMap({
       );
       ui.addBubble(bubble);
       infoBubbleRef.current = bubble;
+      infoBubbleModeRef.current = mode;
     },
-    [closePartnerPoiBubble, onPartnerPoiAddToRoute]
+    [
+      cancelPendingHoverClose,
+      closeHoverBubble,
+      closePartnerPoiBubble,
+      onPartnerPoiAddToRoute,
+    ]
   );
 
   const openRoutePointBubble = React.useCallback(
-    (point: HereMapRoutePoint, index: number) => {
+    (
+      point: HereMapRoutePoint,
+      index: number,
+      mode: "click" | "hover" = "click"
+    ) => {
       const H = hereRef.current;
       const ui = uiRef.current;
       if (!H || !ui) return;
 
+      cancelPendingHoverClose();
       closePartnerPoiBubble();
 
       const content = document.createElement("div");
       content.className = "min-w-[200px] space-y-2 text-sm";
+      if (mode === "hover") {
+        content.addEventListener("pointerenter", cancelPendingHoverClose);
+        content.addEventListener("pointerleave", closeHoverBubble);
+      }
 
       const title = document.createElement("div");
       title.className = "font-semibold";
@@ -272,14 +342,44 @@ export function HereStaticMap({
       coords.textContent = `${point.latitude.toFixed(5)}, ${point.longitude.toFixed(5)}`;
       content.appendChild(coords);
 
+      if (point.partnerPoiId && point.clientId && onPartnerPoiDetachFromRoute) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className =
+          "rounded-md border px-2 py-1 text-xs font-medium text-foreground";
+        button.textContent = "Odłącz POI od trasy";
+        button.addEventListener("click", () => {
+          if (!point.clientId) return;
+          button.setAttribute("disabled", "true");
+          button.textContent = "Przeliczanie...";
+          Promise.resolve(onPartnerPoiDetachFromRoute(point.clientId))
+            .then(() => {
+              if (infoBubbleRef.current) {
+                closePartnerPoiBubble();
+              }
+            })
+            .catch(() => {
+              button.removeAttribute("disabled");
+              button.textContent = "Odłącz POI od trasy";
+            });
+        });
+        content.appendChild(button);
+      }
+
       const bubble = new H.ui.InfoBubble(
         { lat: point.latitude, lng: point.longitude },
         { content }
       );
       ui.addBubble(bubble);
       infoBubbleRef.current = bubble;
+      infoBubbleModeRef.current = mode;
     },
-    [closePartnerPoiBubble]
+    [
+      cancelPendingHoverClose,
+      closeHoverBubble,
+      closePartnerPoiBubble,
+      onPartnerPoiDetachFromRoute,
+    ]
   );
 
   React.useEffect(() => {
@@ -366,6 +466,8 @@ export function HereStaticMap({
     if (!H || !map) return;
 
     closePartnerPoiBubble();
+    const shouldFitViewport =
+      lastRouteViewportSignatureRef.current !== routeViewportSignature;
 
     if (routeGroupRef.current) {
       map.removeObject(routeGroupRef.current);
@@ -373,9 +475,12 @@ export function HereStaticMap({
     }
 
     if (!sortedPoints.length) {
-      map.setCenter(HARDCODED_CENTER);
-      map.setZoom(HARDCODED_ZOOM);
-      emitViewportBbox(map, onViewportBboxChange);
+      if (shouldFitViewport) {
+        map.setCenter(HARDCODED_CENTER);
+        map.setZoom(HARDCODED_ZOOM);
+        lastRouteViewportSignatureRef.current = routeViewportSignature;
+        emitViewportBbox(map, onViewportBboxChange);
+      }
       return;
     }
 
@@ -383,23 +488,26 @@ export function HereStaticMap({
       H,
       sortedPoints,
       polyline,
-      openRoutePointBubble
+      openRoutePointBubble,
+      closeHoverBubble
     );
     map.addObject(group);
     routeGroupRef.current = group;
 
-    if (sortedPoints.length === 1) {
-      map.setCenter({
-        lat: sortedPoints[0].latitude,
-        lng: sortedPoints[0].longitude,
-      });
-      map.setZoom(13);
-      emitViewportBbox(map, onViewportBboxChange);
-      return;
-    }
+    if (shouldFitViewport) {
+      if (sortedPoints.length === 1) {
+        map.setCenter({
+          lat: sortedPoints[0].latitude,
+          lng: sortedPoints[0].longitude,
+        });
+        map.setZoom(13);
+      } else {
+        map.getViewModel().setLookAtData({ bounds: group.getBoundingBox() });
+      }
 
-    map.getViewModel().setLookAtData({ bounds: group.getBoundingBox() });
-    emitViewportBbox(map, onViewportBboxChange);
+      lastRouteViewportSignatureRef.current = routeViewportSignature;
+      emitViewportBbox(map, onViewportBboxChange);
+    }
 
     return () => {
       if (routeGroupRef.current === group) {
@@ -409,10 +517,12 @@ export function HereStaticMap({
     };
   }, [
     closePartnerPoiBubble,
+    closeHoverBubble,
     mapReady,
     onViewportBboxChange,
     openRoutePointBubble,
     polyline,
+    routeViewportSignature,
     sortedPoints,
   ]);
 
@@ -437,7 +547,8 @@ export function HereStaticMap({
     const group = createPartnerPoiObjectsGroup(
       H,
       activePartnerPois,
-      openPartnerPoiBubble
+      openPartnerPoiBubble,
+      closeHoverBubble
     );
     map.addObject(group);
     poiGroupRef.current = group;
@@ -451,6 +562,7 @@ export function HereStaticMap({
   }, [
     activePartnerPois,
     closePartnerPoiBubble,
+    closeHoverBubble,
     mapReady,
     onPartnerPoiAddToRoute,
     openPartnerPoiBubble,
@@ -480,7 +592,12 @@ function createRouteObjectsGroup(
   H: HereNamespace,
   points: HereMapRoutePoint[],
   polyline?: string | null,
-  onMarkerTap?: (point: HereMapRoutePoint, index: number) => void
+  onMarkerOpen?: (
+    point: HereMapRoutePoint,
+    index: number,
+    mode?: "click" | "hover"
+  ) => void,
+  onMarkerHoverEnd?: () => void
 ) {
   const group = new H.map.Group();
   const routeLines = decodePolyline(H, polyline);
@@ -503,8 +620,16 @@ function createRouteObjectsGroup(
               : createNumberedIcon(H, index + 1, point.type),
         }
       );
-      if (onMarkerTap) {
-        marker.addEventListener("tap", () => onMarkerTap(point, index));
+      if (onMarkerOpen) {
+        marker.addEventListener("tap", () =>
+          onMarkerOpen(point, index, "click")
+        );
+        marker.addEventListener("pointerenter", () =>
+          onMarkerOpen(point, index, "hover")
+        );
+      }
+      if (onMarkerHoverEnd) {
+        marker.addEventListener("pointerleave", onMarkerHoverEnd);
       }
       return marker;
     })
@@ -516,7 +641,8 @@ function createRouteObjectsGroup(
 function createPartnerPoiObjectsGroup(
   H: HereNamespace,
   partnerPois: PartnerPoiDto[],
-  onMarkerTap: (poi: PartnerPoiDto) => void
+  onMarkerOpen: (poi: PartnerPoiDto, mode?: "click" | "hover") => void,
+  onMarkerHoverEnd?: () => void
 ) {
   const group = new H.map.Group();
 
@@ -526,12 +652,32 @@ function createPartnerPoiObjectsGroup(
         { lat: poi.latitude, lng: poi.longitude },
         { icon: createPartnerPoiIcon(H, poi.type) }
       );
-      marker.addEventListener("tap", () => onMarkerTap(poi));
+      marker.addEventListener("tap", () => onMarkerOpen(poi, "click"));
+      marker.addEventListener("pointerenter", () =>
+        onMarkerOpen(poi, "hover")
+      );
+      if (onMarkerHoverEnd) {
+        marker.addEventListener("pointerleave", onMarkerHoverEnd);
+      }
       return marker;
     })
   );
 
   return group;
+}
+
+function buildRouteViewportSignature(
+  points: HereMapRoutePoint[],
+  polyline?: string | null
+) {
+  return JSON.stringify({
+    polyline: polyline ?? null,
+    points: points.map((point) => ({
+      sequence: point.sequence,
+      latitude: point.latitude,
+      longitude: point.longitude,
+    })),
+  });
 }
 
 function decodePolyline(H: HereNamespace, polyline?: string | null) {
@@ -582,16 +728,19 @@ function createNumberedIcon(
   return getCachedIcon(H, key, () => {
     const color = getRoutePointColor(type);
     const svg = encodeURIComponent(`
-      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="40" viewBox="0 0 32 40">
-        <path d="M16 39C12 32 4 25 4 15.5C4 8.6 9.4 3 16 3s12 5.6 12 12.5C28 25 20 32 16 39Z" fill="${color}" stroke="white" stroke-width="2"/>
-        <circle cx="16" cy="15.5" r="8.5" fill="white"/>
-        <text x="16" y="19" text-anchor="middle" font-size="11" font-family="Arial, sans-serif" font-weight="700" fill="${color}">${number}</text>
+      <svg xmlns="http://www.w3.org/2000/svg" width="40" height="48" viewBox="0 0 40 48">
+        <rect width="40" height="48" fill="#fff" fill-opacity="0.01"/>
+        <g transform="translate(4 4)">
+          <path d="M16 39C12 32 4 25 4 15.5C4 8.6 9.4 3 16 3s12 5.6 12 12.5C28 25 20 32 16 39Z" fill="${color}" stroke="white" stroke-width="2"/>
+          <circle cx="16" cy="15.5" r="8.5" fill="white"/>
+          <text x="16" y="19" text-anchor="middle" font-size="11" font-family="Arial, sans-serif" font-weight="700" fill="${color}">${number}</text>
+        </g>
       </svg>
     `);
 
     return new H.map.Icon(`data:image/svg+xml;charset=UTF-8,${svg}`, {
-      size: { w: 32, h: 40 },
-      anchor: { x: 16, y: 39 },
+      size: { w: 40, h: 48 },
+      anchor: { x: 20, y: 43 },
     });
   });
 }
@@ -603,12 +752,25 @@ function createTypedIcon(
   const iconPath = ROUTE_POINT_ICON_PATHS[type];
   const key = `typed:${type}:${iconPath}`;
 
-  return getCachedIcon(H, key, () =>
-    new H.map.Icon(iconPath, {
-      size: { w: 40, h: 48 },
-      anchor: { x: 20, y: 47 },
-    })
-  );
+  return getCachedIcon(H, key, () => {
+    const color = getRoutePointColor(type);
+    const glyph = getRoutePointGlyphSvg(type, color);
+    const svg = encodeURIComponent(`
+      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="56" viewBox="0 0 48 56">
+        <rect width="48" height="56" fill="#fff" fill-opacity="0.01"/>
+        <g transform="translate(4 4)">
+          <path d="M20 47C15 38 5 30 5 18.5C5 9.4 11.7 2 20 2s15 7.4 15 16.5C35 30 25 38 20 47Z" fill="${color}" stroke="#fff" stroke-width="2"/>
+          <circle cx="20" cy="18.5" r="11.5" fill="#fff"/>
+          ${glyph}
+        </g>
+      </svg>
+    `);
+
+    return new H.map.Icon(`data:image/svg+xml;charset=UTF-8,${svg}`, {
+      size: { w: 48, h: 56 },
+      anchor: { x: 24, y: 51 },
+    });
+  });
 }
 
 function createPartnerPoiIcon(H: HereNamespace, type: PartnerPoiDto["type"]) {
@@ -627,6 +789,33 @@ function getRoutePointColor(type: TransportOrderRoutePointDto["type"]) {
     : type === "SERVICE"
     ? "#7c3aed"
     : "#52525b";
+}
+
+function getRoutePointGlyphSvg(
+  type: TransportOrderRoutePointDto["type"],
+  color: string
+) {
+  if (type === "LOADING") {
+    return `<path d="M20 10.5v11M15 16.5l5 5 5-5M14 26.5h12" fill="none" stroke="${color}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>`;
+  }
+
+  if (type === "UNLOADING") {
+    return `<path d="M20 21.5v-11M15 15.5l5-5 5 5M14 26.5h12" fill="none" stroke="${color}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>`;
+  }
+
+  if (type === "FUEL") {
+    return `<path d="M14 29V13a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16M13 29h12M16 16h6M24 14l4 4v7a2 2 0 0 0 4 0v-4l-3-3" fill="none" stroke="${color}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>`;
+  }
+
+  if (type === "PARKING") {
+    return `<text x="20" y="25" text-anchor="middle" font-size="18" font-family="Arial, sans-serif" font-weight="800" fill="${color}">P</text>`;
+  }
+
+  if (type === "SERVICE") {
+    return `<path d="M27 12a5 5 0 0 1-6.5 6.5l-6.2 6.2a2 2 0 1 1-2.8-2.8l6.2-6.2A5 5 0 0 1 24.2 9l-3 3 2.8 2.8 3-3Z" fill="none" stroke="${color}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>`;
+  }
+
+  return `<circle cx="15" cy="18.5" r="2.1" fill="${color}"/><circle cx="20" cy="18.5" r="2.1" fill="${color}"/><circle cx="25" cy="18.5" r="2.1" fill="${color}"/>`;
 }
 
 function getRoutePointTypeLabel(type: TransportOrderRoutePointDto["type"]) {

@@ -124,6 +124,8 @@ const HAZARDOUS_GOODS: Array<{ value: HazardousGood; label: string }> = [
 type LocalRoutePoint = RoutePointDraft & {
   clientId: string;
   markerMode: HereMapMarkerMode;
+  partnerPoiId?: string;
+  partnerPoiName?: string | null;
 };
 
 type PartnerPoiFormState = {
@@ -167,6 +169,8 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
   const [partnerPoiForm, setPartnerPoiForm] =
     React.useState<PartnerPoiFormState>(defaultPartnerPoiForm);
   const [editingPartnerPoiId, setEditingPartnerPoiId] =
+    React.useState<string | null>(null);
+  const [detachingPartnerPoiClientId, setDetachingPartnerPoiClientId] =
     React.useState<string | null>(null);
   const [sectionOpen, setSectionOpen] = React.useState({
     points: true,
@@ -221,6 +225,7 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
     setAddressQuery("");
     setPartnerPoiForm(defaultPartnerPoiForm());
     setEditingPartnerPoiId(null);
+    setDetachingPartnerPoiClientId(null);
   }, [open, routeQuery.data]);
 
   const routePointPayload = React.useMemo(
@@ -257,8 +262,20 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
     !!preview.calculationHash &&
     !saveMutation.isPending;
   const partnerPois = partnerPoisQuery.data?.items ?? [];
+  const routePartnerPoiClientIdsByPoiId = React.useMemo(() => {
+    const result = new Map<string, string>();
+    for (const point of routePoints) {
+      if (point.partnerPoiId && !result.has(point.partnerPoiId)) {
+        result.set(point.partnerPoiId, point.clientId);
+      }
+    }
+    return result;
+  }, [routePoints]);
   const visiblePartnerPois = showPartnerPois
-    ? partnerPois.filter((poi) => poi.isActive)
+    ? partnerPois.filter(
+        (poi) =>
+          poi.isActive && !routePartnerPoiClientIdsByPoiId.has(poi.id)
+      )
     : [];
 
   const handlePartnerPoiBboxChange = React.useCallback(
@@ -284,28 +301,55 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
     setLastCalculationSignature(null);
   }, []);
 
-  const handleAddPartnerPoiToRoute = React.useCallback((poi: PartnerPoiDto) => {
-    setRoutePoints((current) => {
-      const nextPoint: LocalRoutePoint = {
-        clientId: crypto.randomUUID(),
-        markerMode: "typed",
-        sequence: 0,
-        type: poi.type,
-        behavior: "STOP",
-        source: "DISPATCHER",
-        isManual: true,
-        label: poi.name || getPartnerPoiTypeLabel(poi.type),
-        address: poi.address,
-        latitude: poi.latitude,
-        longitude: poi.longitude,
-      };
-      const next = current.slice();
-      const unloadIndex = next.findIndex((point) => point.type === "UNLOADING");
-      next.splice(unloadIndex >= 0 ? unloadIndex : next.length, 0, nextPoint);
-      return next.map((point, index) => ({ ...point, sequence: index + 1 }));
-    });
-    setLastCalculationSignature(null);
-  }, []);
+  const applyRoutePointsAndRecalculate = React.useCallback(
+    async (nextRoutePoints: LocalRoutePoint[]) => {
+      const nextPayload = normalizeForPayload(nextRoutePoints);
+
+      setRoutePoints(nextRoutePoints);
+      setLastCalculationSignature(null);
+
+      if (nextPayload.length < 2 || calculateMutation.isPending) return;
+
+      const nextSignature = buildCalculationSignature(
+        nextPayload,
+        routingProfile,
+        vehicleSpecPayload
+      );
+      const result = await calculateMutation.mutateAsync({
+        routePoints: nextPayload,
+        routingProfile,
+        vehicleSpec: vehicleSpecPayload,
+      });
+
+      setPreview(result);
+      setLastCalculationSignature(nextSignature);
+    },
+    [calculateMutation, routingProfile, vehicleSpecPayload]
+  );
+
+  const handleAddPartnerPoiToRoute = React.useCallback(
+    async (poi: PartnerPoiDto) => {
+      await applyRoutePointsAndRecalculate(
+        insertPartnerPoiIntoRoute(routePoints, poi)
+      );
+    },
+    [applyRoutePointsAndRecalculate, routePoints]
+  );
+
+  const handleDetachPartnerPoiFromRoute = React.useCallback(
+    async (clientId: string) => {
+      const nextRoutePoints = removeRoutePointByClientId(routePoints, clientId);
+      if (nextRoutePoints.length === routePoints.length) return;
+
+      setDetachingPartnerPoiClientId(clientId);
+      try {
+        await applyRoutePointsAndRecalculate(nextRoutePoints);
+      } finally {
+        setDetachingPartnerPoiClientId(null);
+      }
+    },
+    [applyRoutePointsAndRecalculate, routePoints]
+  );
 
   const handleSubmitPartnerPoi = async () => {
     const address = partnerPoiForm.address.trim();
@@ -454,6 +498,7 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
               polyline={visiblePolyline}
               partnerPois={visiblePartnerPois}
               onPartnerPoiAddToRoute={handleAddPartnerPoiToRoute}
+              onPartnerPoiDetachFromRoute={handleDetachPartnerPoiFromRoute}
               onViewportBboxChange={handlePartnerPoiBboxChange}
             />
           </div>
@@ -545,7 +590,11 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
                             canMoveDown={index < routePoints.length - 1}
                             onMove={movePoint}
                             onRemove={removePoint}
+                            onDetachPartnerPoi={handleDetachPartnerPoiFromRoute}
                             onUpdate={updatePoint}
+                            isDetachingPartnerPoi={
+                              detachingPartnerPoiClientId === point.clientId
+                            }
                           />
                         ))}
                       </div>
@@ -580,6 +629,10 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
                           ? deletePartnerPoiMutation.variables
                           : null
                       }
+                      detachingRouteClientId={detachingPartnerPoiClientId}
+                      routePartnerPoiClientIdsByPoiId={
+                        routePartnerPoiClientIdsByPoiId
+                      }
                       onShowOnMapChange={setShowPartnerPois}
                       onFormChange={setPartnerPoiForm}
                       onSubmit={handleSubmitPartnerPoi}
@@ -593,6 +646,7 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
                         })
                       }
                       onAddToRoute={handleAddPartnerPoiToRoute}
+                      onDetachFromRoute={handleDetachPartnerPoiFromRoute}
                     />
                   </PanelSection>
 
@@ -745,7 +799,9 @@ function RoutePointRow({
   canMoveDown,
   onMove,
   onRemove,
+  onDetachPartnerPoi,
   onUpdate,
+  isDetachingPartnerPoi,
 }: {
   point: LocalRoutePoint;
   index: number;
@@ -753,16 +809,26 @@ function RoutePointRow({
   canMoveDown: boolean;
   onMove: (clientId: string, direction: -1 | 1) => void;
   onRemove: (clientId: string) => void;
+  onDetachPartnerPoi: (clientId: string) => void | Promise<void>;
   onUpdate: (
     clientId: string,
     patch: Partial<Omit<LocalRoutePoint, "clientId">>
   ) => void;
+  isDetachingPartnerPoi: boolean;
 }) {
   return (
     <div className="rounded-md border p-3">
       <div className="mb-2 flex items-center justify-between gap-2">
-        <span className="text-xs font-semibold">#{index + 1}</span>
-        <div className="flex gap-1">
+        <div className="min-w-0">
+          <span className="text-xs font-semibold">#{index + 1}</span>
+          {point.partnerPoiId ? (
+            <span className="ml-2 rounded-full border px-2 py-0.5 text-[11px] text-muted-foreground">
+              POI
+              {point.partnerPoiName ? ` · ${point.partnerPoiName}` : ""}
+            </span>
+          ) : null}
+        </div>
+        <div className="flex flex-wrap justify-end gap-1">
           <Button
             type="button"
             variant="outline"
@@ -781,6 +847,26 @@ function RoutePointRow({
           >
             ↓
           </Button>
+          {point.partnerPoiId ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={isDetachingPartnerPoi}
+              onClick={() => {
+                void Promise.resolve(onDetachPartnerPoi(point.clientId)).catch(
+                  () => undefined
+                );
+              }}
+            >
+              {isDetachingPartnerPoi ? (
+                <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <X className="mr-1 h-3.5 w-3.5" />
+              )}
+              Odłącz POI
+            </Button>
+          ) : null}
           <Button
             type="button"
             variant="outline"
@@ -896,6 +982,8 @@ function PartnerPoiSection({
   isError,
   isSubmitting,
   deletingId,
+  detachingRouteClientId,
+  routePartnerPoiClientIdsByPoiId,
   onShowOnMapChange,
   onFormChange,
   onSubmit,
@@ -904,6 +992,7 @@ function PartnerPoiSection({
   onDelete,
   onToggleActive,
   onAddToRoute,
+  onDetachFromRoute,
 }: {
   items: PartnerPoiDto[];
   form: PartnerPoiFormState;
@@ -914,6 +1003,8 @@ function PartnerPoiSection({
   isError: boolean;
   isSubmitting: boolean;
   deletingId: string | null;
+  detachingRouteClientId: string | null;
+  routePartnerPoiClientIdsByPoiId: ReadonlyMap<string, string>;
   onShowOnMapChange: (value: boolean) => void;
   onFormChange: (value: PartnerPoiFormState) => void;
   onSubmit: () => void;
@@ -921,7 +1012,8 @@ function PartnerPoiSection({
   onEdit: (poi: PartnerPoiDto) => void;
   onDelete: (id: string) => void;
   onToggleActive: (poi: PartnerPoiDto) => void;
-  onAddToRoute: (poi: PartnerPoiDto) => void;
+  onAddToRoute: (poi: PartnerPoiDto) => void | Promise<void>;
+  onDetachFromRoute: (clientId: string) => void | Promise<void>;
 }) {
   const canSubmit = !!form.address.trim() && !isSubmitting;
 
@@ -1030,66 +1122,97 @@ function PartnerPoiSection({
             Brak punktów partnerskich w tym obszarze.
           </p>
         ) : (
-          items.map((poi) => (
-            <div key={poi.id} className="rounded-md border p-3">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold">
-                    {poi.name || getPartnerPoiTypeLabel(poi.type)}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {getPartnerPoiTypeLabel(poi.type)}
-                    {!poi.isActive ? " · ukryty" : ""}
-                  </p>
-                  <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
-                    {poi.address}
-                  </p>
+          items.map((poi) => {
+            const routeClientId = routePartnerPoiClientIdsByPoiId.get(poi.id);
+            const isDetaching = detachingRouteClientId === routeClientId;
+
+            return (
+              <div key={poi.id} className="rounded-md border p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold">
+                      {poi.name || getPartnerPoiTypeLabel(poi.type)}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {getPartnerPoiTypeLabel(poi.type)}
+                      {!poi.isActive ? " · ukryty" : ""}
+                      {routeClientId ? " · w trasie" : ""}
+                    </p>
+                    <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                      {poi.address}
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-1">
+                  {routeClientId ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={isDetaching}
+                      onClick={() => {
+                        void Promise.resolve(
+                          onDetachFromRoute(routeClientId)
+                        ).catch(() => undefined);
+                      }}
+                    >
+                      {isDetaching ? (
+                        <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <X className="mr-1 h-3.5 w-3.5" />
+                      )}
+                      Odłącz z trasy
+                    </Button>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        void Promise.resolve(onAddToRoute(poi)).catch(
+                          () => undefined
+                        );
+                      }}
+                    >
+                      <Plus className="mr-1 h-3.5 w-3.5" />
+                      Dodaj do trasy
+                    </Button>
+                  )}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onEdit(poi)}
+                  >
+                    <Pencil className="mr-1 h-3.5 w-3.5" />
+                    Edytuj
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onToggleActive(poi)}
+                  >
+                    {poi.isActive ? "Ukryj" : "Pokaż"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={deletingId === poi.id}
+                    onClick={() => onDelete(poi.id)}
+                  >
+                    {deletingId === poi.id ? (
+                      <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Trash2 className="mr-1 h-3.5 w-3.5" />
+                    )}
+                    Usuń
+                  </Button>
                 </div>
               </div>
-              <div className="mt-3 flex flex-wrap gap-1">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onAddToRoute(poi)}
-                >
-                  <Plus className="mr-1 h-3.5 w-3.5" />
-                  Do trasy
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onEdit(poi)}
-                >
-                  <Pencil className="mr-1 h-3.5 w-3.5" />
-                  Edytuj
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onToggleActive(poi)}
-                >
-                  {poi.isActive ? "Ukryj" : "Pokaż"}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={deletingId === poi.id}
-                  onClick={() => onDelete(poi.id)}
-                >
-                  {deletingId === poi.id ? (
-                    <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <Trash2 className="mr-1 h-3.5 w-3.5" />
-                  )}
-                  Usuń
-                </Button>
-              </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>
@@ -1364,7 +1487,14 @@ function normalizeForPayload(points: LocalRoutePoint[]): RoutePointDraft[] {
 
 function normalizeForMap(
   points: LocalRoutePoint[]
-): Array<RoutePointDraft & { markerMode: HereMapMarkerMode }> {
+): Array<
+  RoutePointDraft & {
+    clientId: string;
+    markerMode: HereMapMarkerMode;
+    partnerPoiId?: string;
+    partnerPoiName?: string | null;
+  }
+> {
   return points
     .slice()
     .sort((a, b) => a.sequence - b.sequence)
@@ -1378,8 +1508,45 @@ function normalizeForMap(
       address: point.address ?? null,
       latitude: point.latitude,
       longitude: point.longitude,
+      clientId: point.clientId,
       markerMode: point.markerMode,
+      partnerPoiId: point.partnerPoiId,
+      partnerPoiName: point.partnerPoiName,
     }));
+}
+
+function insertPartnerPoiIntoRoute(
+  points: LocalRoutePoint[],
+  poi: PartnerPoiDto
+): LocalRoutePoint[] {
+  const nextPoint: LocalRoutePoint = {
+    clientId: crypto.randomUUID(),
+    markerMode: "typed",
+    partnerPoiId: poi.id,
+    partnerPoiName: poi.name ?? getPartnerPoiTypeLabel(poi.type),
+    sequence: 0,
+    type: poi.type,
+    behavior: "STOP",
+    source: "DISPATCHER",
+    isManual: true,
+    label: poi.name || getPartnerPoiTypeLabel(poi.type),
+    address: poi.address,
+    latitude: poi.latitude,
+    longitude: poi.longitude,
+  };
+  const next = points.slice();
+  const unloadIndex = next.findIndex((point) => point.type === "UNLOADING");
+  next.splice(unloadIndex >= 0 ? unloadIndex : next.length, 0, nextPoint);
+  return next.map((point, index) => ({ ...point, sequence: index + 1 }));
+}
+
+function removeRoutePointByClientId(
+  points: LocalRoutePoint[],
+  clientId: string
+): LocalRoutePoint[] {
+  return points
+    .filter((point) => point.clientId !== clientId)
+    .map((point, index) => ({ ...point, sequence: index + 1 }));
 }
 
 function defaultRoutingProfile(): RoutingProfile {
