@@ -1,6 +1,8 @@
 "use client";
 
 import * as React from "react";
+import { Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type {
   PartnerPoiBbox,
   PartnerPoiDto,
@@ -158,6 +160,7 @@ type Props = {
   showUiControls?: boolean;
   highlightedClientId?: string | null;
   highlightedPoiId?: string | null;
+  isUpdating?: boolean;
   onPartnerPoiAddToRoute?: (poi: PartnerPoiDto) => void | Promise<void>;
   onPartnerPoiDetachFromRoute?: (clientId: string) => void | Promise<void>;
   onViewportBboxChange?: (bbox: PartnerPoiBbox) => void;
@@ -178,6 +181,7 @@ export function HereStaticMap({
   showUiControls = true,
   highlightedClientId,
   highlightedPoiId,
+  isUpdating = false,
   onPartnerPoiAddToRoute,
   onPartnerPoiDetachFromRoute,
   onViewportBboxChange,
@@ -715,7 +719,37 @@ export function HereStaticMap({
   return (
     <>
       <div ref={mapRef} className="absolute inset-0" />
-      {!sortedPoints.length && (
+
+      {/* Initial map load skeleton — fades out once HERE Maps is ready */}
+      <div
+        className={cn(
+          "absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-muted transition-opacity duration-500",
+          mapReady ? "pointer-events-none opacity-0" : "opacity-100"
+        )}
+        aria-hidden={mapReady}
+      >
+        <Loader2 className="h-7 w-7 animate-spin text-muted-foreground" />
+        <p className="text-sm text-muted-foreground">Ładowanie mapy…</p>
+      </div>
+
+      {/* Route / details update indicator — appears on the live map */}
+      <div
+        className={cn(
+          "pointer-events-none absolute left-1/2 top-4 z-20 -translate-x-1/2 transition-all duration-300",
+          mapReady && isUpdating
+            ? "translate-y-0 opacity-100"
+            : "-translate-y-2 opacity-0"
+        )}
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        <div className="flex items-center gap-2 rounded-full border bg-background/90 px-3 py-1.5 text-xs text-muted-foreground shadow-sm backdrop-blur-sm">
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          Aktualizowanie trasy…
+        </div>
+      </div>
+
+      {!sortedPoints.length && mapReady && (
         <div className="pointer-events-none absolute left-3 top-3 rounded-md border bg-background/90 px-2 py-1 text-[11px] text-muted-foreground shadow-sm">
           Brak punktów trasy
         </div>

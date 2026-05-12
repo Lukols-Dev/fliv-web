@@ -5,6 +5,7 @@ import Image from "next/image";
 import {
   ChevronDown,
   ChevronUp,
+  EllipsisVertical,
   Fuel,
   GripVertical,
   Loader2,
@@ -15,6 +16,7 @@ import {
   PanelRightOpen,
   Pencil,
   Plus,
+  RotateCcw,
   Save,
   Search,
   SquareParking,
@@ -57,6 +59,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { HereStaticMap } from "./here-static-map";
 import type { HereMapMarkerMode } from "./here-static-map";
@@ -172,6 +181,14 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
   const updatePartnerPoiMutation = useUpdatePartnerPoiMutation();
   const deletePartnerPoiMutation = useDeletePartnerPoiMutation();
 
+  const initialStateRef = React.useRef<{
+    routePoints: LocalRoutePoint[];
+    routingProfile: RoutingProfile;
+    vehicleSpec: VehicleSpec;
+    preview: CalculateTransportOrderRouteResult | null;
+    lastCalculationSignature: string | null;
+  } | null>(null);
+
   const [routePoints, setRoutePoints] = React.useState<LocalRoutePoint[]>([]);
   const [routingProfile, setRoutingProfile] =
     React.useState<RoutingProfile>(defaultRoutingProfile);
@@ -223,13 +240,8 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
       routeQuery.data.routingProfile ?? defaultRoutingProfile();
     const loadedVehicleSpec =
       routeQuery.data.vehicleSpec ?? defaultVehicleSpec();
-
-    setRoutePoints(loadedRoutePoints);
-    setRoutingProfile(loadedRoutingProfile);
-    setVehicleSpec(loadedVehicleSpec);
-    setPreview(
-      routeQuery.data.routePlan
-        ? {
+    const loadedPreview = routeQuery.data.routePlan
+      ? {
           routePreviewId: "",
           calculationHash: routeQuery.data.routePlan.calculationHash,
           polyline: routeQuery.data.routePlan.polyline,
@@ -237,17 +249,28 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
           durationSeconds: routeQuery.data.routePlan.durationSeconds,
           calculatedAt: routeQuery.data.routePlan.calculatedAt,
         }
-        : null
-    );
-    setLastCalculationSignature(
-      routeQuery.data.routePlan
-        ? buildCalculationSignature(
+      : null;
+    const loadedLastCalculationSignature = routeQuery.data.routePlan
+      ? buildCalculationSignature(
           normalizeForPayload(loadedRoutePoints),
           loadedRoutingProfile,
           getVehicleSpecPayload(loadedRoutingProfile, loadedVehicleSpec)
         )
-        : null
-    );
+      : null;
+
+    initialStateRef.current = {
+      routePoints: loadedRoutePoints,
+      routingProfile: loadedRoutingProfile,
+      vehicleSpec: loadedVehicleSpec,
+      preview: loadedPreview,
+      lastCalculationSignature: loadedLastCalculationSignature,
+    };
+
+    setRoutePoints(loadedRoutePoints);
+    setRoutingProfile(loadedRoutingProfile);
+    setVehicleSpec(loadedVehicleSpec);
+    setPreview(loadedPreview);
+    setLastCalculationSignature(loadedLastCalculationSignature);
     setGeocodeResults([]);
     setAddressQuery("");
     setPartnerPoiForm(defaultPartnerPoiForm());
@@ -283,6 +306,33 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
     lastCalculationSignature === calculationSignature;
   const visiblePolyline = previewIsCurrent ? preview.polyline : null;
   const canCalculate = routePointPayload.length >= 2;
+
+  const isDirty = React.useMemo(() => {
+    const initial = initialStateRef.current;
+    if (!initial) return false;
+    return (
+      stableStringify(normalizeForPayload(routePoints)) !==
+        stableStringify(normalizeForPayload(initial.routePoints)) ||
+      stableStringify(routingProfile) !==
+        stableStringify(initial.routingProfile) ||
+      stableStringify(vehicleSpec) !== stableStringify(initial.vehicleSpec)
+    );
+  }, [routePoints, routingProfile, vehicleSpec]);
+
+  const resetToInitial = React.useCallback(() => {
+    const initial = initialStateRef.current;
+    if (!initial) return;
+    setRoutePoints(initial.routePoints);
+    setRoutingProfile(initial.routingProfile);
+    setVehicleSpec(initial.vehicleSpec);
+    setPreview(initial.preview);
+    setLastCalculationSignature(initial.lastCalculationSignature);
+    setGeocodeResults([]);
+    setAddressQuery("");
+    setPartnerPoiForm(defaultPartnerPoiForm());
+    setEditingPartnerPoiId(null);
+    setMapFitVersion((v) => v + 1);
+  }, []);
   const canSave =
     canCalculate &&
     previewIsCurrent &&
@@ -546,6 +596,7 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
             fitRouteKey={`${orderId}:${mapFitVersion}`}
             highlightedClientId={hoveredRoutePointClientId}
             highlightedPoiId={hoveredPoiId}
+            isUpdating={calculateMutation.isPending || saveMutation.isPending}
             onPartnerPoiAddToRoute={handleAddPartnerPoiToRoute}
             onPartnerPoiDetachFromRoute={handleDetachPartnerPoiFromRoute}
             onViewportBboxChange={handlePartnerPoiBboxChange}
@@ -896,6 +947,18 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
                       Do przeliczenia trasy wymagane są minimum dwa punkty.
                     </p>
                   ) : null}
+                  {(isDirty || (!!preview && !previewIsCurrent)) && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full"
+                      onClick={resetToInitial}
+                      disabled={calculateMutation.isPending || saveMutation.isPending}
+                    >
+                      <RotateCcw className="mr-2 h-4 w-4" />
+                      Resetuj zmiany
+                    </Button>
+                  )}
                   <div className="flex gap-2">
                     <Button
                       type="button"
@@ -1332,7 +1395,7 @@ function PartnerPoiSection({
                 onMouseEnter={() => onHover(poi.id)}
                 onMouseLeave={() => onHover(null)}
               >
-                <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold">
                       {poi.name || getPartnerPoiTypeLabel(poi.type)}
@@ -1346,73 +1409,68 @@ function PartnerPoiSection({
                       {poi.address}
                     </p>
                   </div>
-                </div>
-                <div className="mt-3 flex flex-wrap gap-1">
-                  {routeClientId ? (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled={isDetaching}
-                      onClick={() => {
-                        void Promise.resolve(
-                          onDetachFromRoute(routeClientId)
-                        ).catch(() => undefined);
-                      }}
-                    >
-                      {isDetaching ? (
-                        <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 shrink-0"
+                      >
+                        <EllipsisVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-44">
+                      {routeClientId ? (
+                        <DropdownMenuItem
+                          disabled={isDetaching}
+                          onClick={() => {
+                            void Promise.resolve(
+                              onDetachFromRoute(routeClientId)
+                            ).catch(() => undefined);
+                          }}
+                        >
+                          {isDetaching ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <X className="h-4 w-4" />
+                          )}
+                          Odłącz z trasy
+                        </DropdownMenuItem>
                       ) : (
-                        <X className="mr-1 h-3.5 w-3.5" />
+                        <DropdownMenuItem
+                          onClick={() => {
+                            void Promise.resolve(onAddToRoute(poi)).catch(
+                              () => undefined
+                            );
+                          }}
+                        >
+                          <Plus className="h-4 w-4" />
+                          Dodaj do trasy
+                        </DropdownMenuItem>
                       )}
-                      Odłącz z trasy
-                    </Button>
-                  ) : (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        void Promise.resolve(onAddToRoute(poi)).catch(
-                          () => undefined
-                        );
-                      }}
-                    >
-                      <Plus className="mr-1 h-3.5 w-3.5" />
-                      Dodaj do trasy
-                    </Button>
-                  )}
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onEdit(poi)}
-                  >
-                    <Pencil className="mr-1 h-3.5 w-3.5" />
-                    Edytuj
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onToggleActive(poi)}
-                  >
-                    {poi.isActive ? "Ukryj" : "Pokaż"}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={deletingId === poi.id}
-                    onClick={() => onDelete(poi.id)}
-                  >
-                    {deletingId === poi.id ? (
-                      <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      <Trash2 className="mr-1 h-3.5 w-3.5" />
-                    )}
-                    Usuń
-                  </Button>
+                      <DropdownMenuItem onClick={() => onEdit(poi)}>
+                        <Pencil className="h-4 w-4" />
+                        Edytuj
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => onToggleActive(poi)}>
+                        {poi.isActive ? "Ukryj" : "Pokaż"}
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        disabled={deletingId === poi.id}
+                        className="text-destructive focus:text-destructive"
+                        onClick={() => onDelete(poi.id)}
+                      >
+                        {deletingId === poi.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-4 w-4" />
+                        )}
+                        Usuń
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
             );
