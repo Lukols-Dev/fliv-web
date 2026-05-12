@@ -3,6 +3,7 @@
 import * as React from "react";
 import {
   ChevronDown,
+  GripVertical,
   Loader2,
   MapPin,
   Pencil,
@@ -12,6 +13,20 @@ import {
   Trash2,
   X,
 } from "lucide-react";
+import {
+  DndContext,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -463,6 +478,24 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
     setLastCalculationSignature(null);
   };
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    setRoutePoints((current) => {
+      const oldIndex = current.findIndex((p) => p.clientId === active.id);
+      const newIndex = current.findIndex((p) => p.clientId === over.id);
+      return arrayMove(current, oldIndex, newIndex).map((p, i) => ({
+        ...p,
+        sequence: i + 1,
+      }));
+    });
+    setLastCalculationSignature(null);
+  };
+
   const calculateRoute = async () => {
     if (!canCalculate || calculateMutation.isPending) return;
     const result = await calculateMutation.mutateAsync({
@@ -583,24 +616,31 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
                         </div>
                       ) : null}
 
-                      <div className="space-y-2">
-                        {routePoints.map((point, index) => (
-                          <RoutePointRow
-                            key={point.clientId}
-                            point={point}
-                            index={index}
-                            canMoveUp={index > 0}
-                            canMoveDown={index < routePoints.length - 1}
-                            onMove={movePoint}
-                            onRemove={removePoint}
-                            onDetachPartnerPoi={handleDetachPartnerPoiFromRoute}
-                            onUpdate={updatePoint}
-                            isDetachingPartnerPoi={
-                              detachingPartnerPoiClientId === point.clientId
-                            }
-                          />
-                        ))}
-                      </div>
+                      <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+                        <SortableContext
+                          items={routePoints.map((p) => p.clientId)}
+                          strategy={verticalListSortingStrategy}
+                        >
+                          <div className="space-y-2">
+                            {routePoints.map((point, index) => (
+                              <RoutePointRow
+                                key={point.clientId}
+                                point={point}
+                                index={index}
+                                canMoveUp={index > 0}
+                                canMoveDown={index < routePoints.length - 1}
+                                onMove={movePoint}
+                                onRemove={removePoint}
+                                onDetachPartnerPoi={handleDetachPartnerPoiFromRoute}
+                                onUpdate={updatePoint}
+                                isDetachingPartnerPoi={
+                                  detachingPartnerPoiClientId === point.clientId
+                                }
+                              />
+                            ))}
+                          </div>
+                        </SortableContext>
+                      </DndContext>
                     </div>
                   </PanelSection>
 
@@ -819,13 +859,36 @@ function RoutePointRow({
   ) => void;
   isDetachingPartnerPoi: boolean;
 }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: point.clientId });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : undefined,
+  };
+
   return (
-    <div className="rounded-md border p-3">
+    <div ref={setNodeRef} style={style} className="rounded-md border p-3">
       <div className="mb-2 flex items-center justify-between gap-2">
-        <div className="min-w-0">
+        <div className="flex min-w-0 items-center gap-2">
+          <button
+            type="button"
+            className="cursor-grab touch-none text-muted-foreground/50 hover:text-muted-foreground active:cursor-grabbing"
+            {...attributes}
+            {...listeners}
+          >
+            <GripVertical className="h-4 w-4" />
+          </button>
           <span className="text-xs font-semibold">#{index + 1}</span>
           {point.partnerPoiId ? (
-            <span className="ml-2 rounded-full border px-2 py-0.5 text-[11px] text-muted-foreground">
+            <span className="rounded-full border px-2 py-0.5 text-[11px] text-muted-foreground">
               POI
               {point.partnerPoiName ? ` · ${point.partnerPoiName}` : ""}
             </span>
