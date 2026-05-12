@@ -3,6 +3,7 @@
 import * as React from "react";
 import {
   ChevronDown,
+  ChevronUp,
   GripVertical,
   Loader2,
   MapPin,
@@ -158,6 +159,9 @@ type Props = {
   orderId: string;
 };
 
+const glassClass =
+  "bg-white/70 dark:bg-black/60 backdrop-blur-xl backdrop-saturate-150 border border-white/30 dark:border-white/10 shadow-2xl";
+
 export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
   const routeQuery = useOrderRouteQuery({ id: orderId, enabled: open });
   const geocodeMutation = useRouteGeocodeMutation();
@@ -190,6 +194,7 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
   const [detachingPartnerPoiClientId, setDetachingPartnerPoiClientId] =
     React.useState<string | null>(null);
   const [mapFitVersion, setMapFitVersion] = React.useState(0);
+  const [vehicleCardOpen, setVehicleCardOpen] = React.useState(true);
   const [sectionOpen, setSectionOpen] = React.useState({
     points: true,
     partnerPois: true,
@@ -542,62 +547,84 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
           {/* </div> */}
 
           <div className="absolute top-4 left-4 z-10 flex flex-wrap gap-1.5">
-            <Badge variant="outline" className="bg-white/70 dark:bg-black/60 backdrop-blur-xl border-white/30 dark:border-white/10 shadow-md text-foreground">
+            <Badge variant="outline" className={cn(glassClass, "text-foreground")}>
               {routingProfile.transportMode === "truck" ? "Ciężarówka" : "Samochód"}
             </Badge>
-            <Badge variant="outline" className="bg-white/70 dark:bg-black/60 backdrop-blur-xl border-white/30 dark:border-white/10 shadow-md text-foreground">
+            <Badge variant="outline" className={cn(glassClass, "text-foreground")}>
               {routingProfile.routingMode === "fast" ? "Trasa szybka" : "Trasa krótka"}
             </Badge>
             {routingProfile.trafficMode === "default" && (
-              <Badge variant="outline" className="bg-white/70 dark:bg-black/60 backdrop-blur-xl border-white/30 dark:border-white/10 shadow-md text-foreground">
-                Ruch drogowy
-              </Badge>
+              <Badge variant="outline" className={cn(glassClass, "text-foreground")}>Ruch drogowy</Badge>
             )}
             {routingProfile.avoidTolls && (
-              <Badge variant="outline" className="bg-white/70 dark:bg-black/60 backdrop-blur-xl border-white/30 dark:border-white/10 shadow-md text-foreground">
-                Unikaj opłat
-              </Badge>
+              <Badge variant="outline" className={cn(glassClass, "text-foreground")}>Unikaj opłat</Badge>
             )}
             {routingProfile.avoidFerries && (
-              <Badge variant="outline" className="bg-white/70 dark:bg-black/60 backdrop-blur-xl border-white/30 dark:border-white/10 shadow-md text-foreground">
-                Unikaj promów
-              </Badge>
+              <Badge variant="outline" className={cn(glassClass, "text-foreground")}>Unikaj promów</Badge>
             )}
             {routingProfile.avoidMotorways && (
-              <Badge variant="outline" className="bg-white/70 dark:bg-black/60 backdrop-blur-xl border-white/30 dark:border-white/10 shadow-md text-foreground">
-                Unikaj autostrad
-              </Badge>
+              <Badge variant="outline" className={cn(glassClass, "text-foreground")}>Unikaj autostrad</Badge>
             )}
           </div>
 
           <div className="absolute bottom-4 left-4 z-10 flex flex-col items-start gap-2">
             {routingProfile.transportMode === "truck" && (
-              <div className="w-full rounded-xl overflow-hidden bg-white/70 dark:bg-black/60 backdrop-blur-xl backdrop-saturate-150 border border-white/30 dark:border-white/10 shadow-2xl">
-                <div className="relative h-28">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/images/truck.jpg" alt="Pojazd" className="h-full w-full object-cover" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                  <div className="absolute bottom-2 left-3 flex items-center gap-1.5">
-                    <Truck className="h-3.5 w-3.5 text-white" />
-                    <span className="text-xs font-semibold text-white">Parametry pojazdu</span>
+              <div
+                className={cn(
+                  "relative overflow-hidden rounded-xl transition-all duration-500 ease-in-out",
+                  glassClass,
+                  vehicleCardOpen
+                    ? "max-h-72 w-full"
+                    : "max-h-10 w-10 cursor-pointer hover:brightness-95 dark:hover:brightness-125"
+                )}
+                onClick={!vehicleCardOpen ? () => setVehicleCardOpen(true) : undefined}
+              >
+                {/* Truck icon — widoczna gdy zwinięta */}
+                <div className={cn(
+                  "absolute inset-0 z-10 flex items-center justify-center transition-opacity duration-300",
+                  vehicleCardOpen ? "opacity-0 pointer-events-none" : "opacity-100 delay-200"
+                )}>
+                  <Truck className="h-4 w-4" />
+                </div>
+
+                {/* Treść karty — widoczna gdy rozwinięta */}
+                <div className={cn(
+                  "transition-opacity duration-200",
+                  vehicleCardOpen ? "opacity-100 delay-200" : "opacity-0 pointer-events-none"
+                )}>
+                  <div className="relative h-28">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src="/images/truck.jpg" alt="Pojazd" className="h-full w-full object-cover" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                    <div className="absolute bottom-2 left-3 flex items-center gap-1.5">
+                      <Truck className="h-3.5 w-3.5 text-white" />
+                      <span className="text-xs font-semibold text-white">Parametry pojazdu</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setVehicleCardOpen(false)}
+                      className="absolute top-2 right-2 flex h-6 w-6 items-center justify-center rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
                   </div>
-                </div>
-                <div className="grid grid-cols-4 divide-x divide-black/10 dark:divide-white/10">
-                  <VehicleParamCell label="Wys." value={vehicleSpec.heightCm} unit="cm" />
-                  <VehicleParamCell label="Szer." value={vehicleSpec.widthCm} unit="cm" />
-                  <VehicleParamCell label="Dł." value={vehicleSpec.lengthCm} unit="cm" />
-                  <VehicleParamCell label="Osie" value={vehicleSpec.axleCount} />
-                </div>
-                <div className="h-px bg-black/10 dark:bg-white/10" />
-                <div className="grid grid-cols-4 divide-x divide-black/10 dark:divide-white/10">
-                  <VehicleParamCell label="Masa" value={vehicleSpec.currentWeightKg} unit="kg" />
-                  <VehicleParamCell label="DMC" value={vehicleSpec.grossWeightKg} unit="kg" />
-                  <VehicleParamCell label="Nacz." value={vehicleSpec.trailerCount} />
-                  <VehicleParamCell label="ADR" value={Array.isArray(vehicleSpec.hazardousGoods) ? "Tak" : "Nie"} />
+                  <div className="grid grid-cols-4 divide-x divide-black/10 dark:divide-white/10">
+                    <VehicleParamCell label="Wys." value={vehicleSpec.heightCm} unit="cm" />
+                    <VehicleParamCell label="Szer." value={vehicleSpec.widthCm} unit="cm" />
+                    <VehicleParamCell label="Dł." value={vehicleSpec.lengthCm} unit="cm" />
+                    <VehicleParamCell label="Osie" value={vehicleSpec.axleCount} />
+                  </div>
+                  <div className="h-px bg-black/10 dark:bg-white/10" />
+                  <div className="grid grid-cols-4 divide-x divide-black/10 dark:divide-white/10">
+                    <VehicleParamCell label="Masa" value={vehicleSpec.currentWeightKg} unit="kg" />
+                    <VehicleParamCell label="DMC" value={vehicleSpec.grossWeightKg} unit="kg" />
+                    <VehicleParamCell label="Nacz." value={vehicleSpec.trailerCount} />
+                    <VehicleParamCell label="ADR" value={Array.isArray(vehicleSpec.hazardousGoods) ? "Tak" : "Nie"} />
+                  </div>
                 </div>
               </div>
             )}
-            <div className="flex items-center gap-px rounded-xl bg-white/70 dark:bg-black/60 backdrop-blur-xl backdrop-saturate-150 border border-white/30 dark:border-white/10 shadow-2xl overflow-hidden text-sm">
+            <div className={cn("flex items-center gap-px rounded-xl overflow-hidden text-sm", glassClass)}>
               <MapSummaryCell label="Dystans" value={preview ? formatDistance(preview.distanceMeters) : "—"} />
               <div className="w-px self-stretch bg-black/10 dark:bg-white/10" />
               <MapSummaryCell label="Czas" value={preview ? formatDuration(preview.durationSeconds) : "—"} />
@@ -612,7 +639,7 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
             </div>
           </div>
 
-          <aside className="flex w-[460px] absolute z-10 top-4 bottom-4 right-4 flex-col bg-white/70 dark:bg-black/60 backdrop-blur-xl backdrop-saturate-150 border border-white/30 dark:border-white/10 shadow-2xl rounded-xl">
+          <aside className={cn("flex w-[460px] absolute z-10 top-4 bottom-4 right-4 flex-col rounded-xl", glassClass)}>
             <div className="flex items-center justify-between border-b px-4 py-3">
               <div>
                 <h2 className="text-base font-semibold">Edytuj trasę</h2>
@@ -972,21 +999,23 @@ function RoutePointRow({
         <div className="flex flex-wrap justify-end gap-1">
           <Button
             type="button"
-            variant="outline"
-            size="sm"
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
             disabled={!canMoveUp}
             onClick={() => onMove(point.clientId, -1)}
           >
-            ↑
+            <ChevronUp className="h-4 w-4" />
           </Button>
           <Button
             type="button"
-            variant="outline"
-            size="sm"
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
             disabled={!canMoveDown}
             onClick={() => onMove(point.clientId, 1)}
           >
-            ↓
+            <ChevronDown className="h-4 w-4" />
           </Button>
           {point.partnerPoiId ? (
             <Button
@@ -1010,11 +1039,12 @@ function RoutePointRow({
           ) : null}
           <Button
             type="button"
-            variant="outline"
-            size="sm"
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-muted-foreground hover:text-destructive"
             onClick={() => onRemove(point.clientId)}
           >
-            Usuń
+            <Trash2 className="h-4 w-4" />
           </Button>
         </div>
       </div>
