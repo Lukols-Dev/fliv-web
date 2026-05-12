@@ -17,6 +17,7 @@ const HERE_SCRIPT_URLS = [
   "https://js.api.here.com/v3/3.2/mapsjs-ui.js",
 ] as const;
 const HERE_UI_CSS_URL = "https://js.api.here.com/v3/3.2/mapsjs-ui.css";
+const TILE_SIZE = 256;
 const iconCache = new WeakMap<HereNamespace, Map<string, unknown>>();
 
 export type HereMapMarkerMode = "numbered" | "typed";
@@ -137,6 +138,7 @@ type Props = {
   routePoints: HereMapRoutePoint[];
   polyline?: string | null;
   partnerPois?: PartnerPoiDto[];
+  fitRouteKey?: string | number | null;
   showUiControls?: boolean;
   onPartnerPoiAddToRoute?: (poi: PartnerPoiDto) => void | Promise<void>;
   onPartnerPoiDetachFromRoute?: (clientId: string) => void | Promise<void>;
@@ -154,6 +156,7 @@ export function HereStaticMap({
   routePoints,
   polyline,
   partnerPois = [],
+  fitRouteKey = null,
   showUiControls = true,
   onPartnerPoiAddToRoute,
   onPartnerPoiDetachFromRoute,
@@ -169,6 +172,7 @@ export function HereStaticMap({
   const infoBubbleModeRef = React.useRef<"click" | "hover" | null>(null);
   const hoverCloseTimeoutRef = React.useRef<number | null>(null);
   const lastRouteViewportSignatureRef = React.useRef<string | null>(null);
+  const lastFitRouteKeyRef = React.useRef<string | number | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [mapReady, setMapReady] = React.useState(false);
   const sortedPoints = React.useMemo(
@@ -467,21 +471,41 @@ export function HereStaticMap({
 
     closePartnerPoiBubble();
     const shouldFitViewport =
-      lastRouteViewportSignatureRef.current !== routeViewportSignature;
+      lastRouteViewportSignatureRef.current !== routeViewportSignature ||
+      lastFitRouteKeyRef.current !== fitRouteKey;
 
     if (routeGroupRef.current) {
       map.removeObject(routeGroupRef.current);
       routeGroupRef.current = null;
     }
 
+    let fitFrame: number | null = null;
+    let resizeFrame: number | null = null;
+
+    const scheduleFit = (fit: () => void) => {
+      fitFrame = window.requestAnimationFrame(() => {
+        map.getViewPort().resize();
+        resizeFrame = window.requestAnimationFrame(() => {
+          fit();
+          lastRouteViewportSignatureRef.current = routeViewportSignature;
+          lastFitRouteKeyRef.current = fitRouteKey;
+          emitViewportBbox(map, onViewportBboxChange);
+        });
+      });
+    };
+
     if (!sortedPoints.length) {
       if (shouldFitViewport) {
-        map.setCenter(HARDCODED_CENTER);
-        map.setZoom(HARDCODED_ZOOM);
-        lastRouteViewportSignatureRef.current = routeViewportSignature;
-        emitViewportBbox(map, onViewportBboxChange);
+        scheduleFit(() => {
+          map.setCenter(HARDCODED_CENTER);
+          map.setZoom(HARDCODED_ZOOM);
+        });
       }
-      return;
+
+      return () => {
+        cancelAnimationFrameIfNeeded(fitFrame);
+        cancelAnimationFrameIfNeeded(resizeFrame);
+      };
     }
 
     const group = createRouteObjectsGroup(
@@ -495,21 +519,13 @@ export function HereStaticMap({
     routeGroupRef.current = group;
 
     if (shouldFitViewport) {
-      if (sortedPoints.length === 1) {
-        map.setCenter({
-          lat: sortedPoints[0].latitude,
-          lng: sortedPoints[0].longitude,
-        });
-        map.setZoom(13);
-      } else {
-        map.getViewModel().setLookAtData({ bounds: group.getBoundingBox() });
-      }
-
-      lastRouteViewportSignatureRef.current = routeViewportSignature;
-      emitViewportBbox(map, onViewportBboxChange);
+      scheduleFit(() => fitMapToRoutePoints(map, sortedPoints, mapRef.current));
     }
 
     return () => {
+      cancelAnimationFrameIfNeeded(fitFrame);
+      cancelAnimationFrameIfNeeded(resizeFrame);
+
       if (routeGroupRef.current === group) {
         map.removeObject(group);
         routeGroupRef.current = null;
@@ -518,6 +534,7 @@ export function HereStaticMap({
   }, [
     closePartnerPoiBubble,
     closeHoverBubble,
+    fitRouteKey,
     mapReady,
     onViewportBboxChange,
     openRoutePointBubble,
@@ -678,6 +695,101 @@ function buildRouteViewportSignature(
       longitude: point.longitude,
     })),
   });
+}
+
+function fitMapToRoutePoints(
+  map: HereMap,
+  points: HereMapRoutePoint[],
+  container: HTMLElement | null
+) {
+  if (!points.length) {
+    map.setCenter(HARDCODED_CENTER);
+    map.setZoom(HARDCODED_ZOOM);
+    return;
+  }
+
+  if (points.length === 1) {
+    map.setCenter({
+      lat: points[0].latitude,
+      lng: points[0].longitude,
+    });
+    map.setZoom(13);
+    return;
+  }
+
+  const bbox = points.reduce(
+    (acc, point) => ({
+      north: Math.max(acc.north, point.latitude),
+      south: Math.min(acc.south, point.latitude),
+      east: Math.max(acc.east, point.longitude),
+      west: Math.min(acc.west, point.longitude),
+    }),
+    {
+      north: -90,
+      south: 90,
+      east: -180,
+      west: 180,
+    }
+  );
+
+  const width = Math.max(container?.clientWidth ?? 800, 320);
+  const height = Math.max(container?.clientHeight ?? 600, 240);
+  const padding = Math.min(120, Math.max(72, Math.min(width, height) * 0.12));
+  const usableWidth = Math.max(width - padding * 2, 1);
+  const usableHeight = Math.max(height - padding * 2, 1);
+
+  const westX = longitudeToWorldX(bbox.west);
+  const eastX = longitudeToWorldX(bbox.east);
+  const northY = latitudeToWorldY(bbox.north);
+  const southY = latitudeToWorldY(bbox.south);
+  const deltaX = Math.max(Math.abs(eastX - westX), 0.000001);
+  const deltaY = Math.max(Math.abs(southY - northY), 0.000001);
+  const zoomX = Math.log2(usableWidth / (TILE_SIZE * deltaX));
+  const zoomY = Math.log2(usableHeight / (TILE_SIZE * deltaY));
+  const zoom = clampNumber(Math.min(zoomX, zoomY) - 0.35, 2, 15);
+  const centerX = (westX + eastX) / 2;
+  const centerY = (northY + southY) / 2;
+
+  map.setCenter({
+    lat: worldYToLatitude(centerY),
+    lng: worldXToLongitude(centerX),
+  });
+  map.setZoom(zoom);
+}
+
+function longitudeToWorldX(longitude: number) {
+  return (longitude + 180) / 360;
+}
+
+function worldXToLongitude(x: number) {
+  return x * 360 - 180;
+}
+
+function latitudeToWorldY(latitude: number) {
+  const clamped = clampNumber(latitude, -85.05112878, 85.05112878);
+  const radians = (clamped * Math.PI) / 180;
+  return (
+    (1 -
+      Math.log(Math.tan(radians) + 1 / Math.cos(radians)) / Math.PI) /
+    2
+  );
+}
+
+function worldYToLatitude(y: number) {
+  return (
+    (Math.atan(Math.sinh(Math.PI * (1 - 2 * y))) * 180) /
+    Math.PI
+  );
+}
+
+function clampNumber(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function cancelAnimationFrameIfNeeded(frame: number | null) {
+  if (frame !== null) {
+    window.cancelAnimationFrame(frame);
+  }
 }
 
 function decodePolyline(H: HereNamespace, polyline?: string | null) {

@@ -172,6 +172,7 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
     React.useState<string | null>(null);
   const [detachingPartnerPoiClientId, setDetachingPartnerPoiClientId] =
     React.useState<string | null>(null);
+  const [mapFitVersion, setMapFitVersion] = React.useState(0);
   const [sectionOpen, setSectionOpen] = React.useState({
     points: true,
     partnerPois: true,
@@ -226,6 +227,7 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
     setPartnerPoiForm(defaultPartnerPoiForm());
     setEditingPartnerPoiId(null);
     setDetachingPartnerPoiClientId(null);
+    setMapFitVersion((version) => version + 1);
   }, [open, routeQuery.data]);
 
   const routePointPayload = React.useMemo(
@@ -497,6 +499,7 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
               routePoints={mapRoutePoints}
               polyline={visiblePolyline}
               partnerPois={visiblePartnerPois}
+              fitRouteKey={`${orderId}:${mapFitVersion}`}
               onPartnerPoiAddToRoute={handleAddPartnerPoiToRoute}
               onPartnerPoiDetachFromRoute={handleDetachPartnerPoiFromRoute}
               onViewportBboxChange={handlePartnerPoiBboxChange}
