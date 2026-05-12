@@ -77,11 +77,11 @@ const PARTNER_POI_TYPES: Array<{
   value: PartnerPoiType;
   label: string;
 }> = [
-  { value: "FUEL", label: "Stacja paliw" },
-  { value: "PARKING", label: "Parking" },
-  { value: "SERVICE", label: "Serwis" },
-  { value: "OTHER", label: "Inne" },
-];
+    { value: "FUEL", label: "Stacja paliw" },
+    { value: "PARKING", label: "Parking" },
+    { value: "SERVICE", label: "Serwis" },
+    { value: "OTHER", label: "Inne" },
+  ];
 
 const TRANSPORT_MODES: Array<{
   value: RoutingProfile["transportMode"];
@@ -103,9 +103,9 @@ const POINT_MARKER_MODES: Array<{
   value: HereMapMarkerMode;
   label: string;
 }> = [
-  { value: "numbered", label: "Numer" },
-  { value: "typed", label: "Ikona" },
-];
+    { value: "numbered", label: "Numer" },
+    { value: "typed", label: "Ikona" },
+  ];
 
 const HAZARDOUS_GOODS: Array<{ value: HazardousGood; label: string }> = [
   { value: "explosive", label: "Wybuchowe" },
@@ -275,19 +275,19 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
   }, [routePoints]);
   const visiblePartnerPois = showPartnerPois
     ? partnerPois.filter(
-        (poi) =>
-          poi.isActive && !routePartnerPoiClientIdsByPoiId.has(poi.id)
-      )
+      (poi) =>
+        poi.isActive && !routePartnerPoiClientIdsByPoiId.has(poi.id)
+    )
     : [];
 
   const handlePartnerPoiBboxChange = React.useCallback(
     (bbox: PartnerPoiBbox) => {
       setPartnerPoiBbox((current) =>
         current &&
-        current.north === bbox.north &&
-        current.south === bbox.south &&
-        current.east === bbox.east &&
-        current.west === bbox.west
+          current.north === bbox.north &&
+          current.south === bbox.south &&
+          current.east === bbox.east &&
+          current.west === bbox.west
           ? current
           : bbox
       );
@@ -494,19 +494,19 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
       >
         <DialogTitle className="sr-only">Edytuj trasę</DialogTitle>
         <div className="flex h-full min-h-0 bg-background">
-          <div className="relative min-w-0 flex-1 bg-muted">
-            <HereStaticMap
-              routePoints={mapRoutePoints}
-              polyline={visiblePolyline}
-              partnerPois={visiblePartnerPois}
-              fitRouteKey={`${orderId}:${mapFitVersion}`}
-              onPartnerPoiAddToRoute={handleAddPartnerPoiToRoute}
-              onPartnerPoiDetachFromRoute={handleDetachPartnerPoiFromRoute}
-              onViewportBboxChange={handlePartnerPoiBboxChange}
-            />
-          </div>
+          {/* <div className="relative min-w-0 flex-1 bg-muted"> */}
+          <HereStaticMap
+            routePoints={mapRoutePoints}
+            polyline={visiblePolyline}
+            partnerPois={visiblePartnerPois}
+            fitRouteKey={`${orderId}:${mapFitVersion}`}
+            onPartnerPoiAddToRoute={handleAddPartnerPoiToRoute}
+            onPartnerPoiDetachFromRoute={handleDetachPartnerPoiFromRoute}
+            onViewportBboxChange={handlePartnerPoiBboxChange}
+          />
+          {/* </div> */}
 
-          <aside className="flex h-full w-[460px] shrink-0 flex-col border-l bg-background">
+          <aside className="flex w-[460px] absolute z-10 top-4 bottom-4 right-4 flex-col bg-white/70 dark:bg-black/60 backdrop-blur-xl backdrop-saturate-150 border border-white/30 dark:border-white/10 shadow-2xl rounded-xl">
             <div className="flex items-center justify-between border-b px-4 py-3">
               <div>
                 <h2 className="text-base font-semibold">Edytuj trasę</h2>
@@ -628,7 +628,7 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
                       }
                       deletingId={
                         deletePartnerPoiMutation.variables &&
-                        deletePartnerPoiMutation.isPending
+                          deletePartnerPoiMutation.isPending
                           ? deletePartnerPoiMutation.variables
                           : null
                       }
@@ -1590,10 +1590,10 @@ function getPartnerPoiTypeLabel(type: PartnerPoiType): string {
   return type === "FUEL"
     ? "Stacja paliw"
     : type === "PARKING"
-    ? "Parking"
-    : type === "SERVICE"
-    ? "Serwis"
-    : "Inne";
+      ? "Parking"
+      : type === "SERVICE"
+        ? "Serwis"
+        : "Inne";
 }
 
 function normalizeVehicleSpec(vehicleSpec: VehicleSpec): VehicleSpec {
