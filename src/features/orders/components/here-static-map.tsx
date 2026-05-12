@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { ROUTE_POINT_ICON_PATHS } from "../lib/route-point-icons";
 import type {
   PartnerPoiBbox,
   PartnerPoiDto,
@@ -73,6 +72,7 @@ type HereMapGroup = {
 
 type HereMapMarker = {
   addEventListener(type: string, listener: () => void): void;
+  setIcon(icon: unknown): void;
 };
 
 type HereUi = {
@@ -113,7 +113,12 @@ type HereNamespace = {
         size?: { w: number; h: number };
       }
     ) => unknown;
+    DomIcon: new (element: string | HTMLElement) => unknown;
     Marker: new (
+      point: HereMapPoint,
+      options?: { icon?: unknown }
+    ) => HereMapMarker;
+    DomMarker: new (
       point: HereMapPoint,
       options?: { icon?: unknown }
     ) => HereMapMarker;
@@ -134,12 +139,25 @@ type HereNamespace = {
   };
 };
 
+type MarkerEntry = {
+  marker: HereMapMarker;
+  point: HereMapRoutePoint;
+  index: number;
+};
+
+type PoiMarkerEntry = {
+  marker: HereMapMarker;
+  poi: PartnerPoiDto;
+};
+
 type Props = {
   routePoints: HereMapRoutePoint[];
   polyline?: string | null;
   partnerPois?: PartnerPoiDto[];
   fitRouteKey?: string | number | null;
   showUiControls?: boolean;
+  highlightedClientId?: string | null;
+  highlightedPoiId?: string | null;
   onPartnerPoiAddToRoute?: (poi: PartnerPoiDto) => void | Promise<void>;
   onPartnerPoiDetachFromRoute?: (clientId: string) => void | Promise<void>;
   onViewportBboxChange?: (bbox: PartnerPoiBbox) => void;
@@ -158,6 +176,8 @@ export function HereStaticMap({
   partnerPois = [],
   fitRouteKey = null,
   showUiControls = true,
+  highlightedClientId,
+  highlightedPoiId,
   onPartnerPoiAddToRoute,
   onPartnerPoiDetachFromRoute,
   onViewportBboxChange,
@@ -173,6 +193,14 @@ export function HereStaticMap({
   const hoverCloseTimeoutRef = React.useRef<number | null>(null);
   const lastRouteViewportSignatureRef = React.useRef<string | null>(null);
   const lastFitRouteKeyRef = React.useRef<string | number | null>(null);
+  const routeMarkersRef = React.useRef<Map<string, MarkerEntry>>(new Map());
+  const prevHighlightedRef = React.useRef<string | null>(null);
+  const highlightedClientIdRef = React.useRef<string | null | undefined>(highlightedClientId);
+  highlightedClientIdRef.current = highlightedClientId ?? null;
+  const poiMarkersRef = React.useRef<Map<string, PoiMarkerEntry>>(new Map());
+  const prevHighlightedPoiRef = React.useRef<string | null>(null);
+  const highlightedPoiIdRef = React.useRef<string | null | undefined>(highlightedPoiId);
+  highlightedPoiIdRef.current = highlightedPoiId ?? null;
   const [error, setError] = React.useState<string | null>(null);
   const [mapReady, setMapReady] = React.useState(false);
   const sortedPoints = React.useMemo(
@@ -508,15 +536,30 @@ export function HereStaticMap({
       };
     }
 
+    routeMarkersRef.current.clear();
     const group = createRouteObjectsGroup(
       H,
       sortedPoints,
       polyline,
+      routeMarkersRef.current,
       openRoutePointBubble,
       closeHoverBubble
     );
     map.addObject(group);
     routeGroupRef.current = group;
+
+    // Re-apply bounce if a marker is currently highlighted
+    const currentHighlight = highlightedClientIdRef.current;
+    if (currentHighlight) {
+      const entry = routeMarkersRef.current.get(currentHighlight);
+      if (entry) {
+        entry.marker.setIcon(
+          entry.point.markerMode === "typed"
+            ? createTypedIconBouncing(H, entry.point.type)
+            : createNumberedIconBouncing(H, entry.index + 1, entry.point.type)
+        );
+      }
+    }
 
     if (shouldFitViewport) {
       scheduleFit(() => fitMapToRoutePoints(map, sortedPoints, mapRef.current));
@@ -561,14 +604,26 @@ export function HereStaticMap({
       return;
     }
 
+    poiMarkersRef.current.clear();
     const group = createPartnerPoiObjectsGroup(
       H,
       activePartnerPois,
+      poiMarkersRef.current,
       openPartnerPoiBubble,
       closeHoverBubble
     );
     map.addObject(group);
     poiGroupRef.current = group;
+
+    const currentPoiHighlight = highlightedPoiIdRef.current;
+    if (currentPoiHighlight) {
+      const entry = poiMarkersRef.current.get(currentPoiHighlight);
+      if (entry) {
+        entry.marker.setIcon(
+          createTypedIconBouncing(H, entry.poi.type as TransportOrderRoutePointDto["type"])
+        );
+      }
+    }
 
     return () => {
       if (poiGroupRef.current === group) {
@@ -584,6 +639,70 @@ export function HereStaticMap({
     onPartnerPoiAddToRoute,
     openPartnerPoiBubble,
   ]);
+
+  React.useEffect(() => {
+    if (!mapReady) return;
+    const H = hereRef.current;
+    if (!H) return;
+
+    const prev = prevHighlightedRef.current;
+    const current = highlightedClientId ?? null;
+    prevHighlightedRef.current = current;
+
+    if (prev === current) return;
+
+    if (prev) {
+      const entry = routeMarkersRef.current.get(prev);
+      if (entry) {
+        entry.marker.setIcon(
+          entry.point.markerMode === "typed"
+            ? createTypedIcon(H, entry.point.type)
+            : createNumberedIcon(H, entry.index + 1, entry.point.type)
+        );
+      }
+    }
+
+    if (current) {
+      const entry = routeMarkersRef.current.get(current);
+      if (entry) {
+        entry.marker.setIcon(
+          entry.point.markerMode === "typed"
+            ? createTypedIconBouncing(H, entry.point.type)
+            : createNumberedIconBouncing(H, entry.index + 1, entry.point.type)
+        );
+      }
+    }
+  }, [highlightedClientId, mapReady]);
+
+  React.useEffect(() => {
+    if (!mapReady) return;
+    const H = hereRef.current;
+    if (!H) return;
+
+    const prev = prevHighlightedPoiRef.current;
+    const current = highlightedPoiId ?? null;
+    prevHighlightedPoiRef.current = current;
+
+    if (prev === current) return;
+
+    if (prev) {
+      const entry = poiMarkersRef.current.get(prev);
+      if (entry) {
+        entry.marker.setIcon(
+          createTypedIcon(H, entry.poi.type as TransportOrderRoutePointDto["type"])
+        );
+      }
+    }
+
+    if (current) {
+      const entry = poiMarkersRef.current.get(current);
+      if (entry) {
+        entry.marker.setIcon(
+          createTypedIconBouncing(H, entry.poi.type as TransportOrderRoutePointDto["type"])
+        );
+      }
+    }
+  }, [highlightedPoiId, mapReady]);
 
   if (error) {
     return (
@@ -609,6 +728,7 @@ function createRouteObjectsGroup(
   H: HereNamespace,
   points: HereMapRoutePoint[],
   polyline?: string | null,
+  markersMap?: Map<string, MarkerEntry>,
   onMarkerOpen?: (
     point: HereMapRoutePoint,
     index: number,
@@ -625,7 +745,7 @@ function createRouteObjectsGroup(
 
   group.addObjects(
     points.map((point, index) => {
-      const marker = new H.map.Marker(
+      const marker = new H.map.DomMarker(
         {
           lat: point.latitude,
           lng: point.longitude,
@@ -637,6 +757,9 @@ function createRouteObjectsGroup(
               : createNumberedIcon(H, index + 1, point.type),
         }
       );
+      if (markersMap && point.clientId) {
+        markersMap.set(point.clientId, { marker, point, index });
+      }
       if (onMarkerOpen) {
         marker.addEventListener("tap", () =>
           onMarkerOpen(point, index, "click")
@@ -658,21 +781,27 @@ function createRouteObjectsGroup(
 function createPartnerPoiObjectsGroup(
   H: HereNamespace,
   partnerPois: PartnerPoiDto[],
-  onMarkerOpen: (poi: PartnerPoiDto, mode?: "click" | "hover") => void,
+  poiMarkersMap?: Map<string, PoiMarkerEntry>,
+  onMarkerOpen?: (poi: PartnerPoiDto, mode?: "click" | "hover") => void,
   onMarkerHoverEnd?: () => void
 ) {
   const group = new H.map.Group();
 
   group.addObjects(
     partnerPois.map((poi) => {
-      const marker = new H.map.Marker(
+      const marker = new H.map.DomMarker(
         { lat: poi.latitude, lng: poi.longitude },
         { icon: createPartnerPoiIcon(H, poi.type) }
       );
-      marker.addEventListener("tap", () => onMarkerOpen(poi, "click"));
-      marker.addEventListener("pointerenter", () =>
-        onMarkerOpen(poi, "hover")
-      );
+      if (poiMarkersMap) {
+        poiMarkersMap.set(poi.id, { marker, poi });
+      }
+      if (onMarkerOpen) {
+        marker.addEventListener("tap", () => onMarkerOpen(poi, "click"));
+        marker.addEventListener("pointerenter", () =>
+          onMarkerOpen(poi, "hover")
+        );
+      }
       if (onMarkerHoverEnd) {
         marker.addEventListener("pointerleave", onMarkerHoverEnd);
       }
@@ -835,25 +964,12 @@ function createNumberedIcon(
   number: number,
   type: TransportOrderRoutePointDto["type"]
 ) {
-  const key = `numbered:${type}:${number}`;
+  const key = `dom:numbered:${type}:${number}`;
 
   return getCachedIcon(H, key, () => {
     const color = getRoutePointColor(type);
-    const svg = encodeURIComponent(`
-      <svg xmlns="http://www.w3.org/2000/svg" width="40" height="48" viewBox="0 0 40 48">
-        <rect width="40" height="48" fill="#fff" fill-opacity="0.01"/>
-        <g transform="translate(4 4)">
-          <path d="M16 39C12 32 4 25 4 15.5C4 8.6 9.4 3 16 3s12 5.6 12 12.5C28 25 20 32 16 39Z" fill="${color}" stroke="white" stroke-width="2"/>
-          <circle cx="16" cy="15.5" r="8.5" fill="white"/>
-          <text x="16" y="19" text-anchor="middle" font-size="11" font-family="Arial, sans-serif" font-weight="700" fill="${color}">${number}</text>
-        </g>
-      </svg>
-    `);
-
-    return new H.map.Icon(`data:image/svg+xml;charset=UTF-8,${svg}`, {
-      size: { w: 40, h: 48 },
-      anchor: { x: 20, y: 43 },
-    });
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" overflow="visible" style="margin:-43px 0 0 -20px" width="40" height="48" viewBox="0 0 40 48"><g transform="translate(4 4)"><path d="M16 39C12 32 4 25 4 15.5C4 8.6 9.4 3 16 3s12 5.6 12 12.5C28 25 20 32 16 39Z" fill="${color}" stroke="white" stroke-width="2"/><circle cx="16" cy="15.5" r="8.5" fill="white"/><text x="16" y="19" text-anchor="middle" font-size="11" font-family="Arial, sans-serif" font-weight="700" fill="${color}">${number}</text></g></svg>`;
+    return new H.map.DomIcon(svg);
   });
 }
 
@@ -861,28 +977,34 @@ function createTypedIcon(
   H: HereNamespace,
   type: TransportOrderRoutePointDto["type"]
 ) {
-  const iconPath = ROUTE_POINT_ICON_PATHS[type];
-  const key = `typed:${type}:${iconPath}`;
+  const key = `dom:typed:${type}`;
 
   return getCachedIcon(H, key, () => {
     const color = getRoutePointColor(type);
     const glyph = getRoutePointGlyphSvg(type, color);
-    const svg = encodeURIComponent(`
-      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="56" viewBox="0 0 48 56">
-        <rect width="48" height="56" fill="#fff" fill-opacity="0.01"/>
-        <g transform="translate(4 4)">
-          <path d="M20 47C15 38 5 30 5 18.5C5 9.4 11.7 2 20 2s15 7.4 15 16.5C35 30 25 38 20 47Z" fill="${color}" stroke="#fff" stroke-width="2"/>
-          <circle cx="20" cy="18.5" r="11.5" fill="#fff"/>
-          ${glyph}
-        </g>
-      </svg>
-    `);
-
-    return new H.map.Icon(`data:image/svg+xml;charset=UTF-8,${svg}`, {
-      size: { w: 48, h: 56 },
-      anchor: { x: 24, y: 51 },
-    });
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" overflow="visible" style="margin:-51px 0 0 -24px" width="48" height="56" viewBox="0 0 48 56"><g transform="translate(4 4)"><path d="M20 47C15 38 5 30 5 18.5C5 9.4 11.7 2 20 2s15 7.4 15 16.5C35 30 25 38 20 47Z" fill="${color}" stroke="#fff" stroke-width="2"/><circle cx="20" cy="18.5" r="11.5" fill="#fff"/>${glyph}</g></svg>`;
+    return new H.map.DomIcon(svg);
   });
+}
+
+function createNumberedIconBouncing(
+  H: HereNamespace,
+  number: number,
+  type: TransportOrderRoutePointDto["type"]
+) {
+  const color = getRoutePointColor(type);
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" overflow="visible" style="margin:-43px 0 0 -20px" width="40" height="48" viewBox="0 0 40 48"><g><animateTransform attributeName="transform" type="translate" values="0,0; 0,-12; 0,0" dur="0.6s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1; 0.4 0 0.6 1" keyTimes="0;0.5;1"/><g transform="translate(4 4)"><path d="M16 39C12 32 4 25 4 15.5C4 8.6 9.4 3 16 3s12 5.6 12 12.5C28 25 20 32 16 39Z" fill="${color}" stroke="white" stroke-width="2"/><circle cx="16" cy="15.5" r="8.5" fill="white"/><text x="16" y="19" text-anchor="middle" font-size="11" font-family="Arial, sans-serif" font-weight="700" fill="${color}">${number}</text></g></g></svg>`;
+  return new H.map.DomIcon(svg);
+}
+
+function createTypedIconBouncing(
+  H: HereNamespace,
+  type: TransportOrderRoutePointDto["type"]
+) {
+  const color = getRoutePointColor(type);
+  const glyph = getRoutePointGlyphSvg(type, color);
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" overflow="visible" style="margin:-51px 0 0 -24px" width="48" height="56" viewBox="0 0 48 56"><g><animateTransform attributeName="transform" type="translate" values="0,0; 0,-12; 0,0" dur="0.6s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1; 0.4 0 0.6 1" keyTimes="0;0.5;1"/><g transform="translate(4 4)"><path d="M20 47C15 38 5 30 5 18.5C5 9.4 11.7 2 20 2s15 7.4 15 16.5C35 30 25 38 20 47Z" fill="${color}" stroke="#fff" stroke-width="2"/><circle cx="20" cy="18.5" r="11.5" fill="#fff"/>${glyph}</g></g></svg>`;
+  return new H.map.DomIcon(svg);
 }
 
 function createPartnerPoiIcon(H: HereNamespace, type: PartnerPoiDto["type"]) {

@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Image from "next/image";
 import {
   ChevronDown,
   ChevronUp,
@@ -196,6 +197,8 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
   const [mapFitVersion, setMapFitVersion] = React.useState(0);
   const [vehicleCardOpen, setVehicleCardOpen] = React.useState(true);
   const [asideOpen, setAsideOpen] = React.useState(true);
+  const [hoveredRoutePointClientId, setHoveredRoutePointClientId] = React.useState<string | null>(null);
+  const [hoveredPoiId, setHoveredPoiId] = React.useState<string | null>(null);
   const [sectionOpen, setSectionOpen] = React.useState({
     points: true,
     partnerPois: true,
@@ -541,6 +544,8 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
             polyline={visiblePolyline}
             partnerPois={visiblePartnerPois}
             fitRouteKey={`${orderId}:${mapFitVersion}`}
+            highlightedClientId={hoveredRoutePointClientId}
+            highlightedPoiId={hoveredPoiId}
             onPartnerPoiAddToRoute={handleAddPartnerPoiToRoute}
             onPartnerPoiDetachFromRoute={handleDetachPartnerPoiFromRoute}
             onViewportBboxChange={handlePartnerPoiBboxChange}
@@ -569,62 +574,66 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
           </div>
 
           <div className="absolute bottom-4 left-4 z-10 flex flex-col items-start gap-2">
-            {routingProfile.transportMode === "truck" && (
-              <div
-                className={cn(
-                  "relative overflow-hidden rounded-xl transition-all duration-500 ease-in-out",
-                  glassClass,
-                  vehicleCardOpen
-                    ? "max-h-72 w-full"
-                    : "max-h-10 w-10 cursor-pointer hover:brightness-95 dark:hover:brightness-125"
-                )}
-                onClick={!vehicleCardOpen ? () => setVehicleCardOpen(true) : undefined}
-              >
-                {/* Truck icon — widoczna gdy zwinięta */}
-                <div className={cn(
-                  "absolute inset-0 z-10 flex items-center justify-center transition-opacity duration-300",
-                  vehicleCardOpen ? "opacity-0 pointer-events-none" : "opacity-100 delay-200"
-                )}>
-                  <Truck className="h-4 w-4" />
-                </div>
-
-                {/* Treść karty — widoczna gdy rozwinięta */}
-                <div className={cn(
-                  "transition-opacity duration-200",
-                  vehicleCardOpen ? "opacity-100 delay-200" : "opacity-0 pointer-events-none"
-                )}>
-                  <div className="relative h-28">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src="/images/truck.jpg" alt="Pojazd" className="h-full w-full object-cover" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                    <div className="absolute bottom-2 left-3 flex items-center gap-1.5">
-                      <Truck className="h-3.5 w-3.5 text-white" />
-                      <span className="text-xs font-semibold text-white">Parametry pojazdu</span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setVehicleCardOpen(false)}
-                      className="absolute top-2 right-2 flex h-6 w-6 items-center justify-center rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                  <div className="grid grid-cols-4 divide-x divide-black/10 dark:divide-white/10">
-                    <VehicleParamCell label="Wys." value={vehicleSpec.heightCm} unit="cm" />
-                    <VehicleParamCell label="Szer." value={vehicleSpec.widthCm} unit="cm" />
-                    <VehicleParamCell label="Dł." value={vehicleSpec.lengthCm} unit="cm" />
-                    <VehicleParamCell label="Osie" value={vehicleSpec.axleCount} />
-                  </div>
-                  <div className="h-px bg-black/10 dark:bg-white/10" />
-                  <div className="grid grid-cols-4 divide-x divide-black/10 dark:divide-white/10">
-                    <VehicleParamCell label="Masa" value={vehicleSpec.currentWeightKg} unit="kg" />
-                    <VehicleParamCell label="DMC" value={vehicleSpec.grossWeightKg} unit="kg" />
-                    <VehicleParamCell label="Nacz." value={vehicleSpec.trailerCount} />
-                    <VehicleParamCell label="ADR" value={Array.isArray(vehicleSpec.hazardousGoods) ? "Tak" : "Nie"} />
-                  </div>
-                </div>
+            <div
+              className={cn(
+                "relative overflow-hidden rounded-xl transition-all duration-500 ease-in-out",
+                glassClass,
+                vehicleCardOpen
+                  ? "max-h-72 w-full"
+                  : "max-h-10 w-10 cursor-pointer hover:brightness-95 dark:hover:brightness-125"
+              )}
+              onClick={!vehicleCardOpen ? () => setVehicleCardOpen(true) : undefined}
+            >
+              <div className={cn(
+                "absolute inset-0 z-10 flex items-center justify-center transition-opacity duration-300",
+                vehicleCardOpen ? "opacity-0 pointer-events-none" : "opacity-100 delay-200"
+              )}>
+                <Truck className="h-4 w-4" />
               </div>
-            )}
+
+              <div className={cn(
+                "transition-opacity duration-200",
+                vehicleCardOpen ? "opacity-100 delay-200" : "opacity-0 pointer-events-none"
+              )}>
+                <div className="relative h-28">
+                  <Image
+                    src={routingProfile.transportMode === "truck" ? "/images/vehicle-truck.png" : "/images/vehicle-bus.png"}
+                    alt="Pojazd"
+                    fill
+                    className="object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                  <div className="absolute bottom-2 left-3 flex items-center gap-1.5">
+                    <Truck className="h-3.5 w-3.5 text-white" />
+                    <span className="text-xs font-semibold text-white">Parametry pojazdu</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setVehicleCardOpen(false)}
+                    className="absolute top-2 right-2 flex h-6 w-6 items-center justify-center rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+                {routingProfile.transportMode === "truck" && (
+                  <>
+                    <div className="grid grid-cols-4 divide-x divide-black/10 dark:divide-white/10">
+                      <VehicleParamCell label="Wys." value={vehicleSpec.heightCm} unit="cm" />
+                      <VehicleParamCell label="Szer." value={vehicleSpec.widthCm} unit="cm" />
+                      <VehicleParamCell label="Dł." value={vehicleSpec.lengthCm} unit="cm" />
+                      <VehicleParamCell label="Osie" value={vehicleSpec.axleCount} />
+                    </div>
+                    <div className="h-px bg-black/10 dark:bg-white/10" />
+                    <div className="grid grid-cols-4 divide-x divide-black/10 dark:divide-white/10">
+                      <VehicleParamCell label="Masa" value={vehicleSpec.currentWeightKg} unit="kg" />
+                      <VehicleParamCell label="DMC" value={vehicleSpec.grossWeightKg} unit="kg" />
+                      <VehicleParamCell label="Nacz." value={vehicleSpec.trailerCount} />
+                      <VehicleParamCell label="ADR" value={Array.isArray(vehicleSpec.hazardousGoods) ? "Tak" : "Nie"} />
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
             <div className={cn("flex items-center gap-px rounded-xl overflow-hidden text-sm", glassClass)}>
               <MapSummaryCell label="Dystans" value={preview ? formatDistance(preview.distanceMeters) : "—"} />
               <div className="w-px self-stretch bg-black/10 dark:bg-white/10" />
@@ -748,6 +757,7 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
                                 onRemove={removePoint}
                                 onDetachPartnerPoi={handleDetachPartnerPoiFromRoute}
                                 onUpdate={updatePoint}
+                                onHover={setHoveredRoutePointClientId}
                                 isDetachingPartnerPoi={
                                   detachingPartnerPoiClientId === point.clientId
                                 }
@@ -805,6 +815,7 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
                       }
                       onAddToRoute={handleAddPartnerPoiToRoute}
                       onDetachFromRoute={handleDetachPartnerPoiFromRoute}
+                      onHover={setHoveredPoiId}
                     />
                   </PanelSection>
 
@@ -962,6 +973,7 @@ function RoutePointRow({
   onRemove,
   onDetachPartnerPoi,
   onUpdate,
+  onHover,
   isDetachingPartnerPoi,
 }: {
   point: LocalRoutePoint;
@@ -975,6 +987,7 @@ function RoutePointRow({
     clientId: string,
     patch: Partial<Omit<LocalRoutePoint, "clientId">>
   ) => void;
+  onHover: (clientId: string | null) => void;
   isDetachingPartnerPoi: boolean;
 }) {
   const {
@@ -993,7 +1006,13 @@ function RoutePointRow({
   };
 
   return (
-    <div ref={setNodeRef} style={style} className="rounded-md border p-3">
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="rounded-md border p-3"
+      onMouseEnter={() => onHover(point.clientId)}
+      onMouseLeave={() => onHover(null)}
+    >
       <div className="mb-2 flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
           <button
@@ -1171,6 +1190,7 @@ function PartnerPoiSection({
   onToggleActive,
   onAddToRoute,
   onDetachFromRoute,
+  onHover,
 }: {
   items: PartnerPoiDto[];
   form: PartnerPoiFormState;
@@ -1192,6 +1212,7 @@ function PartnerPoiSection({
   onToggleActive: (poi: PartnerPoiDto) => void;
   onAddToRoute: (poi: PartnerPoiDto) => void | Promise<void>;
   onDetachFromRoute: (clientId: string) => void | Promise<void>;
+  onHover: (id: string | null) => void;
 }) {
   const canSubmit = !!form.address.trim() && !isSubmitting;
 
@@ -1305,7 +1326,12 @@ function PartnerPoiSection({
             const isDetaching = detachingRouteClientId === routeClientId;
 
             return (
-              <div key={poi.id} className="rounded-md border p-3">
+              <div
+                key={poi.id}
+                className="rounded-md border p-3"
+                onMouseEnter={() => onHover(poi.id)}
+                onMouseLeave={() => onHover(null)}
+              >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold">
