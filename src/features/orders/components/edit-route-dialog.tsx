@@ -27,6 +27,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -539,6 +540,49 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
           />
           {/* </div> */}
 
+          <div className="absolute top-4 left-4 z-10 flex flex-wrap gap-1.5">
+            <Badge variant="outline" className="bg-white/70 dark:bg-black/60 backdrop-blur-xl border-white/30 dark:border-white/10 shadow-md text-foreground">
+              {routingProfile.transportMode === "truck" ? "Ciężarówka" : "Samochód"}
+            </Badge>
+            <Badge variant="outline" className="bg-white/70 dark:bg-black/60 backdrop-blur-xl border-white/30 dark:border-white/10 shadow-md text-foreground">
+              {routingProfile.routingMode === "fast" ? "Trasa szybka" : "Trasa krótka"}
+            </Badge>
+            {routingProfile.trafficMode === "default" && (
+              <Badge variant="outline" className="bg-white/70 dark:bg-black/60 backdrop-blur-xl border-white/30 dark:border-white/10 shadow-md text-foreground">
+                Ruch drogowy
+              </Badge>
+            )}
+            {routingProfile.avoidTolls && (
+              <Badge variant="outline" className="bg-white/70 dark:bg-black/60 backdrop-blur-xl border-white/30 dark:border-white/10 shadow-md text-foreground">
+                Unikaj opłat
+              </Badge>
+            )}
+            {routingProfile.avoidFerries && (
+              <Badge variant="outline" className="bg-white/70 dark:bg-black/60 backdrop-blur-xl border-white/30 dark:border-white/10 shadow-md text-foreground">
+                Unikaj promów
+              </Badge>
+            )}
+            {routingProfile.avoidMotorways && (
+              <Badge variant="outline" className="bg-white/70 dark:bg-black/60 backdrop-blur-xl border-white/30 dark:border-white/10 shadow-md text-foreground">
+                Unikaj autostrad
+              </Badge>
+            )}
+          </div>
+
+          <div className="absolute bottom-4 left-4 z-10 flex items-center gap-px rounded-xl bg-white/70 dark:bg-black/60 backdrop-blur-xl backdrop-saturate-150 border border-white/30 dark:border-white/10 shadow-2xl overflow-hidden text-sm">
+            <MapSummaryCell label="Dystans" value={preview ? formatDistance(preview.distanceMeters) : "—"} />
+            <div className="w-px self-stretch bg-black/10 dark:bg-white/10" />
+            <MapSummaryCell label="Czas" value={preview ? formatDuration(preview.durationSeconds) : "—"} />
+            <div className="w-px self-stretch bg-black/10 dark:bg-white/10" />
+            <MapSummaryCell
+              label="Status"
+              value={previewIsCurrent ? "Aktualna" : preview ? "Wymaga przeliczenia" : "Nieprzeliczona"}
+              valueClassName={previewIsCurrent ? "text-emerald-600 dark:text-emerald-400" : preview ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"}
+            />
+            <div className="w-px self-stretch bg-black/10 dark:bg-white/10" />
+            <MapSummaryCell label="Punkty" value={String(routePoints.length)} />
+          </div>
+
           <aside className="flex w-[460px] absolute z-10 top-4 bottom-4 right-4 flex-col bg-white/70 dark:bg-black/60 backdrop-blur-xl backdrop-saturate-150 border border-white/30 dark:border-white/10 shadow-2xl rounded-xl">
             <div className="flex items-center justify-between border-b px-4 py-3">
               <div>
@@ -727,39 +771,41 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
                     </PanelSection>
                   ) : null}
 
-                  <PanelSection
-                    title="Podsumowanie"
-                    open={sectionOpen.summary}
-                    onOpenChange={(value) =>
-                      setSectionOpen((prev) => ({ ...prev, summary: value }))
-                    }
-                  >
-                    <div className="grid grid-cols-2 gap-3 text-sm">
-                      <SummaryItem
-                        label="Dystans"
-                        value={preview ? formatDistance(preview.distanceMeters) : "—"}
-                      />
-                      <SummaryItem
-                        label="Czas"
-                        value={
-                          preview
-                            ? formatDuration(preview.durationSeconds)
-                            : "—"
-                        }
-                      />
-                      <SummaryItem
-                        label="Status"
-                        value={
-                          previewIsCurrent
-                            ? "Aktualna"
-                            : preview
-                              ? "Wymaga przeliczenia"
-                              : "Nieprzeliczona"
-                        }
-                      />
-                      <SummaryItem label="Punkty" value={String(routePoints.length)} />
-                    </div>
-                  </PanelSection>
+                  <div className="hidden">
+                    <PanelSection
+                      title="Podsumowanie"
+                      open={sectionOpen.summary}
+                      onOpenChange={(value) =>
+                        setSectionOpen((prev) => ({ ...prev, summary: value }))
+                      }
+                    >
+                      <div className="grid grid-cols-2 gap-3 text-sm">
+                        <SummaryItem
+                          label="Dystans"
+                          value={preview ? formatDistance(preview.distanceMeters) : "—"}
+                        />
+                        <SummaryItem
+                          label="Czas"
+                          value={
+                            preview
+                              ? formatDuration(preview.durationSeconds)
+                              : "—"
+                          }
+                        />
+                        <SummaryItem
+                          label="Status"
+                          value={
+                            previewIsCurrent
+                              ? "Aktualna"
+                              : preview
+                                ? "Wymaga przeliczenia"
+                                : "Nieprzeliczona"
+                          }
+                        />
+                        <SummaryItem label="Punkty" value={String(routePoints.length)} />
+                      </div>
+                    </PanelSection>
+                  </div>
                 </div>
 
                 <div className="space-y-2 border-t p-4">
@@ -1525,7 +1571,24 @@ function NumberInput({
   );
 }
 
-function SummaryItem({ label, value }: { label: string; value: string }) {
+function MapSummaryCell({
+  label,
+  value,
+  valueClassName,
+}: {
+  label: string;
+  value: string;
+  valueClassName?: string;
+}) {
+  return (
+    <div className="flex flex-col px-4 py-2.5">
+      <span className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</span>
+      <span className={cn("text-sm font-semibold", valueClassName)}>{value}</span>
+    </div>
+  );
+}
+
+function SummaryItem({ label, value }: { label: string; value: string; }) {
   return (
     <div className="rounded-md border p-2">
       <p className="text-[11px] text-muted-foreground">{label}</p>
