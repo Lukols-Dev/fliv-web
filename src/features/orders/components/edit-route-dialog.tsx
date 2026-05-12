@@ -4,15 +4,20 @@ import * as React from "react";
 import {
   ChevronDown,
   ChevronUp,
+  Fuel,
   GripVertical,
   Loader2,
   MapPin,
+  PackageMinus,
+  PackagePlus,
   Pencil,
   Plus,
   Save,
   Search,
+  SquareParking,
   Trash2,
   Truck,
+  Wrench,
   X,
 } from "lucide-react";
 import {
@@ -117,13 +122,6 @@ const ROUTING_MODES: Array<{
     { value: "short", label: "Short" },
   ];
 
-const POINT_MARKER_MODES: Array<{
-  value: HereMapMarkerMode;
-  label: string;
-}> = [
-    { value: "numbered", label: "Numer" },
-    { value: "typed", label: "Ikona" },
-  ];
 
 const HAZARDOUS_GOODS: Array<{ value: HazardousGood; label: string }> = [
   { value: "explosive", label: "Wybuchowe" },
@@ -988,7 +986,18 @@ function RoutePointRow({
           >
             <GripVertical className="h-4 w-4" />
           </button>
-          <span className="text-xs font-semibold">#{index + 1}</span>
+          <button
+            type="button"
+            title={point.markerMode === "numbered" ? "Przełącz na ikonę" : "Przełącz na numer"}
+            onClick={() => onUpdate(point.clientId, {
+              markerMode: point.markerMode === "numbered" ? "typed" : "numbered",
+            })}
+            className="flex h-6 min-w-6 items-center justify-center rounded border px-1 text-xs font-semibold hover:bg-muted transition-colors"
+          >
+            {point.markerMode === "numbered"
+              ? index + 1
+              : <PointTypeIcon type={point.type} className="h-3.5 w-3.5" />}
+          </button>
           {point.partnerPoiId ? (
             <span className="rounded-full border px-2 py-0.5 text-[11px] text-muted-foreground">
               POI
@@ -1064,7 +1073,7 @@ function RoutePointRow({
           }
           placeholder="Adres opisowy"
         />
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 gap-2">
           <Select
             value={point.type}
             onValueChange={(value) =>
@@ -1099,26 +1108,6 @@ function RoutePointRow({
             <SelectContent>
               <SelectItem value="STOP">Postój</SelectItem>
               <SelectItem value="PASS_THROUGH">Przebieg</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select
-            value={point.markerMode}
-            onValueChange={(value) =>
-              onUpdate(point.clientId, {
-                markerMode: value as HereMapMarkerMode,
-              })
-            }
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {POINT_MARKER_MODES.map((item) => (
-                <SelectItem key={item.value} value={item.value}>
-                  {item.label}
-                </SelectItem>
-              ))}
             </SelectContent>
           </Select>
         </div>
@@ -1645,6 +1634,21 @@ function MapSummaryCell({
       <span className={cn("text-sm font-semibold", valueClassName)}>{value}</span>
     </div>
   );
+}
+
+function PointTypeIcon({
+  type,
+  className,
+}: {
+  type: TransportOrderRoutePointType;
+  className?: string;
+}) {
+  if (type === "LOADING") return <PackagePlus className={className} />;
+  if (type === "UNLOADING") return <PackageMinus className={className} />;
+  if (type === "FUEL") return <Fuel className={className} />;
+  if (type === "PARKING") return <SquareParking className={className} />;
+  if (type === "SERVICE") return <Wrench className={className} />;
+  return <MapPin className={className} />;
 }
 
 function VehicleParamCell({
