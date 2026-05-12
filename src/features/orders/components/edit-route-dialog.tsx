@@ -10,6 +10,8 @@ import {
   MapPin,
   PackageMinus,
   PackagePlus,
+  PanelRightClose,
+  PanelRightOpen,
   Pencil,
   Plus,
   Save,
@@ -193,6 +195,7 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
     React.useState<string | null>(null);
   const [mapFitVersion, setMapFitVersion] = React.useState(0);
   const [vehicleCardOpen, setVehicleCardOpen] = React.useState(true);
+  const [asideOpen, setAsideOpen] = React.useState(true);
   const [sectionOpen, setSectionOpen] = React.useState({
     points: true,
     partnerPois: true,
@@ -637,23 +640,37 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
             </div>
           </div>
 
-          <aside className={cn("flex w-[460px] absolute z-10 top-4 bottom-4 right-4 flex-col rounded-xl", glassClass)}>
-            <div className="flex items-center justify-between border-b px-4 py-3">
-              <div>
-                <h2 className="text-base font-semibold">Edytuj trasę</h2>
-                <p className="text-xs text-muted-foreground">
-                  Punkty, ustawienia i parametry pojazdu
-                </p>
+          <div
+            className={cn(
+              "absolute z-10 top-4 right-4 flex flex-col overflow-hidden rounded-xl transition-[width,height] duration-500 ease-in-out",
+              glassClass,
+              asideOpen
+                ? "w-[460px] h-[calc(100dvh-2rem)]"
+                : "w-[76px] h-10"
+            )}
+          >
+            <div className={cn("flex h-10 shrink-0 items-center px-1", asideOpen && "border-b")}>
+              <div className="min-w-0 flex-1 overflow-hidden">
+                <h2 className="truncate pl-3 text-sm font-semibold">Edytuj trasę</h2>
               </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                onClick={() => onOpenChange(false)}
-                className="h-8 w-8"
-              >
-                <X className="h-4 w-4" />
-              </Button>
+              <div className="flex shrink-0 gap-1">
+                <button
+                  type="button"
+                  onClick={() => setAsideOpen((v) => !v)}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
+                >
+                  {asideOpen
+                    ? <PanelRightClose className="h-4 w-4" />
+                    : <PanelRightOpen className="h-4 w-4" />}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onOpenChange(false)}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
             </div>
 
             {routeQuery.isPending ? (
@@ -904,8 +921,9 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
                 </div>
               </>
             )}
-          </aside>
+          </div>
         </div>
+
       </DialogContent>
     </Dialog>
   );
