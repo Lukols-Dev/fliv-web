@@ -11,6 +11,7 @@ import {
   Save,
   Search,
   Trash2,
+  Truck,
   X,
 } from "lucide-react";
 import {
@@ -569,18 +570,46 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
             )}
           </div>
 
-          <div className="absolute bottom-4 left-4 z-10 flex items-center gap-px rounded-xl bg-white/70 dark:bg-black/60 backdrop-blur-xl backdrop-saturate-150 border border-white/30 dark:border-white/10 shadow-2xl overflow-hidden text-sm">
-            <MapSummaryCell label="Dystans" value={preview ? formatDistance(preview.distanceMeters) : "—"} />
-            <div className="w-px self-stretch bg-black/10 dark:bg-white/10" />
-            <MapSummaryCell label="Czas" value={preview ? formatDuration(preview.durationSeconds) : "—"} />
-            <div className="w-px self-stretch bg-black/10 dark:bg-white/10" />
-            <MapSummaryCell
-              label="Status"
-              value={previewIsCurrent ? "Aktualna" : preview ? "Wymaga przeliczenia" : "Nieprzeliczona"}
-              valueClassName={previewIsCurrent ? "text-emerald-600 dark:text-emerald-400" : preview ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"}
-            />
-            <div className="w-px self-stretch bg-black/10 dark:bg-white/10" />
-            <MapSummaryCell label="Punkty" value={String(routePoints.length)} />
+          <div className="absolute bottom-4 left-4 z-10 flex flex-col items-start gap-2">
+            {routingProfile.transportMode === "truck" && (
+              <div className="w-full rounded-xl overflow-hidden bg-white/70 dark:bg-black/60 backdrop-blur-xl backdrop-saturate-150 border border-white/30 dark:border-white/10 shadow-2xl">
+                <div className="relative h-28">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/images/truck.jpg" alt="Pojazd" className="h-full w-full object-cover" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                  <div className="absolute bottom-2 left-3 flex items-center gap-1.5">
+                    <Truck className="h-3.5 w-3.5 text-white" />
+                    <span className="text-xs font-semibold text-white">Parametry pojazdu</span>
+                  </div>
+                </div>
+                <div className="grid grid-cols-4 divide-x divide-black/10 dark:divide-white/10">
+                  <VehicleParamCell label="Wys." value={vehicleSpec.heightCm} unit="cm" />
+                  <VehicleParamCell label="Szer." value={vehicleSpec.widthCm} unit="cm" />
+                  <VehicleParamCell label="Dł." value={vehicleSpec.lengthCm} unit="cm" />
+                  <VehicleParamCell label="Osie" value={vehicleSpec.axleCount} />
+                </div>
+                <div className="h-px bg-black/10 dark:bg-white/10" />
+                <div className="grid grid-cols-4 divide-x divide-black/10 dark:divide-white/10">
+                  <VehicleParamCell label="Masa" value={vehicleSpec.currentWeightKg} unit="kg" />
+                  <VehicleParamCell label="DMC" value={vehicleSpec.grossWeightKg} unit="kg" />
+                  <VehicleParamCell label="Nacz." value={vehicleSpec.trailerCount} />
+                  <VehicleParamCell label="ADR" value={Array.isArray(vehicleSpec.hazardousGoods) ? "Tak" : "Nie"} />
+                </div>
+              </div>
+            )}
+            <div className="flex items-center gap-px rounded-xl bg-white/70 dark:bg-black/60 backdrop-blur-xl backdrop-saturate-150 border border-white/30 dark:border-white/10 shadow-2xl overflow-hidden text-sm">
+              <MapSummaryCell label="Dystans" value={preview ? formatDistance(preview.distanceMeters) : "—"} />
+              <div className="w-px self-stretch bg-black/10 dark:bg-white/10" />
+              <MapSummaryCell label="Czas" value={preview ? formatDuration(preview.durationSeconds) : "—"} />
+              <div className="w-px self-stretch bg-black/10 dark:bg-white/10" />
+              <MapSummaryCell
+                label="Status"
+                value={previewIsCurrent ? "Aktualna" : preview ? "Wymaga przeliczenia" : "Nieprzeliczona"}
+                valueClassName={previewIsCurrent ? "text-emerald-600 dark:text-emerald-400" : preview ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"}
+              />
+              <div className="w-px self-stretch bg-black/10 dark:bg-white/10" />
+              <MapSummaryCell label="Punkty" value={String(routePoints.length)} />
+            </div>
           </div>
 
           <aside className="flex w-[460px] absolute z-10 top-4 bottom-4 right-4 flex-col bg-white/70 dark:bg-black/60 backdrop-blur-xl backdrop-saturate-150 border border-white/30 dark:border-white/10 shadow-2xl rounded-xl">
@@ -1584,6 +1613,24 @@ function MapSummaryCell({
     <div className="flex flex-col px-4 py-2.5">
       <span className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</span>
       <span className={cn("text-sm font-semibold", valueClassName)}>{value}</span>
+    </div>
+  );
+}
+
+function VehicleParamCell({
+  label,
+  value,
+  unit,
+}: {
+  label: string;
+  value: number | string | null | undefined;
+  unit?: string;
+}) {
+  const display = value == null ? "—" : unit ? `${value} ${unit}` : String(value);
+  return (
+    <div className="flex flex-col items-center px-1 py-2">
+      <span className="text-[9px] uppercase tracking-wide text-muted-foreground">{label}</span>
+      <span className="text-xs font-semibold">{display}</span>
     </div>
   );
 }
