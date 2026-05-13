@@ -443,6 +443,63 @@ export function HereStaticMap({
     ]
   );
 
+  const openDriverLocationBubble = React.useCallback(
+    (location: DriverMapLocation, mode: "click" | "hover" = "click") => {
+      const H = hereRef.current;
+      const ui = uiRef.current;
+      if (!H || !ui) return;
+
+      cancelPendingHoverClose();
+      closePartnerPoiBubble();
+
+      const content = document.createElement("div");
+      content.className = "min-w-[210px] space-y-2 text-sm";
+      if (mode === "hover") {
+        content.addEventListener("pointerenter", cancelPendingHoverClose);
+        content.addEventListener("pointerleave", closeHoverBubble);
+      }
+
+      const title = document.createElement("div");
+      title.className = "font-semibold";
+      title.textContent = "Lokalizacja kierowcy";
+      content.appendChild(title);
+
+      const updatedAt = document.createElement("div");
+      updatedAt.className = "text-xs text-muted-foreground";
+      updatedAt.textContent = `Ostatnie odświeżenie: ${formatDriverLocationTimestamp(
+        location.updatedAt
+      )}`;
+      content.appendChild(updatedAt);
+
+      const coords = document.createElement("div");
+      coords.className = "text-[11px] text-muted-foreground";
+      coords.textContent = `${location.latitude.toFixed(5)}, ${location.longitude.toFixed(5)}`;
+      content.appendChild(coords);
+
+      if (typeof location.accuracyMeters === "number") {
+        const accuracy = document.createElement("div");
+        accuracy.className = "text-[11px] text-muted-foreground";
+        accuracy.textContent = `Dokładność: ${Math.round(
+          location.accuracyMeters
+        )} m`;
+        content.appendChild(accuracy);
+      }
+
+      const bubble = new H.ui.InfoBubble(
+        { lat: location.latitude, lng: location.longitude },
+        { content }
+      );
+      ui.addBubble(bubble);
+      infoBubbleRef.current = bubble;
+      infoBubbleModeRef.current = mode;
+    },
+    [
+      cancelPendingHoverClose,
+      closeHoverBubble,
+      closePartnerPoiBubble,
+    ]
+  );
+
   React.useEffect(() => {
     const apiKey = process.env.NEXT_PUBLIC_HERE_MAPS_API_KEY;
 
@@ -576,6 +633,8 @@ export function HereStaticMap({
       {
         approachPolyline,
         driverLocation: driverLocationPoint,
+        onDriverLocationOpen: openDriverLocationBubble,
+        onDriverLocationHoverEnd: closeHoverBubble,
       }
     );
     map.addObject(group);
@@ -617,6 +676,7 @@ export function HereStaticMap({
     fitRouteKey,
     mapReady,
     onViewportBboxChange,
+    openDriverLocationBubble,
     openRoutePointBubble,
     polyline,
     routeViewportSignature,
@@ -805,6 +865,11 @@ function createRouteObjectsGroup(
   options: {
     approachPolyline?: string | null;
     driverLocation?: DriverMapLocation | null;
+    onDriverLocationOpen?: (
+      location: DriverMapLocation,
+      mode?: "click" | "hover"
+    ) => void;
+    onDriverLocationHoverEnd?: () => void;
   } = {}
 ) {
   const group = new H.map.Group();
@@ -854,21 +919,32 @@ function createRouteObjectsGroup(
     })
   );
 
-  if (options.driverLocation) {
-    group.addObject(
-      new H.map.DomMarker(
-        {
-          lat: options.driverLocation.latitude,
-          lng: options.driverLocation.longitude,
-        },
-        {
-          icon: createDriverLocationIcon(
-            H,
-            options.driverLocation.bearingDegrees
-          ),
-        }
-      )
+  const driverLocation = options.driverLocation;
+  if (driverLocation) {
+    const marker = new H.map.DomMarker(
+      {
+        lat: driverLocation.latitude,
+        lng: driverLocation.longitude,
+      },
+      {
+        icon: createDriverLocationIcon(
+          H,
+          driverLocation.bearingDegrees
+        ),
+      }
     );
+    if (options.onDriverLocationOpen) {
+      marker.addEventListener("tap", () =>
+        options.onDriverLocationOpen?.(driverLocation, "click")
+      );
+      marker.addEventListener("pointerenter", () =>
+        options.onDriverLocationOpen?.(driverLocation, "hover")
+      );
+    }
+    if (options.onDriverLocationHoverEnd) {
+      marker.addEventListener("pointerleave", options.onDriverLocationHoverEnd);
+    }
+    group.addObject(marker);
   }
 
   return group;
@@ -906,6 +982,16 @@ function createPartnerPoiObjectsGroup(
   );
 
   return group;
+}
+
+function formatDriverLocationTimestamp(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "brak danych";
+
+  return new Intl.DateTimeFormat("pl-PL", {
+    dateStyle: "short",
+    timeStyle: "medium",
+  }).format(date);
 }
 
 function normalizeDriverLocation(
@@ -1153,10 +1239,15 @@ function createPartnerPoiIcon(H: HereNamespace, type: PartnerPoiDto["type"]) {
 
 function createDriverLocationIcon(
   H: HereNamespace,
-  _bearingDegrees?: number | null
+  bearingDegrees?: number | null
 ) {
-  return getCachedIcon(H, "dom:driver-location", () => {
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" overflow="visible" style="margin:-28px 0 0 -28px" width="56" height="56" viewBox="0 0 56 56"><defs><filter id="drvShadow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur in="SourceAlpha" stdDeviation="4"/><feOffset dx="0" dy="4"/><feComponentTransfer><feFuncA type="linear" slope="0.2"/></feComponentTransfer><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><circle cx="28" cy="28" r="23" fill="rgba(255,255,255,0.7)" stroke="rgba(255,255,255,0.4)" stroke-width="1" filter="url(#drvShadow)"/><circle cx="28" cy="28" r="15" fill="#2563eb"/><g transform="translate(18,18) scale(0.85)" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2" fill="white"/><circle cx="7" cy="18" r="2" fill="white"/></g></svg>`;
+  const bearing =
+    typeof bearingDegrees === "number" && Number.isFinite(bearingDegrees)
+      ? Math.round(bearingDegrees)
+      : 0;
+
+  return getCachedIcon(H, `dom:driver-location:${bearing}`, () => {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" overflow="visible" style="margin:-28px 0 0 -28px" width="56" height="56" viewBox="0 0 56 56"><defs><filter id="drvShadow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur in="SourceAlpha" stdDeviation="4"/><feOffset dx="0" dy="4"/><feComponentTransfer><feFuncA type="linear" slope="0.2"/></feComponentTransfer><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><circle cx="28" cy="28" r="23" fill="rgba(255,255,255,0.7)" stroke="rgba(255,255,255,0.4)" stroke-width="1" filter="url(#drvShadow)"/><circle cx="28" cy="28" r="15" fill="#2563eb"/><g transform="rotate(${bearing} 28 28)"><g transform="translate(18,18) scale(0.85)" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2" fill="white"/><circle cx="7" cy="18" r="2" fill="white"/></g></g></svg>`;
     return new H.map.DomIcon(svg);
   });
 }
