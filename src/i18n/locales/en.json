@@ -130,8 +130,10 @@
       "mapPlaceholder": "Map (placeholder)"
     },
     "stats": {
-      "currentDistance": "Current distance",
-      "distance": "Distance",
+      "approachDistance": "Approach distance",
+      "approachEta": "Est. arrival time",
+      "traveledDistance": "Traveled distance",
+      "distance": "Route distance",
       "startTime": "Start time",
       "startDate": "Start date"
     },

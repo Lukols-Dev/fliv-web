@@ -133,10 +133,8 @@ export default function OrderDetailsSheet({
 
   const stats = [
     {
-      label: t("stats.currentDistance"),
-      value: approachRoute?.route
-        ? formatDistance(approachRoute.route.distanceMeters, locale)
-        : "—",
+      label: t("stats.traveledDistance"),
+      value: formatDistanceKm(mapDriverLocation?.traveledDistanceMeters ?? 0, locale),
     },
     {
       label: t("stats.distance"),
@@ -726,6 +724,13 @@ function formatDistance(distanceMeters: number, locale: string): string {
   }
 
   return `${new Intl.NumberFormat(locale, {
+    maximumFractionDigits: distanceMeters >= 100_000 ? 0 : 1,
+  }).format(distanceMeters / 1000)} km`;
+}
+
+function formatDistanceKm(distanceMeters: number, locale: string): string {
+  return `${new Intl.NumberFormat(locale, {
+    minimumFractionDigits: 1,
     maximumFractionDigits: distanceMeters >= 100_000 ? 0 : 1,
   }).format(distanceMeters / 1000)} km`;
 }

@@ -40,6 +40,9 @@ export type DriverLiveLocationDto = {
   accuracyMeters: number | null;
   speedMetersPerSecond: number | null;
   bearingDegrees: number | null;
+  remainingDistanceMeters: number | null;
+  traveledDistanceMeters: number | null;
+  remainingDurationSeconds: number | null;
   recordedAt: string;
   updatedAt: string;
   source: DriverLocationSource;
