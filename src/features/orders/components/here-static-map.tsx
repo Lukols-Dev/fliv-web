@@ -1153,16 +1153,10 @@ function createPartnerPoiIcon(H: HereNamespace, type: PartnerPoiDto["type"]) {
 
 function createDriverLocationIcon(
   H: HereNamespace,
-  bearingDegrees?: number | null
+  _bearingDegrees?: number | null
 ) {
-  const bearing =
-    typeof bearingDegrees === "number" && Number.isFinite(bearingDegrees)
-      ? Math.round(bearingDegrees / 10) * 10
-      : 0;
-  const key = `dom:driver-location:${bearing}`;
-
-  return getCachedIcon(H, key, () => {
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" overflow="visible" style="margin:-27px 0 0 -22px" width="44" height="54" viewBox="0 0 44 54"><g transform="translate(2 2)"><circle cx="20" cy="20" r="18" fill="#0f766e" fill-opacity="0.16" stroke="#ffffff" stroke-width="3"/><circle cx="20" cy="20" r="12" fill="#0f766e"/><path d="M20 7l4.6 12.2H15.4L20 7Z" fill="#ffffff" transform="rotate(${bearing} 20 20)"/><path d="M12 27h16v6H12zM15 22h10l3 5H12l3-5Z" fill="#ffffff"/><circle cx="16" cy="34" r="2.1" fill="#0f766e"/><circle cx="25" cy="34" r="2.1" fill="#0f766e"/></g></svg>`;
+  return getCachedIcon(H, "dom:driver-location", () => {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" overflow="visible" style="margin:-28px 0 0 -28px" width="56" height="56" viewBox="0 0 56 56"><defs><filter id="drvShadow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur in="SourceAlpha" stdDeviation="4"/><feOffset dx="0" dy="4"/><feComponentTransfer><feFuncA type="linear" slope="0.2"/></feComponentTransfer><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><circle cx="28" cy="28" r="23" fill="rgba(255,255,255,0.7)" stroke="rgba(255,255,255,0.4)" stroke-width="1" filter="url(#drvShadow)"/><circle cx="28" cy="28" r="15" fill="#2563eb"/><g transform="translate(18,18) scale(0.85)" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2" fill="white"/><circle cx="7" cy="18" r="2" fill="white"/></g></svg>`;
     return new H.map.DomIcon(svg);
   });
 }
