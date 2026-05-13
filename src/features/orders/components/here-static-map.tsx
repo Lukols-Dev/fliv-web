@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Loader2, Settings, X } from "lucide-react";
+import { Loader2, Minus, Plus, Settings, X } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import type {
@@ -15,6 +15,8 @@ const HARDCODED_CENTER = { lat: 52.2297, lng: 21.0122 };
 const HARDCODED_ZOOM = 12;
 const VEHICLE_RESTRICTIONS_FEATURE = "vehicle restrictions";
 const VEHICLE_RESTRICTIONS_MODE = "active & inactive";
+const TRAFFIC_STYLE_URL =
+  "https://js.api.here.com/v3/3.2/styles/harp/oslo/normal.day.json";
 const HERE_SCRIPT_URLS = [
   "https://js.api.here.com/v3/3.2/mapsjs-core.js",
   "https://js.api.here.com/v3/3.2/mapsjs-service.js",
@@ -26,6 +28,7 @@ const TILE_SIZE = 256;
 const iconCache = new WeakMap<HereNamespace, Map<string, unknown>>();
 
 export type HereMapMarkerMode = "numbered" | "typed";
+type HereMapView = "map" | "satellite";
 type HereMapRoutePoint = Omit<TransportOrderRoutePointDto, "id"> & {
   clientId?: string;
   id?: string;
@@ -54,6 +57,27 @@ type HereDefaultLayers = {
     normal: {
       logistics: unknown;
       map: unknown;
+    };
+    traffic?: {
+      logistics?: unknown;
+      map?: unknown;
+    };
+  };
+  hybrid?: {
+    day?: {
+      raster?: unknown;
+      traffic?: unknown;
+      vector?: unknown;
+    };
+    logistics?: {
+      raster?: unknown;
+      traffic?: unknown;
+      vector?: unknown;
+    };
+  };
+  raster?: {
+    satellite?: {
+      map?: unknown;
     };
   };
 };
@@ -88,6 +112,7 @@ type HereMap = {
   getViewModel(): {
     getLookAtData(): {
       bounds?: unknown;
+      zoom?: number;
     };
     setLookAtData(data: {
       bounds?: unknown;
@@ -95,7 +120,10 @@ type HereMap = {
       zoom?: number;
     }): void;
   };
+  addLayer(layer: unknown): void;
+  removeLayer(layer: unknown): void;
   getBaseLayer(): HereMapLayer;
+  setBaseLayer(layer: unknown): void;
   setCenter(point: HereMapPoint): void;
   setZoom(zoom: number): void;
 };
@@ -120,6 +148,9 @@ type HereNamespace = {
   service: {
     Platform: new (options: { apikey: string }) => {
       createDefaultLayers(): HereDefaultLayers;
+      getTrafficVectorTileService?: (options: { layer: "flow" | "incident" }) => {
+        createLayer(style: unknown): unknown;
+      };
     };
   };
   Map: new (
@@ -133,6 +164,7 @@ type HereNamespace = {
   };
   ui: {
     UI: {
+      new (map: HereMap): HereUi;
       createDefault(map: HereMap, layers: HereDefaultLayers): HereUi;
     };
     InfoBubble: new (
@@ -167,6 +199,11 @@ type HereNamespace = {
         };
       }
     ) => unknown;
+    render?: {
+      harp?: {
+        Style: new (url: string) => unknown;
+      };
+    };
   };
   geo: {
     LineString: {
@@ -198,6 +235,7 @@ type Props = {
   highlightedPoiId?: string | null;
   isUpdating?: boolean;
   mapSettingsPositionClassName?: string;
+  mapZoomPositionClassName?: string;
   onPartnerPoiAddToRoute?: (poi: PartnerPoiDto) => void | Promise<void>;
   onPartnerPoiDetachFromRoute?: (clientId: string) => void | Promise<void>;
   onViewportBboxChange?: (bbox: PartnerPoiBbox) => void;
@@ -222,16 +260,26 @@ export function HereStaticMap({
   highlightedPoiId,
   isUpdating = false,
   mapSettingsPositionClassName = "right-3 top-3",
+  mapZoomPositionClassName = "right-3 bottom-3",
   onPartnerPoiAddToRoute,
   onPartnerPoiDetachFromRoute,
   onViewportBboxChange,
 }: Props) {
   const mapRef = React.useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = React.useRef<HereMap | null>(null);
+  const defaultLayersRef = React.useRef<HereDefaultLayers | null>(null);
   const hereRef = React.useRef<HereNamespace | null>(null);
   const uiRef = React.useRef<HereUi | null>(null);
   const routeGroupRef = React.useRef<HereMapGroup | null>(null);
   const poiGroupRef = React.useRef<HereMapGroup | null>(null);
+  const satelliteVectorLayerRef = React.useRef<unknown | null>(null);
+  const trafficFlowLayerRef = React.useRef<unknown | null>(null);
+  const trafficIncidentLayerRef = React.useRef<unknown | null>(null);
+  const trafficFallbackLayerRef = React.useRef<unknown | null>(null);
+  const activeTrafficFlowRef = React.useRef(false);
+  const activeTrafficIncidentRef = React.useRef(false);
+  const activeTrafficFallbackLayerRef = React.useRef<unknown | null>(null);
+  const activeSatelliteVectorRef = React.useRef(false);
   const infoBubbleRef = React.useRef<unknown | null>(null);
   const infoBubbleModeRef = React.useRef<"click" | "hover" | null>(null);
   const hoverCloseTimeoutRef = React.useRef<number | null>(null);
@@ -248,6 +296,10 @@ export function HereStaticMap({
   const [error, setError] = React.useState<string | null>(null);
   const [mapReady, setMapReady] = React.useState(false);
   const [mapSettingsOpen, setMapSettingsOpen] = React.useState(false);
+  const [mapView, setMapView] = React.useState<HereMapView>("map");
+  const [trafficFlowEnabled, setTrafficFlowEnabled] = React.useState(false);
+  const [trafficIncidentsEnabled, setTrafficIncidentsEnabled] =
+    React.useState(false);
   const [vehicleRestrictionsEnabled, setVehicleRestrictionsEnabled] =
     React.useState(true);
   const sortedPoints = React.useMemo(
@@ -551,15 +603,20 @@ export function HereStaticMap({
 
         const platform = new H.service.Platform({ apikey: apiKey });
         const defaultLayers = platform.createDefaultLayers();
+        defaultLayersRef.current = defaultLayers;
         const map = new H.Map(container, defaultLayers.vector.normal.logistics, {
           center: HARDCODED_CENTER,
           zoom: HARDCODED_ZOOM,
           pixelRatio: window.devicePixelRatio || 1,
         });
+        const trafficLayers = createTrafficLayers(H, platform, defaultLayers);
+        trafficFlowLayerRef.current = trafficLayers.flow;
+        trafficIncidentLayerRef.current = trafficLayers.incident;
+        trafficFallbackLayerRef.current = trafficLayers.fallback;
 
         new H.mapevents.Behavior(new H.mapevents.MapEvents(map));
         if (showUiControls) {
-          uiRef.current = H.ui.UI.createDefault(map, defaultLayers);
+          uiRef.current = new H.ui.UI(map);
         }
 
         hereRef.current = H;
@@ -581,6 +638,15 @@ export function HereStaticMap({
       mapInstanceRef.current?.dispose();
       routeGroupRef.current = null;
       poiGroupRef.current = null;
+      defaultLayersRef.current = null;
+      satelliteVectorLayerRef.current = null;
+      trafficFlowLayerRef.current = null;
+      trafficIncidentLayerRef.current = null;
+      trafficFallbackLayerRef.current = null;
+      activeTrafficFlowRef.current = false;
+      activeTrafficIncidentRef.current = false;
+      activeTrafficFallbackLayerRef.current = null;
+      activeSatelliteVectorRef.current = false;
       mapInstanceRef.current = null;
       hereRef.current = null;
       uiRef.current = null;
@@ -591,10 +657,50 @@ export function HereStaticMap({
     if (!mapReady) return;
 
     const map = mapInstanceRef.current;
+    const defaultLayers = defaultLayersRef.current;
+    if (!map || !defaultLayers) return;
+
+    applyBaseMapView({
+      map,
+      defaultLayers,
+      mapView,
+      satelliteVectorLayerRef,
+      activeSatelliteVectorRef,
+    });
+    applyVehicleRestrictionsVisibility(
+      defaultLayers,
+      mapView,
+      vehicleRestrictionsEnabled
+    );
+    applyTrafficLayers({
+      map,
+      defaultLayers,
+      mapView,
+      trafficFlowEnabled,
+      trafficIncidentsEnabled,
+      trafficFlowLayer: trafficFlowLayerRef.current,
+      trafficIncidentLayer: trafficIncidentLayerRef.current,
+      trafficFallbackLayerRef,
+      activeTrafficFlowRef,
+      activeTrafficIncidentRef,
+      activeTrafficFallbackLayerRef,
+    });
+  }, [
+    mapReady,
+    mapView,
+    trafficFlowEnabled,
+    trafficIncidentsEnabled,
+    vehicleRestrictionsEnabled,
+  ]);
+
+  const zoomMapBy = React.useCallback((delta: number) => {
+    const map = mapInstanceRef.current;
     if (!map) return;
 
-    setVehicleRestrictionsVisibility(map, vehicleRestrictionsEnabled);
-  }, [mapReady, vehicleRestrictionsEnabled]);
+    const currentZoom =
+      map.getViewModel().getLookAtData().zoom ?? HARDCODED_ZOOM;
+    map.setZoom(clampNumber(currentZoom + delta, 2, 20));
+  }, []);
 
   React.useEffect(() => {
     if (!mapReady || !onViewportBboxChange) return;
@@ -889,9 +995,23 @@ export function HereStaticMap({
         <MapSettingsControl
           open={mapSettingsOpen}
           onOpenChange={setMapSettingsOpen}
+          mapView={mapView}
+          onMapViewChange={setMapView}
+          trafficFlowEnabled={trafficFlowEnabled}
+          onTrafficFlowEnabledChange={setTrafficFlowEnabled}
+          trafficIncidentsEnabled={trafficIncidentsEnabled}
+          onTrafficIncidentsEnabledChange={setTrafficIncidentsEnabled}
           vehicleRestrictionsEnabled={vehicleRestrictionsEnabled}
           onVehicleRestrictionsEnabledChange={setVehicleRestrictionsEnabled}
           positionClassName={mapSettingsPositionClassName}
+        />
+      )}
+
+      {mapReady && showUiControls && (
+        <MapZoomControl
+          onZoomIn={() => zoomMapBy(1)}
+          onZoomOut={() => zoomMapBy(-1)}
+          positionClassName={mapZoomPositionClassName}
         />
       )}
     </>
@@ -901,12 +1021,24 @@ export function HereStaticMap({
 function MapSettingsControl({
   open,
   onOpenChange,
+  mapView,
+  onMapViewChange,
+  trafficFlowEnabled,
+  onTrafficFlowEnabledChange,
+  trafficIncidentsEnabled,
+  onTrafficIncidentsEnabledChange,
   vehicleRestrictionsEnabled,
   onVehicleRestrictionsEnabledChange,
   positionClassName,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  mapView: HereMapView;
+  onMapViewChange: (view: HereMapView) => void;
+  trafficFlowEnabled: boolean;
+  onTrafficFlowEnabledChange: (checked: boolean) => void;
+  trafficIncidentsEnabled: boolean;
+  onTrafficIncidentsEnabledChange: (checked: boolean) => void;
   vehicleRestrictionsEnabled: boolean;
   onVehicleRestrictionsEnabledChange: (checked: boolean) => void;
   positionClassName: string;
@@ -914,9 +1046,9 @@ function MapSettingsControl({
   return (
     <div
       className={cn(
-        "absolute z-30 overflow-hidden rounded-xl border bg-background/90 text-foreground shadow-lg backdrop-blur-md transition-[width,max-height] duration-500 ease-in-out",
+        "absolute z-30 overflow-hidden rounded-xl border bg-background/90 text-foreground shadow-lg backdrop-blur-md transition-[right,width,max-height] duration-500 ease-in-out",
         open
-          ? "max-h-40 w-72"
+          ? "max-h-[360px] w-80"
           : "max-h-10 w-10 cursor-pointer hover:brightness-95 dark:hover:brightness-125",
         positionClassName
       )}
@@ -966,37 +1098,398 @@ function MapSettingsControl({
 
       <div
         className={cn(
-          "p-3 transition-opacity duration-200",
+          "space-y-4 p-3 transition-opacity duration-200",
           open ? "opacity-100 delay-200" : "pointer-events-none opacity-0"
         )}
       >
-        <label className="flex items-center justify-between gap-3 text-sm">
-          <span className="min-w-0 truncate">Ograniczenia dla ciężarówek</span>
-          <Switch
+        <div className="space-y-2">
+          <div className="text-xs font-medium text-muted-foreground">
+            Widok
+          </div>
+          <div className="grid grid-cols-2 gap-1 rounded-lg bg-muted/70 p-1">
+            <MapViewButton
+              active={mapView === "map"}
+              onClick={() => onMapViewChange("map")}
+            >
+              Mapa
+            </MapViewButton>
+            <MapViewButton
+              active={mapView === "satellite"}
+              onClick={() => onMapViewChange("satellite")}
+            >
+              Satelita
+            </MapViewButton>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <MapSettingsSwitch
+            label="Warunki ruchu"
+            checked={trafficFlowEnabled}
+            onCheckedChange={onTrafficFlowEnabledChange}
+          />
+          <MapSettingsSwitch
+            label="Zdarzenia drogowe"
+            checked={trafficIncidentsEnabled}
+            onCheckedChange={onTrafficIncidentsEnabledChange}
+          />
+          <MapSettingsSwitch
+            label="Ograniczenia dla ciężarówek"
             checked={vehicleRestrictionsEnabled}
             onCheckedChange={onVehicleRestrictionsEnabledChange}
           />
-        </label>
+        </div>
       </div>
     </div>
   );
 }
 
-function setVehicleRestrictionsVisibility(map: HereMap, enabled: boolean) {
-  const style = map.getBaseLayer().getProvider().getStyle();
+function MapViewButton({
+  active,
+  children,
+  onClick,
+}: {
+  active: boolean;
+  children: React.ReactNode;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "h-8 rounded-md px-3 text-sm font-medium transition-colors",
+        active
+          ? "bg-background text-foreground shadow-sm"
+          : "text-muted-foreground hover:bg-background/60 hover:text-foreground"
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+function MapSettingsSwitch({
+  label,
+  checked,
+  onCheckedChange,
+}: {
+  label: string;
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+}) {
+  return (
+    <label className="flex items-center justify-between gap-3 text-sm">
+      <span className="min-w-0 truncate">{label}</span>
+      <Switch checked={checked} onCheckedChange={onCheckedChange} />
+    </label>
+  );
+}
+
+function MapZoomControl({
+  onZoomIn,
+  onZoomOut,
+  positionClassName,
+}: {
+  onZoomIn: () => void;
+  onZoomOut: () => void;
+  positionClassName: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "absolute z-30 flex w-10 flex-col overflow-hidden rounded-xl border bg-background/90 text-foreground shadow-lg backdrop-blur-md transition-[right,bottom] duration-500 ease-in-out",
+        positionClassName
+      )}
+    >
+      <button
+        type="button"
+        aria-label="Przybliż mapę"
+        onClick={onZoomIn}
+        className="grid h-10 place-items-center transition-colors hover:bg-muted"
+      >
+        <Plus className="h-5 w-5" />
+      </button>
+      <div className="h-px bg-border" />
+      <button
+        type="button"
+        aria-label="Oddal mapę"
+        onClick={onZoomOut}
+        className="grid h-10 place-items-center transition-colors hover:bg-muted"
+      >
+        <Minus className="h-5 w-5" />
+      </button>
+    </div>
+  );
+}
+
+function applyBaseMapView({
+  map,
+  defaultLayers,
+  mapView,
+  satelliteVectorLayerRef,
+  activeSatelliteVectorRef,
+}: {
+  map: HereMap;
+  defaultLayers: HereDefaultLayers;
+  mapView: HereMapView;
+  satelliteVectorLayerRef: React.MutableRefObject<unknown | null>;
+  activeSatelliteVectorRef: React.MutableRefObject<boolean>;
+}) {
+  if (mapView === "satellite") {
+    const baseLayer =
+      defaultLayers.hybrid?.logistics?.raster ??
+      defaultLayers.hybrid?.day?.raster ??
+      defaultLayers.raster?.satellite?.map;
+    const vectorLayer =
+      defaultLayers.hybrid?.logistics?.vector ??
+      defaultLayers.hybrid?.day?.vector ??
+      null;
+
+    if (baseLayer) {
+      map.setBaseLayer(baseLayer);
+    }
+
+    if (
+      satelliteVectorLayerRef.current &&
+      satelliteVectorLayerRef.current !== vectorLayer &&
+      activeSatelliteVectorRef.current
+    ) {
+      map.removeLayer(satelliteVectorLayerRef.current);
+      activeSatelliteVectorRef.current = false;
+    }
+
+    satelliteVectorLayerRef.current = vectorLayer;
+
+    if (vectorLayer && !activeSatelliteVectorRef.current) {
+      map.addLayer(vectorLayer);
+      activeSatelliteVectorRef.current = true;
+    }
+
+    return;
+  }
+
+  if (satelliteVectorLayerRef.current && activeSatelliteVectorRef.current) {
+    map.removeLayer(satelliteVectorLayerRef.current);
+    activeSatelliteVectorRef.current = false;
+  }
+
+  satelliteVectorLayerRef.current = null;
+  map.setBaseLayer(defaultLayers.vector.normal.logistics);
+}
+
+function applyVehicleRestrictionsVisibility(
+  defaultLayers: HereDefaultLayers,
+  mapView: HereMapView,
+  enabled: boolean
+) {
+  const styleLayer =
+    mapView === "satellite"
+      ? defaultLayers.hybrid?.logistics?.vector ??
+        defaultLayers.hybrid?.day?.vector ??
+        null
+      : defaultLayers.vector.normal.logistics;
+
+  setStyleFeatureVisibility(
+    styleLayer,
+    VEHICLE_RESTRICTIONS_FEATURE,
+    VEHICLE_RESTRICTIONS_MODE,
+    enabled
+  );
+}
+
+function setStyleFeatureVisibility(
+  layer: unknown,
+  feature: string,
+  mode: string,
+  enabled: boolean
+) {
+  const style = getLayerStyle(layer);
+  if (!style) return;
+
   const enabledFeatures = style.getEnabledFeatures() ?? [];
   const nextFeatures = enabledFeatures.filter(
-    (item) => item.feature !== VEHICLE_RESTRICTIONS_FEATURE
+    (item) => item.feature !== feature
   );
 
   if (enabled) {
     nextFeatures.push({
-      feature: VEHICLE_RESTRICTIONS_FEATURE,
-      mode: VEHICLE_RESTRICTIONS_MODE,
+      feature,
+      mode,
     });
   }
 
   style.setEnabledFeatures(nextFeatures);
+}
+
+function getLayerStyle(layer: unknown): HereMapStyle | null {
+  if (!layer || typeof layer !== "object") return null;
+
+  const provider = (layer as { getProvider?: () => unknown }).getProvider?.();
+  if (!provider || typeof provider !== "object") return null;
+
+  const style = (provider as { getStyle?: () => unknown }).getStyle?.();
+  if (!style || typeof style !== "object") return null;
+
+  const candidate = style as Partial<HereMapStyle>;
+  return typeof candidate.getEnabledFeatures === "function" &&
+    typeof candidate.setEnabledFeatures === "function"
+    ? (candidate as HereMapStyle)
+    : null;
+}
+
+function createTrafficLayers(
+  H: HereNamespace,
+  platform: {
+    getTrafficVectorTileService?: (options: { layer: "flow" | "incident" }) => {
+      createLayer(style: unknown): unknown;
+    };
+  },
+  defaultLayers: HereDefaultLayers
+) {
+  const Style = H.map.render?.harp?.Style;
+
+  if (Style && typeof platform.getTrafficVectorTileService === "function") {
+    try {
+      return {
+        flow: platform
+          .getTrafficVectorTileService({ layer: "flow" })
+          .createLayer(new Style(TRAFFIC_STYLE_URL)),
+        incident: platform.getTrafficVectorTileService({
+          layer: "incident",
+        }).createLayer(new Style(TRAFFIC_STYLE_URL)),
+        fallback: null,
+      };
+    } catch {
+      // Fall back to HERE's bundled traffic layer when separate layers are unavailable.
+    }
+  }
+
+  return {
+    flow: null,
+    incident: null,
+    fallback: getDefaultTrafficLayer(defaultLayers, "map"),
+  };
+}
+
+function applyTrafficLayers({
+  map,
+  defaultLayers,
+  mapView,
+  trafficFlowEnabled,
+  trafficIncidentsEnabled,
+  trafficFlowLayer,
+  trafficIncidentLayer,
+  trafficFallbackLayerRef,
+  activeTrafficFlowRef,
+  activeTrafficIncidentRef,
+  activeTrafficFallbackLayerRef,
+}: {
+  map: HereMap;
+  defaultLayers: HereDefaultLayers;
+  mapView: HereMapView;
+  trafficFlowEnabled: boolean;
+  trafficIncidentsEnabled: boolean;
+  trafficFlowLayer: unknown | null;
+  trafficIncidentLayer: unknown | null;
+  trafficFallbackLayerRef: React.MutableRefObject<unknown | null>;
+  activeTrafficFlowRef: React.MutableRefObject<boolean>;
+  activeTrafficIncidentRef: React.MutableRefObject<boolean>;
+  activeTrafficFallbackLayerRef: React.MutableRefObject<unknown | null>;
+}) {
+  if (trafficFlowLayer && trafficIncidentLayer) {
+    if (activeTrafficFallbackLayerRef.current) {
+      map.removeLayer(activeTrafficFallbackLayerRef.current);
+      activeTrafficFallbackLayerRef.current = null;
+    }
+
+    setMapLayerVisibility(
+      map,
+      trafficFlowLayer,
+      trafficFlowEnabled,
+      activeTrafficFlowRef
+    );
+    setMapLayerVisibility(
+      map,
+      trafficIncidentLayer,
+      trafficIncidentsEnabled,
+      activeTrafficIncidentRef
+    );
+    return;
+  }
+
+  if (trafficFlowLayer) {
+    setMapLayerVisibility(
+      map,
+      trafficFlowLayer,
+      trafficFlowEnabled || trafficIncidentsEnabled,
+      activeTrafficFlowRef
+    );
+    return;
+  }
+
+  const fallbackLayer =
+    getDefaultTrafficLayer(defaultLayers, mapView) ?? trafficFallbackLayerRef.current;
+  const shouldShowFallback = trafficFlowEnabled || trafficIncidentsEnabled;
+
+  if (
+    activeTrafficFallbackLayerRef.current &&
+    (!shouldShowFallback ||
+      activeTrafficFallbackLayerRef.current !== fallbackLayer)
+  ) {
+    map.removeLayer(activeTrafficFallbackLayerRef.current);
+    activeTrafficFallbackLayerRef.current = null;
+  }
+
+  trafficFallbackLayerRef.current = fallbackLayer;
+
+  if (
+    shouldShowFallback &&
+    fallbackLayer &&
+    activeTrafficFallbackLayerRef.current !== fallbackLayer
+  ) {
+    map.addLayer(fallbackLayer);
+    activeTrafficFallbackLayerRef.current = fallbackLayer;
+  }
+}
+
+function setMapLayerVisibility(
+  map: HereMap,
+  layer: unknown,
+  visible: boolean,
+  activeRef: React.MutableRefObject<boolean>
+) {
+  if (visible && !activeRef.current) {
+    map.addLayer(layer);
+    activeRef.current = true;
+    return;
+  }
+
+  if (!visible && activeRef.current) {
+    map.removeLayer(layer);
+    activeRef.current = false;
+  }
+}
+
+function getDefaultTrafficLayer(
+  defaultLayers: HereDefaultLayers,
+  mapView: HereMapView
+) {
+  if (mapView === "satellite") {
+    return (
+      defaultLayers.hybrid?.logistics?.traffic ??
+      defaultLayers.hybrid?.day?.traffic ??
+      defaultLayers.vector.traffic?.logistics ??
+      defaultLayers.vector.traffic?.map ??
+      null
+    );
+  }
+
+  return (
+    defaultLayers.vector.traffic?.logistics ??
+    defaultLayers.vector.traffic?.map ??
+    null
+  );
 }
 
 function createRouteObjectsGroup(

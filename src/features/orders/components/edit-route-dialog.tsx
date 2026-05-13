@@ -618,6 +618,9 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
             mapSettingsPositionClassName={
               asideOpen ? "right-[492px] top-4" : "right-[108px] top-4"
             }
+            mapZoomPositionClassName={
+              asideOpen ? "right-[492px] bottom-4" : "right-4 bottom-4"
+            }
             onPartnerPoiAddToRoute={handleAddPartnerPoiToRoute}
             onPartnerPoiDetachFromRoute={handleDetachPartnerPoiFromRoute}
             onViewportBboxChange={handlePartnerPoiBboxChange}
