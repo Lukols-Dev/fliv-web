@@ -70,6 +70,8 @@ import { cn } from "@/lib/utils";
 import { HereStaticMap } from "./here-static-map";
 import type { HereMapMarkerMode } from "./here-static-map";
 import { Spinner } from "@/components/ui/spinner";
+import { useOrderApproachRouteQuery } from "../hooks/use-order-approach-route-query";
+import { useOrderLocationQuery } from "../hooks/use-order-location-query";
 import { useOrderRouteQuery } from "../hooks/use-order-route-query";
 import {
   useCreatePartnerPoiMutation,
@@ -174,6 +176,16 @@ const glassClass =
 
 export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
   const routeQuery = useOrderRouteQuery({ id: orderId, enabled: open });
+  const driverLocationQuery = useOrderLocationQuery({
+    id: orderId,
+    enabled: open && !!orderId,
+  });
+  const driverApproachRouteQuery = useOrderApproachRouteQuery({
+    id: orderId,
+    enabled: open && !!orderId,
+  });
+  const mapDriverLocation =
+    driverApproachRouteQuery.data?.location ?? driverLocationQuery.data ?? null;
   const geocodeMutation = useRouteGeocodeMutation();
   const calculateMutation = useCalculateRouteMutation(orderId);
   const saveMutation = useSaveRouteMutation(orderId);
@@ -592,11 +604,17 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
           <HereStaticMap
             routePoints={mapRoutePoints}
             polyline={visiblePolyline}
+            approachPolyline={driverApproachRouteQuery.data?.route.polyline}
+            driverLocation={mapDriverLocation}
             partnerPois={visiblePartnerPois}
             fitRouteKey={`${orderId}:${mapFitVersion}`}
             highlightedClientId={hoveredRoutePointClientId}
             highlightedPoiId={hoveredPoiId}
-            isUpdating={calculateMutation.isPending || saveMutation.isPending}
+            isUpdating={
+              calculateMutation.isPending ||
+              saveMutation.isPending ||
+              driverApproachRouteQuery.isFetching
+            }
             onPartnerPoiAddToRoute={handleAddPartnerPoiToRoute}
             onPartnerPoiDetachFromRoute={handleDetachPartnerPoiFromRoute}
             onViewportBboxChange={handlePartnerPoiBboxChange}

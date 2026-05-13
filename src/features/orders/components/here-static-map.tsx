@@ -4,6 +4,7 @@ import * as React from "react";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type {
+  DriverLiveLocationDto,
   PartnerPoiBbox,
   PartnerPoiDto,
   TransportOrderRoutePointDto,
@@ -29,6 +30,16 @@ type HereMapRoutePoint = Omit<TransportOrderRoutePointDto, "id"> & {
   partnerPoiId?: string;
   partnerPoiName?: string | null;
 };
+
+type DriverMapLocation = Pick<
+  DriverLiveLocationDto,
+  | "latitude"
+  | "longitude"
+  | "bearingDegrees"
+  | "accuracyMeters"
+  | "recordedAt"
+  | "updatedAt"
+>;
 
 type HereMapPoint = {
   lat: number;
@@ -155,6 +166,8 @@ type PoiMarkerEntry = {
 type Props = {
   routePoints: HereMapRoutePoint[];
   polyline?: string | null;
+  approachPolyline?: string | null;
+  driverLocation?: DriverMapLocation | null;
   partnerPois?: PartnerPoiDto[];
   fitRouteKey?: string | number | null;
   showUiControls?: boolean;
@@ -176,6 +189,8 @@ declare global {
 export function HereStaticMap({
   routePoints,
   polyline,
+  approachPolyline,
+  driverLocation,
   partnerPois = [],
   fitRouteKey = null,
   showUiControls = true,
@@ -218,9 +233,19 @@ export function HereStaticMap({
         .sort((a, b) => a.sequence - b.sequence),
     [routePoints]
   );
+  const driverLocationPoint = React.useMemo(
+    () => normalizeDriverLocation(driverLocation),
+    [driverLocation]
+  );
   const routeViewportSignature = React.useMemo(
-    () => buildRouteViewportSignature(sortedPoints, polyline),
-    [polyline, sortedPoints]
+    () =>
+      buildRouteViewportSignature(
+        sortedPoints,
+        polyline,
+        approachPolyline,
+        driverLocationPoint
+      ),
+    [approachPolyline, driverLocationPoint, polyline, sortedPoints]
   );
   const activePartnerPois = React.useMemo(
     () =>
@@ -526,7 +551,7 @@ export function HereStaticMap({
       });
     };
 
-    if (!sortedPoints.length) {
+    if (!sortedPoints.length && !driverLocationPoint) {
       if (shouldFitViewport) {
         scheduleFit(() => {
           map.setCenter(HARDCODED_CENTER);
@@ -547,7 +572,11 @@ export function HereStaticMap({
       polyline,
       routeMarkersRef.current,
       openRoutePointBubble,
-      closeHoverBubble
+      closeHoverBubble,
+      {
+        approachPolyline,
+        driverLocation: driverLocationPoint,
+      }
     );
     map.addObject(group);
     routeGroupRef.current = group;
@@ -566,7 +595,9 @@ export function HereStaticMap({
     }
 
     if (shouldFitViewport) {
-      scheduleFit(() => fitMapToRoutePoints(map, sortedPoints, mapRef.current));
+      scheduleFit(() =>
+        fitMapToRoutePoints(map, sortedPoints, mapRef.current, driverLocationPoint)
+      );
     }
 
     return () => {
@@ -581,6 +612,8 @@ export function HereStaticMap({
   }, [
     closePartnerPoiBubble,
     closeHoverBubble,
+    approachPolyline,
+    driverLocationPoint,
     fitRouteKey,
     mapReady,
     onViewportBboxChange,
@@ -768,13 +801,25 @@ function createRouteObjectsGroup(
     index: number,
     mode?: "click" | "hover"
   ) => void,
-  onMarkerHoverEnd?: () => void
+  onMarkerHoverEnd?: () => void,
+  options: {
+    approachPolyline?: string | null;
+    driverLocation?: DriverMapLocation | null;
+  } = {}
 ) {
   const group = new H.map.Group();
   const routeLines = decodePolyline(H, polyline);
+  const approachLines = decodePolyline(H, options.approachPolyline, {
+    lineWidth: 4,
+    strokeColor: "rgba(20, 184, 166, 0.9)",
+  });
 
   if (routeLines.length) {
     group.addObjects(routeLines);
+  }
+
+  if (approachLines.length) {
+    group.addObjects(approachLines);
   }
 
   group.addObjects(
@@ -808,6 +853,23 @@ function createRouteObjectsGroup(
       return marker;
     })
   );
+
+  if (options.driverLocation) {
+    group.addObject(
+      new H.map.DomMarker(
+        {
+          lat: options.driverLocation.latitude,
+          lng: options.driverLocation.longitude,
+        },
+        {
+          icon: createDriverLocationIcon(
+            H,
+            options.driverLocation.bearingDegrees
+          ),
+        }
+      )
+    );
+  }
 
   return group;
 }
@@ -846,12 +908,36 @@ function createPartnerPoiObjectsGroup(
   return group;
 }
 
+function normalizeDriverLocation(
+  location?: DriverMapLocation | null
+): DriverMapLocation | null {
+  if (
+    !location ||
+    !Number.isFinite(location.latitude) ||
+    !Number.isFinite(location.longitude)
+  ) {
+    return null;
+  }
+
+  return location;
+}
+
 function buildRouteViewportSignature(
   points: HereMapRoutePoint[],
-  polyline?: string | null
+  polyline?: string | null,
+  approachPolyline?: string | null,
+  driverLocation?: DriverMapLocation | null
 ) {
   return JSON.stringify({
     polyline: polyline ?? null,
+    approachPolyline: approachPolyline ?? null,
+    driverLocation: driverLocation
+      ? {
+          latitude: driverLocation.latitude,
+          longitude: driverLocation.longitude,
+          recordedAt: driverLocation.recordedAt,
+        }
+      : null,
     points: points.map((point) => ({
       sequence: point.sequence,
       latitude: point.latitude,
@@ -863,24 +949,40 @@ function buildRouteViewportSignature(
 function fitMapToRoutePoints(
   map: HereMap,
   points: HereMapRoutePoint[],
-  container: HTMLElement | null
+  container: HTMLElement | null,
+  driverLocation?: DriverMapLocation | null
 ) {
-  if (!points.length) {
+  const viewportPoints = [
+    ...points.map((point) => ({
+      latitude: point.latitude,
+      longitude: point.longitude,
+    })),
+    ...(driverLocation
+      ? [
+          {
+            latitude: driverLocation.latitude,
+            longitude: driverLocation.longitude,
+          },
+        ]
+      : []),
+  ];
+
+  if (!viewportPoints.length) {
     map.setCenter(HARDCODED_CENTER);
     map.setZoom(HARDCODED_ZOOM);
     return;
   }
 
-  if (points.length === 1) {
+  if (viewportPoints.length === 1) {
     map.setCenter({
-      lat: points[0].latitude,
-      lng: points[0].longitude,
+      lat: viewportPoints[0].latitude,
+      lng: viewportPoints[0].longitude,
     });
     map.setZoom(13);
     return;
   }
 
-  const bbox = points.reduce(
+  const bbox = viewportPoints.reduce(
     (acc, point) => ({
       north: Math.max(acc.north, point.latitude),
       south: Math.min(acc.south, point.latitude),
@@ -955,7 +1057,14 @@ function cancelAnimationFrameIfNeeded(frame: number | null) {
   }
 }
 
-function decodePolyline(H: HereNamespace, polyline?: string | null) {
+function decodePolyline(
+  H: HereNamespace,
+  polyline?: string | null,
+  style: { lineWidth: number; strokeColor: string } = {
+    lineWidth: 5,
+    strokeColor: "rgba(37, 99, 235, 0.85)",
+  }
+) {
   if (!polyline) return [];
 
   return polyline
@@ -965,10 +1074,7 @@ function decodePolyline(H: HereNamespace, polyline?: string | null) {
     .map((sectionPolyline) => {
       const lineString = H.geo.LineString.fromFlexiblePolyline(sectionPolyline);
       return new H.map.Polyline(lineString, {
-        style: {
-          lineWidth: 5,
-          strokeColor: "rgba(37, 99, 235, 0.85)",
-        },
+        style,
       });
     });
 }
@@ -1043,6 +1149,22 @@ function createTypedIconBouncing(
 
 function createPartnerPoiIcon(H: HereNamespace, type: PartnerPoiDto["type"]) {
   return createTypedIcon(H, type as TransportOrderRoutePointDto["type"]);
+}
+
+function createDriverLocationIcon(
+  H: HereNamespace,
+  bearingDegrees?: number | null
+) {
+  const bearing =
+    typeof bearingDegrees === "number" && Number.isFinite(bearingDegrees)
+      ? Math.round(bearingDegrees / 10) * 10
+      : 0;
+  const key = `dom:driver-location:${bearing}`;
+
+  return getCachedIcon(H, key, () => {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" overflow="visible" style="margin:-27px 0 0 -22px" width="44" height="54" viewBox="0 0 44 54"><g transform="translate(2 2)"><circle cx="20" cy="20" r="18" fill="#0f766e" fill-opacity="0.16" stroke="#ffffff" stroke-width="3"/><circle cx="20" cy="20" r="12" fill="#0f766e"/><path d="M20 7l4.6 12.2H15.4L20 7Z" fill="#ffffff" transform="rotate(${bearing} 20 20)"/><path d="M12 27h16v6H12zM15 22h10l3 5H12l3-5Z" fill="#ffffff"/><circle cx="16" cy="34" r="2.1" fill="#0f766e"/><circle cx="25" cy="34" r="2.1" fill="#0f766e"/></g></svg>`;
+    return new H.map.DomIcon(svg);
+  });
 }
 
 function getRoutePointColor(type: TransportOrderRoutePointDto["type"]) {

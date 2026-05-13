@@ -6,6 +6,8 @@ import type {
   CreatePartnerPoiPayload,
   CreateTransportOrderPayload,
   CreateTransportOrderResult,
+  DriverApproachRouteDto,
+  DriverLiveLocationDto,
   ListPartnerPoisParams,
   OrderDetailsDto,
   OrderDocumentDto,
@@ -153,6 +155,34 @@ export function getOrderRoute(
     signal: options.signal,
     withCredentials: true,
   });
+}
+
+export function getOrderLastKnownLocation(
+  orderId: string,
+  options: { signal?: AbortSignal } = {}
+) {
+  return apiFetchPath<DriverLiveLocationDto | null>(
+    ordersEndpoints.locationById(orderId),
+    {
+      method: "GET",
+      signal: options.signal,
+      withCredentials: true,
+    }
+  );
+}
+
+export function getOrderApproachRoute(
+  orderId: string,
+  options: { signal?: AbortSignal } = {}
+) {
+  return apiFetchPath<DriverApproachRouteDto | null>(
+    ordersEndpoints.approachRouteById(orderId),
+    {
+      method: "GET",
+      signal: options.signal,
+      withCredentials: true,
+    }
+  );
 }
 
 export function geocodeRoutePoint(

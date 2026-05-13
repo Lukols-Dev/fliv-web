@@ -30,6 +30,36 @@ export type TransportOrderRoutePointType =
 export type TransportOrderRoutePointBehavior = "STOP" | "PASS_THROUGH";
 export type TransportOrderRoutePointSource = "DISPATCHER" | "SYSTEM" | "HERE";
 export type PartnerPoiType = "FUEL" | "PARKING" | "SERVICE" | "OTHER";
+export type DriverLocationSource = "HERE_SDK";
+
+export type DriverLiveLocationDto = {
+  driverId: string;
+  transportOrderId: string;
+  latitude: number;
+  longitude: number;
+  accuracyMeters: number | null;
+  speedMetersPerSecond: number | null;
+  bearingDegrees: number | null;
+  recordedAt: string;
+  updatedAt: string;
+  source: DriverLocationSource;
+};
+
+export type DriverApproachRouteDto = {
+  location: DriverLiveLocationDto;
+  route: {
+    polyline: string;
+    distanceMeters: number;
+    durationSeconds: number;
+    calculatedAt: string;
+  };
+  destinationRoutePoint: {
+    id: string;
+    sequence: number;
+    latitude: number;
+    longitude: number;
+  };
+};
 
 export type TransportOrderRoutePointDto = {
   id: string;

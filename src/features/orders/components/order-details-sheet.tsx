@@ -29,6 +29,8 @@ import { useDeleteOrderMutation } from "../hooks/use-delete-order-mutation";
 import { useOrderDetailsQuery } from "../hooks/use-order-details-query";
 import { useDeleteOrderDocumentMutation } from "../hooks/use-delete-order-document-mutation";
 import { useUploadOrderDocumentMutation } from "../hooks/use-upload-order-document-mutation";
+import { useOrderApproachRouteQuery } from "../hooks/use-order-approach-route-query";
+import { useOrderLocationQuery } from "../hooks/use-order-location-query";
 import { Spinner } from "@/components/ui/spinner";
 import { formatDatePL, formatTimeHM, formatTimeHMS } from "@/lib/format";
 import { initials } from "@/lib/utils";
@@ -79,9 +81,19 @@ export default function OrderDetailsSheet({
     id: orderId ?? "",
     enabled: open && !!orderId,
   });
+  const { data: driverLocation } = useOrderLocationQuery({
+    id: orderId,
+    enabled: open && !!orderId,
+  });
+  const { data: approachRoute, isFetching: isApproachRouteFetching } =
+    useOrderApproachRouteQuery({
+      id: orderId,
+      enabled: open && !!orderId,
+    });
   const details: OrderDetailsDto | undefined = orderDetails as
     | OrderDetailsDto
     | undefined;
+  const mapDriverLocation = approachRoute?.location ?? driverLocation ?? null;
 
   const orderNumber = orderDetails?.ztNumber ?? selected?.number ?? "#ZL-—";
   const orderStatus = (orderDetails?.status ??
@@ -120,7 +132,12 @@ export default function OrderDetailsSheet({
   }, [loadingTime, loadingDate, locale]);
 
   const stats = [
-    { label: t("stats.currentDistance"), value: "—" },
+    {
+      label: t("stats.currentDistance"),
+      value: approachRoute?.route
+        ? formatDistance(approachRoute.route.distanceMeters, locale)
+        : "—",
+    },
     {
       label: t("stats.distance"),
       value: orderDetails?.routePlan
@@ -379,6 +396,9 @@ export default function OrderDetailsSheet({
                               <HereStaticMap
                                 routePoints={orderDetails?.routePoints ?? []}
                                 polyline={orderDetails?.routePlan?.polyline}
+                                approachPolyline={approachRoute?.route.polyline}
+                                driverLocation={mapDriverLocation}
+                                isUpdating={isApproachRouteFetching}
                                 showUiControls={false}
                               />
                             </div>

@@ -11,6 +11,13 @@ export const ordersEndpoints = {
     joinPath(apiPaths.v1, `/dispatcher/transport-orders/${id}`),
   routeById: (id: string) =>
     joinPath(apiPaths.v1, `/dispatcher/transport-orders/${id}/route`),
+  locationById: (id: string) =>
+    joinPath(apiPaths.v1, `/dispatcher/transport-orders/${id}/location`),
+  approachRouteById: (id: string) =>
+    joinPath(
+      apiPaths.v1,
+      `/dispatcher/transport-orders/${id}/approach-route`
+    ),
   routeCalculateById: (id: string) =>
     joinPath(apiPaths.v1, `/dispatcher/transport-orders/${id}/route/calculate`),
   routeGeocode: joinPath(
