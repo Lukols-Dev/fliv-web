@@ -914,35 +914,41 @@ function MapSettingsControl({
   return (
     <div
       className={cn(
-        "absolute z-30 overflow-hidden rounded-xl border bg-background/90 text-foreground shadow-lg backdrop-blur-md transition-all duration-500 ease-in-out",
+        "absolute z-30 overflow-hidden rounded-xl border bg-background/90 text-foreground shadow-lg backdrop-blur-md transition-[width,max-height] duration-500 ease-in-out",
         open
           ? "max-h-40 w-72"
-          : "h-10 w-10 cursor-pointer hover:brightness-95 dark:hover:brightness-125",
+          : "max-h-10 w-10 cursor-pointer hover:brightness-95 dark:hover:brightness-125",
         positionClassName
       )}
       onClick={!open ? () => onOpenChange(true) : undefined}
     >
-      <button
-        type="button"
-        aria-label="Otwórz ustawienia mapy"
-        aria-expanded={open}
-        className={cn(
-          "absolute inset-0 z-10 flex items-center justify-center transition-opacity duration-300",
-          open ? "pointer-events-none opacity-0" : "opacity-100 delay-200"
-        )}
-      >
-        <Settings className="h-4 w-4" />
-      </button>
-
       <div
         className={cn(
-          "transition-opacity duration-200",
-          open ? "opacity-100 delay-200" : "pointer-events-none opacity-0"
+          "flex h-10 items-center transition-colors duration-300",
+          open && "border-b"
         )}
       >
-        <div className="flex h-10 items-center border-b px-3">
-          <div className="flex min-w-0 flex-1 items-center gap-2">
-            <Settings className="h-4 w-4 shrink-0" />
+        <button
+          type="button"
+          aria-label="Otwórz ustawienia mapy"
+          aria-expanded={open}
+          onClick={() => {
+            if (!open) onOpenChange(true);
+          }}
+          className="flex h-10 w-10 shrink-0 items-center justify-center"
+        >
+          <Settings className="h-4 w-4" />
+        </button>
+
+        <div
+          className={cn(
+            "flex min-w-0 flex-1 items-center transition-all duration-200",
+            open
+              ? "translate-x-0 opacity-100 delay-200"
+              : "pointer-events-none -translate-x-2 opacity-0"
+          )}
+        >
+          <div className="min-w-0 flex-1">
             <span className="truncate text-sm font-semibold">
               Ustawienia mapy
             </span>
@@ -956,18 +962,21 @@ function MapSettingsControl({
             <X className="h-3.5 w-3.5" />
           </button>
         </div>
+      </div>
 
-        <div className="p-3">
-          <label className="flex items-center justify-between gap-3 text-sm">
-            <span className="min-w-0 truncate">
-              Ograniczenia dla ciężarówek
-            </span>
-            <Switch
-              checked={vehicleRestrictionsEnabled}
-              onCheckedChange={onVehicleRestrictionsEnabledChange}
-            />
-          </label>
-        </div>
+      <div
+        className={cn(
+          "p-3 transition-opacity duration-200",
+          open ? "opacity-100 delay-200" : "pointer-events-none opacity-0"
+        )}
+      >
+        <label className="flex items-center justify-between gap-3 text-sm">
+          <span className="min-w-0 truncate">Ograniczenia dla ciężarówek</span>
+          <Switch
+            checked={vehicleRestrictionsEnabled}
+            onCheckedChange={onVehicleRestrictionsEnabledChange}
+          />
+        </label>
       </div>
     </div>
   );
