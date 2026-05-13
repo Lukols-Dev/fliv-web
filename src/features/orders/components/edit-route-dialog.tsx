@@ -615,6 +615,9 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
               saveMutation.isPending ||
               driverApproachRouteQuery.isFetching
             }
+            mapSettingsPositionClassName={
+              asideOpen ? "right-[492px] top-4" : "right-[108px] top-4"
+            }
             onPartnerPoiAddToRoute={handleAddPartnerPoiToRoute}
             onPartnerPoiDetachFromRoute={handleDetachPartnerPoiFromRoute}
             onViewportBboxChange={handlePartnerPoiBboxChange}

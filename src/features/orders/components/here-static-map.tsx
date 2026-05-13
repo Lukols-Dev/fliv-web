@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Settings, X } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import type {
   DriverLiveLocationDto,
@@ -12,6 +13,8 @@ import type {
 
 const HARDCODED_CENTER = { lat: 52.2297, lng: 21.0122 };
 const HARDCODED_ZOOM = 12;
+const VEHICLE_RESTRICTIONS_FEATURE = "vehicle restrictions";
+const VEHICLE_RESTRICTIONS_MODE = "active & inactive";
 const HERE_SCRIPT_URLS = [
   "https://js.api.here.com/v3/3.2/mapsjs-core.js",
   "https://js.api.here.com/v3/3.2/mapsjs-service.js",
@@ -49,9 +52,28 @@ type HereMapPoint = {
 type HereDefaultLayers = {
   vector: {
     normal: {
+      logistics: unknown;
       map: unknown;
     };
   };
+};
+
+type HereMapStyleFeature = {
+  feature: string;
+  mode: string;
+};
+
+type HereMapStyle = {
+  getEnabledFeatures(): HereMapStyleFeature[] | undefined;
+  setEnabledFeatures(features: HereMapStyleFeature[]): void;
+};
+
+type HereMapProvider = {
+  getStyle(): HereMapStyle;
+};
+
+type HereMapLayer = {
+  getProvider(): HereMapProvider;
 };
 
 type HereMap = {
@@ -73,6 +95,7 @@ type HereMap = {
       zoom?: number;
     }): void;
   };
+  getBaseLayer(): HereMapLayer;
   setCenter(point: HereMapPoint): void;
   setZoom(zoom: number): void;
 };
@@ -174,6 +197,7 @@ type Props = {
   highlightedClientId?: string | null;
   highlightedPoiId?: string | null;
   isUpdating?: boolean;
+  mapSettingsPositionClassName?: string;
   onPartnerPoiAddToRoute?: (poi: PartnerPoiDto) => void | Promise<void>;
   onPartnerPoiDetachFromRoute?: (clientId: string) => void | Promise<void>;
   onViewportBboxChange?: (bbox: PartnerPoiBbox) => void;
@@ -197,6 +221,7 @@ export function HereStaticMap({
   highlightedClientId,
   highlightedPoiId,
   isUpdating = false,
+  mapSettingsPositionClassName = "right-3 top-3",
   onPartnerPoiAddToRoute,
   onPartnerPoiDetachFromRoute,
   onViewportBboxChange,
@@ -222,6 +247,9 @@ export function HereStaticMap({
   highlightedPoiIdRef.current = highlightedPoiId ?? null;
   const [error, setError] = React.useState<string | null>(null);
   const [mapReady, setMapReady] = React.useState(false);
+  const [mapSettingsOpen, setMapSettingsOpen] = React.useState(false);
+  const [vehicleRestrictionsEnabled, setVehicleRestrictionsEnabled] =
+    React.useState(true);
   const sortedPoints = React.useMemo(
     () =>
       routePoints
@@ -523,7 +551,7 @@ export function HereStaticMap({
 
         const platform = new H.service.Platform({ apikey: apiKey });
         const defaultLayers = platform.createDefaultLayers();
-        const map = new H.Map(container, defaultLayers.vector.normal.map, {
+        const map = new H.Map(container, defaultLayers.vector.normal.logistics, {
           center: HARDCODED_CENTER,
           zoom: HARDCODED_ZOOM,
           pixelRatio: window.devicePixelRatio || 1,
@@ -558,6 +586,15 @@ export function HereStaticMap({
       uiRef.current = null;
     };
   }, [closePartnerPoiBubble, onViewportBboxChange, showUiControls]);
+
+  React.useEffect(() => {
+    if (!mapReady) return;
+
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    setVehicleRestrictionsVisibility(map, vehicleRestrictionsEnabled);
+  }, [mapReady, vehicleRestrictionsEnabled]);
 
   React.useEffect(() => {
     if (!mapReady || !onViewportBboxChange) return;
@@ -847,8 +884,110 @@ export function HereStaticMap({
           Brak punktów trasy
         </div>
       )}
+
+      {mapReady && (
+        <MapSettingsControl
+          open={mapSettingsOpen}
+          onOpenChange={setMapSettingsOpen}
+          vehicleRestrictionsEnabled={vehicleRestrictionsEnabled}
+          onVehicleRestrictionsEnabledChange={setVehicleRestrictionsEnabled}
+          positionClassName={mapSettingsPositionClassName}
+        />
+      )}
     </>
   );
+}
+
+function MapSettingsControl({
+  open,
+  onOpenChange,
+  vehicleRestrictionsEnabled,
+  onVehicleRestrictionsEnabledChange,
+  positionClassName,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  vehicleRestrictionsEnabled: boolean;
+  onVehicleRestrictionsEnabledChange: (checked: boolean) => void;
+  positionClassName: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "absolute z-30 overflow-hidden rounded-xl border bg-background/90 text-foreground shadow-lg backdrop-blur-md transition-all duration-500 ease-in-out",
+        open
+          ? "max-h-40 w-72"
+          : "h-10 w-10 cursor-pointer hover:brightness-95 dark:hover:brightness-125",
+        positionClassName
+      )}
+      onClick={!open ? () => onOpenChange(true) : undefined}
+    >
+      <button
+        type="button"
+        aria-label="Otwórz ustawienia mapy"
+        aria-expanded={open}
+        className={cn(
+          "absolute inset-0 z-10 flex items-center justify-center transition-opacity duration-300",
+          open ? "pointer-events-none opacity-0" : "opacity-100 delay-200"
+        )}
+      >
+        <Settings className="h-4 w-4" />
+      </button>
+
+      <div
+        className={cn(
+          "transition-opacity duration-200",
+          open ? "opacity-100 delay-200" : "pointer-events-none opacity-0"
+        )}
+      >
+        <div className="flex h-10 items-center border-b px-3">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <Settings className="h-4 w-4 shrink-0" />
+            <span className="truncate text-sm font-semibold">
+              Ustawienia mapy
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => onOpenChange(false)}
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            aria-label="Zamknij ustawienia mapy"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+
+        <div className="p-3">
+          <label className="flex items-center justify-between gap-3 text-sm">
+            <span className="min-w-0 truncate">
+              Ograniczenia dla ciężarówek
+            </span>
+            <Switch
+              checked={vehicleRestrictionsEnabled}
+              onCheckedChange={onVehicleRestrictionsEnabledChange}
+            />
+          </label>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function setVehicleRestrictionsVisibility(map: HereMap, enabled: boolean) {
+  const style = map.getBaseLayer().getProvider().getStyle();
+  const enabledFeatures = style.getEnabledFeatures() ?? [];
+  const nextFeatures = enabledFeatures.filter(
+    (item) => item.feature !== VEHICLE_RESTRICTIONS_FEATURE
+  );
+
+  if (enabled) {
+    nextFeatures.push({
+      feature: VEHICLE_RESTRICTIONS_FEATURE,
+      mode: VEHICLE_RESTRICTIONS_MODE,
+    });
+  }
+
+  style.setEnabledFeatures(nextFeatures);
 }
 
 function createRouteObjectsGroup(
