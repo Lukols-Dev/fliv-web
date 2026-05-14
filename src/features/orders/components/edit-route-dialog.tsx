@@ -1122,15 +1122,44 @@ function PanelSection({
   onOpenChange: (open: boolean) => void;
   children: React.ReactNode;
 }) {
+  const prefersReducedMotion = useReducedMotion();
+  const contentTransition = prefersReducedMotion
+    ? { duration: 0 }
+    : {
+        height: { duration: 0.24, ease: [0.22, 1, 0.36, 1] },
+        opacity: { duration: 0.16, ease: "easeOut" },
+      };
+  const iconTransition = prefersReducedMotion
+    ? { duration: 0 }
+    : { duration: 0.18, ease: "easeOut" };
+
   return (
     <Collapsible open={open} onOpenChange={onOpenChange} className="border-b py-3">
       <CollapsibleTrigger className="flex w-full items-center justify-between text-sm font-semibold">
         {title}
-        <ChevronDown
-          className={cn("h-4 w-4 transition-transform", open && "rotate-180")}
-        />
+        <motion.span
+          animate={{ rotate: open ? 180 : 0 }}
+          transition={iconTransition}
+          className="flex h-4 w-4 items-center justify-center"
+        >
+          <ChevronDown className="h-4 w-4" />
+        </motion.span>
       </CollapsibleTrigger>
-      <CollapsibleContent className="pt-3">{children}</CollapsibleContent>
+      <CollapsibleContent forceMount className="overflow-hidden">
+        <motion.div
+          initial={false}
+          animate={{
+            height: open ? "auto" : 0,
+            opacity: open ? 1 : 0,
+          }}
+          transition={contentTransition}
+          className="overflow-hidden"
+          aria-hidden={!open}
+          inert={!open ? true : undefined}
+        >
+          <div className="pt-3">{children}</div>
+        </motion.div>
+      </CollapsibleContent>
     </Collapsible>
   );
 }
