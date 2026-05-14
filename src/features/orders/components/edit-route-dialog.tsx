@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Image from "next/image";
+import { motion, useReducedMotion } from "motion/react";
 import {
   ChevronDown,
   ChevronUp,
@@ -86,6 +87,7 @@ import {
 } from "../hooks/use-route-editor-mutations";
 import type {
   CalculateTransportOrderRouteResult,
+  DriverLiveLocationDto,
   HazardousGood,
   PartnerPoiBbox,
   PartnerPoiDto,
@@ -94,6 +96,7 @@ import type {
   RoutePointDraft,
   RoutingProfile,
   TransportOrderRoutePointBehavior,
+  TransportOrderRoutePointDto,
   TransportOrderRoutePointType,
   VehicleSpec,
 } from "../types";
@@ -169,12 +172,26 @@ type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   orderId: string;
+  mapLayoutId?: string;
+  initialMapData?: {
+    routePoints: TransportOrderRoutePointDto[];
+    polyline?: string | null;
+    approachPolyline?: string | null;
+    driverLocation?: DriverLiveLocationDto | null;
+  };
 };
 
 const glassClass =
   "bg-white/70 dark:bg-black/60 backdrop-blur-xl backdrop-saturate-150 border border-white/30 dark:border-white/10 shadow-2xl";
 
-export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
+export function EditRouteDialog({
+  open,
+  onOpenChange,
+  orderId,
+  mapLayoutId,
+  initialMapData,
+}: Props) {
+  const prefersReducedMotion = useReducedMotion();
   const routeQuery = useOrderRouteQuery({ id: orderId, enabled: open });
   const driverLocationQuery = useOrderLocationQuery({
     id: orderId,
@@ -200,6 +217,7 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
     preview: CalculateTransportOrderRouteResult | null;
     lastCalculationSignature: string | null;
   } | null>(null);
+  const hydratedOrderIdRef = React.useRef<string | null>(null);
 
   const [routePoints, setRoutePoints] = React.useState<LocalRoutePoint[]>([]);
   const [routingProfile, setRoutingProfile] =
@@ -228,6 +246,9 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
   const [asideOpen, setAsideOpen] = React.useState(true);
   const [hoveredRoutePointClientId, setHoveredRoutePointClientId] = React.useState<string | null>(null);
   const [hoveredPoiId, setHoveredPoiId] = React.useState<string | null>(null);
+  const mapExpansionTransition = prefersReducedMotion
+    ? { duration: 0.01 }
+    : { type: "spring" as const, stiffness: 300, damping: 35, mass: 0.9 };
   const [sectionOpen, setSectionOpen] = React.useState({
     points: true,
     partnerPois: true,
@@ -277,6 +298,7 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
       preview: loadedPreview,
       lastCalculationSignature: loadedLastCalculationSignature,
     };
+    hydratedOrderIdRef.current = orderId;
 
     setRoutePoints(loadedRoutePoints);
     setRoutingProfile(loadedRoutingProfile);
@@ -289,7 +311,7 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
     setEditingPartnerPoiId(null);
     setDetachingPartnerPoiClientId(null);
     setMapFitVersion((version) => version + 1);
-  }, [open, routeQuery.data]);
+  }, [open, orderId, routeQuery.data]);
 
   const routePointPayload = React.useMemo(
     () => normalizeForPayload(routePoints),
@@ -298,6 +320,24 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
   const mapRoutePoints = React.useMemo(
     () => normalizeForMap(routePoints),
     [routePoints]
+  );
+  const initialMapRoutePoints = React.useMemo(
+    () =>
+      initialMapData?.routePoints.map((point) => ({
+        ...point,
+        clientId: point.id,
+        markerMode: "numbered" as const,
+      })) ?? [],
+    [initialMapData?.routePoints]
+  );
+  const routeQueryMapRoutePoints = React.useMemo(
+    () =>
+      routeQuery.data?.routePoints.map((point) => ({
+        ...point,
+        clientId: point.id,
+        markerMode: "numbered" as const,
+      })) ?? [],
+    [routeQuery.data?.routePoints]
   );
   const vehicleSpecPayload = React.useMemo(
     () => getVehicleSpecPayload(routingProfile, vehicleSpec),
@@ -317,6 +357,20 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
     !!lastCalculationSignature &&
     lastCalculationSignature === calculationSignature;
   const visiblePolyline = previewIsCurrent ? preview.polyline : null;
+  const editorRouteHydrated = hydratedOrderIdRef.current === orderId;
+  const displayedMapRoutePoints = editorRouteHydrated
+    ? mapRoutePoints
+    : routeQueryMapRoutePoints.length
+      ? routeQueryMapRoutePoints
+      : initialMapRoutePoints;
+  const displayedPolyline = editorRouteHydrated
+    ? visiblePolyline
+    : routeQuery.data?.routePlan?.polyline ?? initialMapData?.polyline ?? null;
+  const displayedApproachPolyline =
+    driverApproachRouteQuery.data?.route.polyline ??
+    initialMapData?.approachPolyline;
+  const displayedDriverLocation =
+    mapDriverLocation ?? initialMapData?.driverLocation ?? null;
   const canCalculate = routePointPayload.length >= 2;
 
   const isDirty = React.useMemo(() => {
@@ -595,39 +649,53 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="h-screen! w-screen! max-w-none! translate-x-0! translate-y-0! left-0! top-0! rounded-none border-0 p-0"
+        className="h-screen! w-screen! max-w-none! translate-x-0! translate-y-0! left-0! top-0! overflow-hidden rounded-none border-0 p-0 data-[state=open]:animate-none! data-[state=closed]:animate-none!"
         showCloseButton={false}
       >
         <DialogTitle className="sr-only">Edytuj trasę</DialogTitle>
-        <div className="flex h-full min-h-0 bg-background">
-          {/* <div className="relative min-w-0 flex-1 bg-muted"> */}
-          <HereStaticMap
-            routePoints={mapRoutePoints}
-            polyline={visiblePolyline}
-            approachPolyline={driverApproachRouteQuery.data?.route.polyline}
-            driverLocation={mapDriverLocation}
-            partnerPois={visiblePartnerPois}
-            fitRouteKey={`${orderId}:${mapFitVersion}`}
-            highlightedClientId={hoveredRoutePointClientId}
-            highlightedPoiId={hoveredPoiId}
-            isUpdating={
-              calculateMutation.isPending ||
-              saveMutation.isPending ||
-              driverApproachRouteQuery.isFetching
-            }
-            mapSettingsPositionClassName={
-              asideOpen ? "right-[492px] top-4" : "right-[108px] top-4"
-            }
-            mapZoomPositionClassName={
-              asideOpen ? "right-[492px] bottom-4" : "right-4 bottom-4"
-            }
-            onPartnerPoiAddToRoute={handleAddPartnerPoiToRoute}
-            onPartnerPoiDetachFromRoute={handleDetachPartnerPoiFromRoute}
-            onViewportBboxChange={handlePartnerPoiBboxChange}
-          />
-          {/* </div> */}
+        <div className="relative h-full min-h-0 overflow-hidden bg-background">
+          <motion.div
+            layoutId={prefersReducedMotion ? undefined : mapLayoutId}
+            transition={mapExpansionTransition}
+            className="absolute inset-0 z-0 overflow-hidden bg-muted"
+            style={{ borderRadius: 0 }}
+          >
+            <HereStaticMap
+              routePoints={displayedMapRoutePoints}
+              polyline={displayedPolyline}
+              approachPolyline={displayedApproachPolyline}
+              driverLocation={displayedDriverLocation}
+              partnerPois={visiblePartnerPois}
+              fitRouteKey={`${orderId}:${mapFitVersion}`}
+              highlightedClientId={hoveredRoutePointClientId}
+              highlightedPoiId={hoveredPoiId}
+              isUpdating={
+                calculateMutation.isPending ||
+                saveMutation.isPending ||
+                driverApproachRouteQuery.isFetching
+              }
+              mapSettingsPositionClassName={
+                asideOpen ? "right-[492px] top-4" : "right-[108px] top-4"
+              }
+              mapZoomPositionClassName={
+                asideOpen ? "right-[492px] bottom-4" : "right-4 bottom-4"
+              }
+              onPartnerPoiAddToRoute={handleAddPartnerPoiToRoute}
+              onPartnerPoiDetachFromRoute={handleDetachPartnerPoiFromRoute}
+              onViewportBboxChange={handlePartnerPoiBboxChange}
+            />
+          </motion.div>
 
-          <div className="absolute top-4 left-4 z-10 flex flex-wrap gap-1.5">
+          <motion.div
+            initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 8 }}
+            animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
+            transition={
+              prefersReducedMotion
+                ? { duration: 0.12 }
+                : { duration: 0.24, delay: 0.16, ease: "easeOut" }
+            }
+            className="absolute top-4 left-4 z-10 flex flex-wrap gap-1.5"
+          >
             <Badge variant="outline" className={cn(glassClass, "text-foreground")}>
               {routingProfile.transportMode === "truck" ? "Ciężarówka" : "Samochód"}
             </Badge>
@@ -646,9 +714,18 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
             {routingProfile.avoidMotorways && (
               <Badge variant="outline" className={cn(glassClass, "text-foreground")}>Unikaj autostrad</Badge>
             )}
-          </div>
+          </motion.div>
 
-          <div className="absolute bottom-4 left-4 z-10 flex flex-col items-start gap-2">
+          <motion.div
+            initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 8 }}
+            animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
+            transition={
+              prefersReducedMotion
+                ? { duration: 0.12 }
+                : { duration: 0.24, delay: 0.2, ease: "easeOut" }
+            }
+            className="absolute bottom-4 left-4 z-10 flex flex-col items-start gap-2"
+          >
             <div
               className={cn(
                 "relative overflow-hidden rounded-xl transition-all duration-500 ease-in-out",
@@ -722,9 +799,16 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
               <div className="w-px self-stretch bg-black/10 dark:bg-white/10" />
               <MapSummaryCell label="Punkty" value={String(routePoints.length)} />
             </div>
-          </div>
+          </motion.div>
 
-          <div
+          <motion.div
+            initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 8 }}
+            animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
+            transition={
+              prefersReducedMotion
+                ? { duration: 0.12 }
+                : { duration: 0.24, delay: 0.18, ease: "easeOut" }
+            }
             className={cn(
               "absolute z-10 top-4 right-4 flex flex-col overflow-hidden rounded-xl transition-[width,height] duration-500 ease-in-out",
               glassClass,
@@ -1019,7 +1103,7 @@ export function EditRouteDialog({ open, onOpenChange, orderId }: Props) {
                 </div>
               </>
             )}
-          </div>
+          </motion.div>
         </div>
 
       </DialogContent>

@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { LayoutGroup, motion, useReducedMotion } from "motion/react";
 import {
   Sheet,
   SheetContent,
@@ -72,6 +73,7 @@ export default function OrderDetailsSheet({
 
   const [editOpen, setEditOpen] = React.useState(false);
   const [routeEditOpen, setRouteEditOpen] = React.useState(false);
+  const prefersReducedMotion = useReducedMotion();
 
   const {
     data: orderDetails,
@@ -94,6 +96,31 @@ export default function OrderDetailsSheet({
     | OrderDetailsDto
     | undefined;
   const mapDriverLocation = approachRoute?.location ?? driverLocation ?? null;
+  const routeMapLayoutId = orderId
+    ? `order-route-map-${orderId}`
+    : undefined;
+  const sharedRouteMapLayoutId = prefersReducedMotion
+    ? undefined
+    : routeMapLayoutId;
+  const routeMapTransition = prefersReducedMotion
+    ? { duration: 0.01 }
+    : { type: "spring" as const, stiffness: 300, damping: 35, mass: 0.9 };
+  const routeEditorInitialMapData = React.useMemo(
+    () =>
+      details
+        ? {
+            routePoints: details.routePoints,
+            polyline: details.routePlan?.polyline,
+            approachPolyline: approachRoute?.route.polyline,
+            driverLocation: mapDriverLocation,
+          }
+        : undefined,
+    [
+      approachRoute?.route.polyline,
+      details,
+      mapDriverLocation,
+    ]
+  );
 
   const orderNumber = orderDetails?.ztNumber ?? selected?.number ?? "#ZL-—";
   const orderStatus = (orderDetails?.status ??
@@ -213,7 +240,7 @@ export default function OrderDetailsSheet({
   );
 
   return (
-    <>
+    <LayoutGroup id={`order-route-editor-${orderId || "empty"}`}>
       {details ? (
         <EditOrderDialog
           open={editOpen}
@@ -227,6 +254,8 @@ export default function OrderDetailsSheet({
           open={routeEditOpen}
           onOpenChange={setRouteEditOpen}
           orderId={orderId}
+          mapLayoutId={sharedRouteMapLayoutId}
+          initialMapData={routeEditorInitialMapData}
         />
       ) : null}
 
@@ -390,7 +419,12 @@ export default function OrderDetailsSheet({
 
                           {/* Map preview */}
                           <Card className="mt-3 py-0 overflow-hidden border shadow-none p">
-                            <div className="relative aspect-4/3 w-full bg-muted">
+                            <motion.div
+                              layoutId={sharedRouteMapLayoutId}
+                              transition={routeMapTransition}
+                              className="relative aspect-4/3 w-full overflow-hidden bg-muted"
+                              style={{ borderRadius: 8 }}
+                            >
                               <HereStaticMap
                                 routePoints={orderDetails?.routePoints ?? []}
                                 polyline={orderDetails?.routePlan?.polyline}
@@ -399,7 +433,7 @@ export default function OrderDetailsSheet({
                                 isUpdating={isApproachRouteFetching}
                                 showUiControls={false}
                               />
-                            </div>
+                            </motion.div>
                           </Card>
 
                           {/* Stats */}
@@ -714,7 +748,7 @@ export default function OrderDetailsSheet({
           </div>
         </SheetContent>
       </Sheet>
-    </>
+    </LayoutGroup>
   );
 }
 

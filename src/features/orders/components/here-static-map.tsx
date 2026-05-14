@@ -654,6 +654,18 @@ export function HereStaticMap({
   }, [closePartnerPoiBubble, onViewportBboxChange, showUiControls]);
 
   React.useEffect(() => {
+    const container = mapRef.current;
+    if (!container || typeof ResizeObserver === "undefined") return;
+
+    const observer = new ResizeObserver(() => {
+      mapInstanceRef.current?.getViewPort().resize();
+    });
+
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
+
+  React.useEffect(() => {
     if (!mapReady) return;
 
     const map = mapInstanceRef.current;
