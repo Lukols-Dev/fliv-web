@@ -991,7 +991,7 @@ export function HereStaticMap({
         </div>
       )}
 
-      {mapReady && (
+      {mapReady && showUiControls && (
         <MapSettingsControl
           open={mapSettingsOpen}
           onOpenChange={setMapSettingsOpen}
