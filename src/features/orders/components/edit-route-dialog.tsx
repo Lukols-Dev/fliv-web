@@ -202,7 +202,7 @@ export function EditRouteDialog({
     enabled: open && !!orderId,
   });
   const mapDriverLocation =
-    driverApproachRouteQuery.data?.location ?? driverLocationQuery.data ?? null;
+    driverLocationQuery.data ?? driverApproachRouteQuery.data?.location ?? null;
   const geocodeMutation = useRouteGeocodeMutation();
   const calculateMutation = useCalculateRouteMutation(orderId);
   const saveMutation = useSaveRouteMutation(orderId);
@@ -669,11 +669,11 @@ export function EditRouteDialog({
               fitRouteKey={`${orderId}:${mapFitVersion}`}
               highlightedClientId={hoveredRoutePointClientId}
               highlightedPoiId={hoveredPoiId}
-              isUpdating={
-                calculateMutation.isPending ||
-                saveMutation.isPending ||
-                driverApproachRouteQuery.isFetching
-              }
+              isUpdating={driverLocationQuery.isFetching}
+              isDriverLocationRefreshing={driverLocationQuery.isFetching}
+              onDriverLocationRefresh={() => {
+                void driverLocationQuery.refetch();
+              }}
               mapSettingsPositionClassName={
                 asideOpen ? "right-[492px] top-4" : "right-[108px] top-4"
               }

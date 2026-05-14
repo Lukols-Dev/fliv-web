@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { Loader2, Minus, Plus, Settings, X } from "lucide-react";
+import { Loader2, Minus, Plus, RefreshCw, Settings, X } from "lucide-react";
+import { motion, useReducedMotion } from "motion/react";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import type {
@@ -234,8 +235,11 @@ type Props = {
   highlightedClientId?: string | null;
   highlightedPoiId?: string | null;
   isUpdating?: boolean;
+  isDriverLocationRefreshing?: boolean;
   mapSettingsPositionClassName?: string;
   mapZoomPositionClassName?: string;
+  mapDriverRefreshPositionClassName?: string;
+  onDriverLocationRefresh?: () => void;
   onPartnerPoiAddToRoute?: (poi: PartnerPoiDto) => void | Promise<void>;
   onPartnerPoiDetachFromRoute?: (clientId: string) => void | Promise<void>;
   onViewportBboxChange?: (bbox: PartnerPoiBbox) => void;
@@ -259,8 +263,11 @@ export function HereStaticMap({
   highlightedClientId,
   highlightedPoiId,
   isUpdating = false,
+  isDriverLocationRefreshing = false,
   mapSettingsPositionClassName = "right-3 top-3",
   mapZoomPositionClassName = "right-3 bottom-3",
+  mapDriverRefreshPositionClassName = "right-3 top-3",
+  onDriverLocationRefresh,
   onPartnerPoiAddToRoute,
   onPartnerPoiDetachFromRoute,
   onViewportBboxChange,
@@ -993,7 +1000,7 @@ export function HereStaticMap({
       >
         <div className="flex items-center gap-2 rounded-full border bg-background/90 px-3 py-1.5 text-xs text-muted-foreground shadow-sm backdrop-blur-sm">
           <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          Aktualizowanie trasy…
+          Aktualizowanie pozycji…
         </div>
       </div>
 
@@ -1003,20 +1010,37 @@ export function HereStaticMap({
         </div>
       )}
 
-      {mapReady && showUiControls && (
-        <MapSettingsControl
-          open={mapSettingsOpen}
-          onOpenChange={setMapSettingsOpen}
-          mapView={mapView}
-          onMapViewChange={setMapView}
-          trafficFlowEnabled={trafficFlowEnabled}
-          onTrafficFlowEnabledChange={setTrafficFlowEnabled}
-          trafficIncidentsEnabled={trafficIncidentsEnabled}
-          onTrafficIncidentsEnabledChange={setTrafficIncidentsEnabled}
-          vehicleRestrictionsEnabled={vehicleRestrictionsEnabled}
-          onVehicleRestrictionsEnabledChange={setVehicleRestrictionsEnabled}
-          positionClassName={mapSettingsPositionClassName}
-        />
+      {mapReady && (showUiControls || onDriverLocationRefresh) && (
+        <div
+          className={cn(
+            "absolute z-30 flex items-start gap-2 transition-[right,top] duration-500 ease-in-out",
+            showUiControls
+              ? mapSettingsPositionClassName
+              : mapDriverRefreshPositionClassName
+          )}
+        >
+          {onDriverLocationRefresh ? (
+            <MapDriverRefreshControl
+              isRefreshing={isDriverLocationRefreshing}
+              onRefresh={onDriverLocationRefresh}
+            />
+          ) : null}
+
+          {showUiControls ? (
+            <MapSettingsControl
+              open={mapSettingsOpen}
+              onOpenChange={setMapSettingsOpen}
+              mapView={mapView}
+              onMapViewChange={setMapView}
+              trafficFlowEnabled={trafficFlowEnabled}
+              onTrafficFlowEnabledChange={setTrafficFlowEnabled}
+              trafficIncidentsEnabled={trafficIncidentsEnabled}
+              onTrafficIncidentsEnabledChange={setTrafficIncidentsEnabled}
+              vehicleRestrictionsEnabled={vehicleRestrictionsEnabled}
+              onVehicleRestrictionsEnabledChange={setVehicleRestrictionsEnabled}
+            />
+          ) : null}
+        </div>
       )}
 
       {mapReady && showUiControls && (
@@ -1026,7 +1050,33 @@ export function HereStaticMap({
           positionClassName={mapZoomPositionClassName}
         />
       )}
+
     </>
+  );
+}
+
+function MapDriverRefreshControl({
+  isRefreshing,
+  onRefresh,
+}: {
+  isRefreshing: boolean;
+  onRefresh: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label="Odśwież pozycję kierowcy"
+      title="Odśwież pozycję kierowcy"
+      onClick={onRefresh}
+      disabled={isRefreshing}
+      className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border bg-background/90 text-foreground shadow-lg backdrop-blur-md transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-70"
+    >
+      {isRefreshing ? (
+        <Loader2 className="h-4 w-4 animate-spin" />
+      ) : (
+        <RefreshCw className="h-4 w-4" />
+      )}
+    </button>
   );
 }
 
@@ -1041,7 +1091,6 @@ function MapSettingsControl({
   onTrafficIncidentsEnabledChange,
   vehicleRestrictionsEnabled,
   onVehicleRestrictionsEnabledChange,
-  positionClassName,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -1053,16 +1102,24 @@ function MapSettingsControl({
   onTrafficIncidentsEnabledChange: (checked: boolean) => void;
   vehicleRestrictionsEnabled: boolean;
   onVehicleRestrictionsEnabledChange: (checked: boolean) => void;
-  positionClassName: string;
 }) {
+  const prefersReducedMotion = useReducedMotion();
+
   return (
-    <div
+    <motion.div
+      initial={false}
+      animate={{
+        maxHeight: open ? 360 : 40,
+        width: open ? 320 : 40,
+      }}
+      transition={
+        prefersReducedMotion
+          ? { duration: 0 }
+          : { duration: 0.5, ease: "easeInOut" }
+      }
       className={cn(
-        "absolute z-30 overflow-hidden rounded-xl border bg-background/90 text-foreground shadow-lg backdrop-blur-md transition-[right,width,max-height] duration-500 ease-in-out",
-        open
-          ? "max-h-[360px] w-80"
-          : "max-h-10 w-10 cursor-pointer hover:brightness-95 dark:hover:brightness-125",
-        positionClassName
+        "overflow-hidden rounded-xl border bg-background/90 text-foreground shadow-lg backdrop-blur-md",
+        !open && "cursor-pointer hover:brightness-95 dark:hover:brightness-125"
       )}
       onClick={!open ? () => onOpenChange(true) : undefined}
     >
@@ -1152,7 +1209,7 @@ function MapSettingsControl({
           />
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 

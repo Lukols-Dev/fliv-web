@@ -19,7 +19,8 @@ export function orderLocationQueryOptions(params: Params) {
     enabled: !!params.id,
     staleTime: 10_000,
     gcTime: 5 * 60_000,
-    refetchInterval: 10_000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
 
     retry: (count, error) => {
       if (

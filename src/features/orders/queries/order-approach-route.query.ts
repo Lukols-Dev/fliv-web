@@ -19,7 +19,8 @@ export function orderApproachRouteQueryOptions(params: Params) {
     enabled: !!params.id,
     staleTime: 30_000,
     gcTime: 5 * 60_000,
-    refetchInterval: 30_000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
 
     retry: (count, error) => {
       if (

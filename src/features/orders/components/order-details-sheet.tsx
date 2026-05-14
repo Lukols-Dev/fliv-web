@@ -83,19 +83,19 @@ export default function OrderDetailsSheet({
     id: orderId ?? "",
     enabled: open && !!orderId,
   });
-  const { data: driverLocation } = useOrderLocationQuery({
+  const driverLocationQuery = useOrderLocationQuery({
     id: orderId,
     enabled: open && !!orderId,
   });
-  const { data: approachRoute, isFetching: isApproachRouteFetching } =
-    useOrderApproachRouteQuery({
-      id: orderId,
-      enabled: open && !!orderId,
-    });
+  const { data: driverLocation } = driverLocationQuery;
+  const { data: approachRoute } = useOrderApproachRouteQuery({
+    id: orderId,
+    enabled: open && !!orderId,
+  });
   const details: OrderDetailsDto | undefined = orderDetails as
     | OrderDetailsDto
     | undefined;
-  const mapDriverLocation = approachRoute?.location ?? driverLocation ?? null;
+  const mapDriverLocation = driverLocation ?? approachRoute?.location ?? null;
   const routeMapLayoutId = orderId
     ? `order-route-map-${orderId}`
     : undefined;
@@ -430,7 +430,13 @@ export default function OrderDetailsSheet({
                                 polyline={orderDetails?.routePlan?.polyline}
                                 approachPolyline={approachRoute?.route.polyline}
                                 driverLocation={mapDriverLocation}
-                                isUpdating={isApproachRouteFetching}
+                                isUpdating={driverLocationQuery.isFetching}
+                                isDriverLocationRefreshing={
+                                  driverLocationQuery.isFetching
+                                }
+                                onDriverLocationRefresh={() => {
+                                  void driverLocationQuery.refetch();
+                                }}
                                 showUiControls={false}
                               />
                             </motion.div>
