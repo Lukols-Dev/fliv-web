@@ -127,11 +127,19 @@
     "route": {
       "title": "Route",
       "edit": "Edit route",
-      "mapPlaceholder": "Map (placeholder)"
+      "mapPlaceholder": "Map (placeholder)",
+      "points": {
+        "title": "Route points",
+        "confirmed": "completed",
+        "next": "Next stop",
+        "arrivedAt": "Arrived:"
+      }
     },
     "stats": {
-      "currentDistance": "Current distance",
-      "distance": "Distance",
+      "approachDistance": "Approach distance",
+      "approachEta": "Est. arrival time",
+      "traveledDistance": "Traveled distance",
+      "distance": "Route distance",
       "startTime": "Start time",
       "startDate": "Start date"
     },

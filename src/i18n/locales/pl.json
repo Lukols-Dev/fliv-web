@@ -127,11 +127,19 @@
     "route": {
       "title": "Trasa",
       "edit": "Edytuj trasę",
-      "mapPlaceholder": "Mapa (placeholder)"
+      "mapPlaceholder": "Mapa (placeholder)",
+      "points": {
+        "title": "Punkty trasy",
+        "confirmed": "zaliczone",
+        "next": "Następny cel",
+        "arrivedAt": "Dotarcie:"
+      }
     },
     "stats": {
-      "currentDistance": "Aktualny dystans",
-      "distance": "Dystans",
+      "approachDistance": "Dojazd do 1. punktu",
+      "approachEta": "Szac. czas dojazdu",
+      "traveledDistance": "Przebyty dystans",
+      "distance": "Dystans trasy",
       "startTime": "Godzina startu",
       "startDate": "Data startu"
     },

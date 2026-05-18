@@ -8,7 +8,7 @@ export type OrderStatus =
   | "COMPLETED"
   | "PROBLEM";
 
-  export type OrderEventType =
+export type OrderEventType =
   | "STATUS_CHANGED"
   | "INCIDENT_DETOUR"
   | "INCIDENT_ACCIDENT"
@@ -19,6 +19,194 @@ export type OrderStatus =
   | "PROBLEM_REPORTED"
   | "ORDER_ASSIGNED"
   | "ORDER_COMPLETED";
+
+export type TransportOrderRoutePointType =
+  | "LOADING"
+  | "UNLOADING"
+  | "FUEL"
+  | "PARKING"
+  | "SERVICE"
+  | "OTHER";
+export type TransportOrderRoutePointBehavior = "STOP" | "PASS_THROUGH";
+export type TransportOrderRoutePointSource = "DISPATCHER" | "SYSTEM" | "HERE";
+export type PartnerPoiType = "FUEL" | "PARKING" | "SERVICE" | "OTHER";
+export type DriverLocationSource = "HERE_SDK";
+
+export type DriverLiveLocationDto = {
+  driverId: string;
+  transportOrderId: string;
+  latitude: number;
+  longitude: number;
+  accuracyMeters: number | null;
+  speedMetersPerSecond: number | null;
+  bearingDegrees: number | null;
+  remainingDistanceMeters: number | null;
+  traveledDistanceMeters: number | null;
+  remainingDurationSeconds: number | null;
+  recordedAt: string;
+  updatedAt: string;
+  source: DriverLocationSource;
+};
+
+export type DriverApproachRouteDto = {
+  location: DriverLiveLocationDto;
+  route: {
+    polyline: string;
+    distanceMeters: number;
+    durationSeconds: number;
+    calculatedAt: string;
+  };
+  destinationRoutePoint: {
+    id: string;
+    sequence: number;
+    latitude: number;
+    longitude: number;
+  };
+};
+
+export type TransportOrderRoutePointDto = {
+  id: string;
+  sequence: number;
+  type: TransportOrderRoutePointType;
+  behavior: TransportOrderRoutePointBehavior;
+  source: TransportOrderRoutePointSource;
+  isManual: boolean;
+  label: string | null;
+  address: string | null;
+  latitude: number;
+  longitude: number;
+  arrivedAt?: string | null;
+};
+
+export type TransportOrderRoutePointPayload = Omit<
+  TransportOrderRoutePointDto,
+  "id"
+>;
+
+export type HazardousGood =
+  | "explosive"
+  | "gas"
+  | "flammable"
+  | "combustible"
+  | "organic"
+  | "poison"
+  | "radioactive"
+  | "corrosive"
+  | "poisonousInhalation"
+  | "harmfulToWater"
+  | "other";
+
+export type RoutingProfile = {
+  transportMode: "car" | "truck";
+  routingMode: "fast" | "short";
+  trafficMode: "default" | "disabled";
+  avoidTolls: boolean;
+  avoidFerries: boolean;
+  avoidMotorways: boolean;
+};
+
+export type VehicleSpec = {
+  heightCm?: number | null;
+  widthCm?: number | null;
+  lengthCm?: number | null;
+  currentWeightKg?: number | null;
+  grossWeightKg?: number | null;
+  weightPerAxleKg?: number | null;
+  axleCount?: number | null;
+  trailerCount?: number | null;
+  hazardousGoods?: HazardousGood[] | null;
+};
+
+export type TransportOrderRoutePlanDto = {
+  routingProfile: RoutingProfile;
+  vehicleSpec: VehicleSpec | null;
+  distanceMeters: number;
+  durationSeconds: number;
+  polyline: string;
+  calculationHash: string;
+  calculatedAt: string;
+};
+
+export type TransportOrderRouteDto = {
+  routePoints: TransportOrderRoutePointDto[];
+  routePlan: TransportOrderRoutePlanDto | null;
+  routingProfile: RoutingProfile;
+  vehicleSpec: VehicleSpec | null;
+};
+
+export type RoutePointDraft = TransportOrderRoutePointPayload;
+
+export type CalculateTransportOrderRoutePayload = {
+  routePoints: RoutePointDraft[];
+  routingProfile: RoutingProfile;
+  vehicleSpec: VehicleSpec | null;
+};
+
+export type CalculateTransportOrderRouteResult = {
+  routePreviewId: string;
+  calculationHash: string;
+  polyline: string;
+  distanceMeters: number;
+  durationSeconds: number;
+  calculatedAt: string;
+};
+
+export type SaveTransportOrderRoutePayload =
+  CalculateTransportOrderRoutePayload & {
+    routePreviewId: string;
+    calculationHash: string;
+  };
+
+export type SaveTransportOrderRouteResult = {
+  success: boolean;
+  routePlan: TransportOrderRoutePlanDto;
+};
+
+export type RouteGeocodeResult = {
+  latitude: number;
+  longitude: number;
+  title: string;
+  address?: string | null;
+  hereId?: string | null;
+};
+
+export type PartnerPoiDto = {
+  id: string;
+  name: string | null;
+  type: PartnerPoiType;
+  address: string;
+  latitude: number;
+  longitude: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type PartnerPoiBbox = {
+  north: number;
+  south: number;
+  east: number;
+  west: number;
+};
+
+export type ListPartnerPoisParams = {
+  bbox: PartnerPoiBbox;
+  isActive?: boolean;
+  signal?: AbortSignal;
+};
+
+export type PartnerPoisListDto = {
+  items: PartnerPoiDto[];
+};
+
+export type CreatePartnerPoiPayload = {
+  name?: string | null;
+  type?: PartnerPoiType;
+  address: string;
+  isActive?: boolean;
+};
+
+export type UpdatePartnerPoiPayload = Partial<CreatePartnerPoiPayload>;
 
 export type DispatcherOrderDto = {
   id: string;
@@ -103,6 +291,7 @@ export type CreateTransportOrderPayload = {
   temperatureSensitive: boolean;
 
   notes?: string;
+  routePoints?: TransportOrderRoutePointPayload[];
 };
 
 export type CreateTransportOrderResult = {
@@ -157,6 +346,8 @@ export type OrderDetailsDto = {
   cargoDescription: string | null;
   temperatureSensitive: boolean;
   notes: string | null;
+  routePoints: TransportOrderRoutePointDto[];
+  routePlan: TransportOrderRoutePlanDto | null;
   documents: OrderDocumentDto[];
   events: OrderEventDto[];
 };
@@ -191,6 +382,7 @@ export type UpdateTransportOrderPayload = Partial<{
   cargoDescription: string;
   temperatureSensitive: boolean;
   notes: string;
+  routePoints: TransportOrderRoutePointPayload[];
 }>;
 
 export type UpdateTransportOrderResult = {

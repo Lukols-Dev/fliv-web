@@ -17,13 +17,13 @@ export type DashboardNavItem = {
 
 export const dashboardNav = {
   main: [
-    {
-      key: "dashboard",
-      href: "/dashboard",
-      icon: LayoutDashboard,
-      match: "exact",
-      roles: ["DISPATCHER", "DRIVER"],
-    },
+    // {
+    //   key: "dashboard",
+    //   href: "/dashboard",
+    //   icon: LayoutDashboard,
+    //   match: "exact",
+    //   roles: ["DISPATCHER", "DRIVER"],
+    // },
     {
       key: "orders",
       href: "/dashboard/orders",

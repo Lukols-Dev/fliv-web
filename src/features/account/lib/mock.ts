@@ -6,6 +6,8 @@ export async function getAccountUser(): Promise<AccountUser> {
     firstName: "Jan",
     lastName: "Kowalski",
     email: "jan.kowalski@gmail.com",
+    roles: ["DISPATCHER"],
+    isActive: true,
     role: "Dyspozytor",
     phone: "",
   };

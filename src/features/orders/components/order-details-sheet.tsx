@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { LayoutGroup, motion, useReducedMotion } from "motion/react";
 import {
   Sheet,
   SheetContent,
@@ -20,7 +21,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { MapPin, MoreVertical, Truck, Eye, X } from "lucide-react";
+import { MapPin, MoreVertical, Truck, Eye, X, ChevronDown, CheckCircle2, Navigation, Circle } from "lucide-react";
+import {
+  Collapsible,
+  CollapsibleTrigger,
+  CollapsibleContent,
+} from "@/components/ui/collapsible";
 import OrderStatusBadge from "./order-status-badge";
 import type { OrderDetailsDto, OrderListItem, OrderStatus } from "../types";
 import { useTranslations, useLocale } from "next-intl";
@@ -29,6 +35,8 @@ import { useDeleteOrderMutation } from "../hooks/use-delete-order-mutation";
 import { useOrderDetailsQuery } from "../hooks/use-order-details-query";
 import { useDeleteOrderDocumentMutation } from "../hooks/use-delete-order-document-mutation";
 import { useUploadOrderDocumentMutation } from "../hooks/use-upload-order-document-mutation";
+import { useOrderApproachRouteQuery } from "../hooks/use-order-approach-route-query";
+import { useOrderLocationQuery } from "../hooks/use-order-location-query";
 import { Spinner } from "@/components/ui/spinner";
 import { formatDatePL, formatTimeHM, formatTimeHMS } from "@/lib/format";
 import { initials } from "@/lib/utils";
@@ -37,7 +45,9 @@ import { OrderDocumentUploadDialog } from "./order-document-upload";
 import Image from "next/image";
 import { Plus } from "lucide-react";
 import EditOrderDialog from "./edit-order/edit-order-dialog";
+import { EditRouteDialog } from "./edit-route-dialog";
 import { TrackingHistoryList } from "./tracking-history-list";
+import { HereStaticMap } from "./here-static-map";
 
 type Props = {
   open: boolean;
@@ -67,6 +77,8 @@ export default function OrderDetailsSheet({
   );
 
   const [editOpen, setEditOpen] = React.useState(false);
+  const [routeEditOpen, setRouteEditOpen] = React.useState(false);
+  const prefersReducedMotion = useReducedMotion();
 
   const {
     data: orderDetails,
@@ -75,10 +87,46 @@ export default function OrderDetailsSheet({
   } = useOrderDetailsQuery({
     id: orderId ?? "",
     enabled: open && !!orderId,
+    status: (selected?.status ?? "PENDING") as OrderStatus,
+  });
+  const driverLocationQuery = useOrderLocationQuery({
+    id: orderId,
+    enabled: open && !!orderId,
+  });
+  const { data: driverLocation } = driverLocationQuery;
+  const { data: approachRoute } = useOrderApproachRouteQuery({
+    id: orderId,
+    enabled: open && !!orderId,
   });
   const details: OrderDetailsDto | undefined = orderDetails as
     | OrderDetailsDto
     | undefined;
+  const mapDriverLocation = driverLocation ?? approachRoute?.location ?? null;
+  const routeMapLayoutId = orderId
+    ? `order-route-map-${orderId}`
+    : undefined;
+  const sharedRouteMapLayoutId = prefersReducedMotion
+    ? undefined
+    : routeMapLayoutId;
+  const routeMapTransition = prefersReducedMotion
+    ? { duration: 0.01 }
+    : { type: "spring" as const, stiffness: 300, damping: 35, mass: 0.9 };
+  const routeEditorInitialMapData = React.useMemo(
+    () =>
+      details
+        ? {
+            routePoints: details.routePoints,
+            polyline: details.routePlan?.polyline,
+            approachPolyline: approachRoute?.route.polyline,
+            driverLocation: mapDriverLocation,
+          }
+        : undefined,
+    [
+      approachRoute?.route.polyline,
+      details,
+      mapDriverLocation,
+    ]
+  );
 
   const orderNumber = orderDetails?.ztNumber ?? selected?.number ?? "#ZL-—";
   const orderStatus = (orderDetails?.status ??
@@ -117,8 +165,16 @@ export default function OrderDetailsSheet({
   }, [loadingTime, loadingDate, locale]);
 
   const stats = [
-    { label: t("stats.currentDistance"), value: "—" },
-    { label: t("stats.distance"), value: "—" },
+    {
+      label: t("stats.traveledDistance"),
+      value: formatDistanceKm(mapDriverLocation?.traveledDistanceMeters ?? 0, locale),
+    },
+    {
+      label: t("stats.distance"),
+      value: orderDetails?.routePlan
+        ? formatDistance(orderDetails.routePlan.distanceMeters, locale)
+        : "—",
+    },
     {
       label: t("stats.startTime"),
       value: formattedLoadingTime,
@@ -190,13 +246,22 @@ export default function OrderDetailsSheet({
   );
 
   return (
-    <>
+    <LayoutGroup id={`order-route-editor-${orderId || "empty"}`}>
       {details ? (
         <EditOrderDialog
           open={editOpen}
           onOpenChange={setEditOpen}
           orderId={orderId}
           initial={details}
+        />
+      ) : null}
+      {details ? (
+        <EditRouteDialog
+          open={routeEditOpen}
+          onOpenChange={setRouteEditOpen}
+          orderId={orderId}
+          mapLayoutId={sharedRouteMapLayoutId}
+          initialMapData={routeEditorInitialMapData}
         />
       ) : null}
 
@@ -348,19 +413,39 @@ export default function OrderDetailsSheet({
                             <h3 className="text-base font-semibold">
                               {t("route.title")}
                             </h3>
-                            <Button size="sm" className="h-8 cursor-pointer">
+                            <Button
+                              size="sm"
+                              className="h-8 cursor-pointer"
+                              onClick={() => setRouteEditOpen(true)}
+                            >
                               <Icons.pencil className="mr-2 h-4 w-4" />
                               {t("route.edit")}
                             </Button>
                           </div>
 
-                          {/* Map placeholder */}
-                          <Card className="mt-3 overflow-hidden border shadow-none">
-                            <div className="relative aspect-4/3 w-full bg-muted">
-                              <div className="absolute inset-0 grid place-items-center text-xs text-muted-foreground">
-                                {t("route.mapPlaceholder")}
-                              </div>
-                            </div>
+                          {/* Map preview */}
+                          <Card className="mt-3 py-0 overflow-hidden border shadow-none p">
+                            <motion.div
+                              layoutId={sharedRouteMapLayoutId}
+                              transition={routeMapTransition}
+                              className="relative aspect-4/3 w-full overflow-hidden bg-muted"
+                              style={{ borderRadius: 8 }}
+                            >
+                              <HereStaticMap
+                                routePoints={orderDetails?.routePoints ?? []}
+                                polyline={orderDetails?.routePlan?.polyline}
+                                approachPolyline={approachRoute?.route.polyline}
+                                driverLocation={mapDriverLocation}
+                                isUpdating={driverLocationQuery.isFetching}
+                                isDriverLocationRefreshing={
+                                  driverLocationQuery.isFetching
+                                }
+                                onDriverLocationRefresh={() => {
+                                  void driverLocationQuery.refetch();
+                                }}
+                                showUiControls={false}
+                              />
+                            </motion.div>
                           </Card>
 
                           {/* Stats */}
@@ -383,6 +468,13 @@ export default function OrderDetailsSheet({
                             ))}
                           </div>
                         </div>
+
+                        {/* Route points progress */}
+                        <RoutePointsProgress
+                          routePoints={orderDetails?.routePoints ?? []}
+                          t={t}
+                          locale={locale}
+                        />
 
                         {/* Route line */}
                         <div className="mt-6">
@@ -675,6 +767,132 @@ export default function OrderDetailsSheet({
           </div>
         </SheetContent>
       </Sheet>
-    </>
+    </LayoutGroup>
+  );
+}
+
+function formatDistance(distanceMeters: number, locale: string): string {
+  if (distanceMeters < 1000) {
+    return `${Math.round(distanceMeters)} m`;
+  }
+
+  return `${new Intl.NumberFormat(locale, {
+    maximumFractionDigits: distanceMeters >= 100_000 ? 0 : 1,
+  }).format(distanceMeters / 1000)} km`;
+}
+
+function formatDistanceKm(distanceMeters: number, locale: string): string {
+  return `${new Intl.NumberFormat(locale, {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: distanceMeters >= 100_000 ? 0 : 1,
+  }).format(distanceMeters / 1000)} km`;
+}
+
+function RoutePointsProgress({
+  routePoints,
+  t,
+  locale,
+}: {
+  routePoints: { sequence: number; label: string | null; address: string | null; arrivedAt?: string | null }[];
+  t: ReturnType<typeof useTranslations<"OrdersDetails">>;
+  locale: string;
+}) {
+  const [open, setOpen] = React.useState(false);
+
+  if (routePoints.length === 0) return null;
+
+  const sorted = [...routePoints].sort((a, b) => a.sequence - b.sequence);
+  const confirmedCount = sorted.filter((p) => p.arrivedAt != null).length;
+  const nextIndex = confirmedCount < sorted.length ? confirmedCount : null;
+
+  return (
+    <Collapsible open={open} onOpenChange={setOpen} className="mt-5">
+      <CollapsibleTrigger asChild>
+        <button className="flex w-full items-center justify-between rounded-lg border border-border/60 bg-muted/30 px-4 py-3 text-left transition-colors hover:bg-muted/50">
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium">{t("route.points.title")}</span>
+            <span className="flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-semibold text-green-700">
+              {confirmedCount} / {sorted.length}
+              <span className="font-normal text-green-600">{t("route.points.confirmed")}</span>
+            </span>
+          </div>
+          <ChevronDown
+            className={cn(
+              "h-4 w-4 text-muted-foreground transition-transform duration-200",
+              open && "rotate-180"
+            )}
+          />
+        </button>
+      </CollapsibleTrigger>
+
+      <CollapsibleContent>
+        <div className="mt-1 rounded-lg border border-border/60 bg-white px-4 py-3">
+          {sorted.map((point, i) => {
+            const isDone = i < confirmedCount;
+            const isNext = i === nextIndex;
+            const isLast = i === sorted.length - 1;
+            const label = point.address ?? point.label ?? `Punkt ${point.sequence}`;
+
+            return (
+              <div key={point.sequence} className="flex gap-3">
+                {/* dot + connector */}
+                <div className="flex flex-col items-center">
+                  <div
+                    className={cn(
+                      "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border",
+                      isDone && "border-0 bg-green-500",
+                      isNext && "border-[1.5px] border-orange-400 bg-orange-50",
+                      !isDone && !isNext && "border-[1.5px] border-gray-300 bg-gray-100"
+                    )}
+                  >
+                    {isDone && <CheckCircle2 className="h-3 w-3 text-white" strokeWidth={3} />}
+                    {isNext && <Navigation className="h-3 w-3 text-orange-400" />}
+                  </div>
+                  {!isLast && (
+                    <div
+                      className={cn(
+                        "mt-0.5 w-0.5 flex-1",
+                        isDone ? "bg-green-400" : "bg-gray-200"
+                      )}
+                      style={{ minHeight: 20 }}
+                    />
+                  )}
+                </div>
+
+                {/* text */}
+                <div className={cn("min-w-0 pb-3", isLast && "pb-0")}>
+                  {isNext && (
+                    <p className="mb-0.5 text-[10px] font-semibold text-orange-500">
+                      {t("route.points.next")}
+                    </p>
+                  )}
+                  <p
+                    className={cn(
+                      "text-[13px] leading-snug",
+                      isDone
+                        ? "text-gray-400 line-through decoration-gray-400"
+                        : isNext
+                        ? "font-semibold text-gray-900"
+                        : "text-gray-800"
+                    )}
+                  >
+                    {label}
+                  </p>
+                  {isDone && point.arrivedAt && (
+                    <p className="mt-0.5 text-[10px] text-green-600">
+                      {t("route.points.arrivedAt")}{" "}
+                      {new Intl.DateTimeFormat(locale, {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      }).format(new Date(point.arrivedAt))}
+                    </p>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
