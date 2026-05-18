@@ -127,7 +127,13 @@
     "route": {
       "title": "Route",
       "edit": "Edit route",
-      "mapPlaceholder": "Map (placeholder)"
+      "mapPlaceholder": "Map (placeholder)",
+      "points": {
+        "title": "Route points",
+        "confirmed": "completed",
+        "next": "Next stop",
+        "arrivedAt": "Arrived:"
+      }
     },
     "stats": {
       "approachDistance": "Approach distance",

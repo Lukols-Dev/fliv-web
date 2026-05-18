@@ -21,7 +21,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { MapPin, MoreVertical, Truck, Eye, X } from "lucide-react";
+import { MapPin, MoreVertical, Truck, Eye, X, ChevronDown, CheckCircle2, Navigation, Circle } from "lucide-react";
+import {
+  Collapsible,
+  CollapsibleTrigger,
+  CollapsibleContent,
+} from "@/components/ui/collapsible";
 import OrderStatusBadge from "./order-status-badge";
 import type { OrderDetailsDto, OrderListItem, OrderStatus } from "../types";
 import { useTranslations, useLocale } from "next-intl";
@@ -82,6 +87,7 @@ export default function OrderDetailsSheet({
   } = useOrderDetailsQuery({
     id: orderId ?? "",
     enabled: open && !!orderId,
+    status: (selected?.status ?? "PENDING") as OrderStatus,
   });
   const driverLocationQuery = useOrderLocationQuery({
     id: orderId,
@@ -463,6 +469,13 @@ export default function OrderDetailsSheet({
                           </div>
                         </div>
 
+                        {/* Route points progress */}
+                        <RoutePointsProgress
+                          routePoints={orderDetails?.routePoints ?? []}
+                          t={t}
+                          locale={locale}
+                        />
+
                         {/* Route line */}
                         <div className="mt-6">
                           <div className="relative flex items-center justify-between">
@@ -773,4 +786,113 @@ function formatDistanceKm(distanceMeters: number, locale: string): string {
     minimumFractionDigits: 1,
     maximumFractionDigits: distanceMeters >= 100_000 ? 0 : 1,
   }).format(distanceMeters / 1000)} km`;
+}
+
+function RoutePointsProgress({
+  routePoints,
+  t,
+  locale,
+}: {
+  routePoints: { sequence: number; label: string | null; address: string | null; arrivedAt?: string | null }[];
+  t: ReturnType<typeof useTranslations<"OrdersDetails">>;
+  locale: string;
+}) {
+  const [open, setOpen] = React.useState(false);
+
+  if (routePoints.length === 0) return null;
+
+  const sorted = [...routePoints].sort((a, b) => a.sequence - b.sequence);
+  const confirmedCount = sorted.filter((p) => p.arrivedAt != null).length;
+  const nextIndex = confirmedCount < sorted.length ? confirmedCount : null;
+
+  return (
+    <Collapsible open={open} onOpenChange={setOpen} className="mt-5">
+      <CollapsibleTrigger asChild>
+        <button className="flex w-full items-center justify-between rounded-lg border border-border/60 bg-muted/30 px-4 py-3 text-left transition-colors hover:bg-muted/50">
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium">{t("route.points.title")}</span>
+            <span className="flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-semibold text-green-700">
+              {confirmedCount} / {sorted.length}
+              <span className="font-normal text-green-600">{t("route.points.confirmed")}</span>
+            </span>
+          </div>
+          <ChevronDown
+            className={cn(
+              "h-4 w-4 text-muted-foreground transition-transform duration-200",
+              open && "rotate-180"
+            )}
+          />
+        </button>
+      </CollapsibleTrigger>
+
+      <CollapsibleContent>
+        <div className="mt-1 rounded-lg border border-border/60 bg-white px-4 py-3">
+          {sorted.map((point, i) => {
+            const isDone = i < confirmedCount;
+            const isNext = i === nextIndex;
+            const isLast = i === sorted.length - 1;
+            const label = point.address ?? point.label ?? `Punkt ${point.sequence}`;
+
+            return (
+              <div key={point.sequence} className="flex gap-3">
+                {/* dot + connector */}
+                <div className="flex flex-col items-center">
+                  <div
+                    className={cn(
+                      "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border",
+                      isDone && "border-0 bg-green-500",
+                      isNext && "border-[1.5px] border-orange-400 bg-orange-50",
+                      !isDone && !isNext && "border-[1.5px] border-gray-300 bg-gray-100"
+                    )}
+                  >
+                    {isDone && <CheckCircle2 className="h-3 w-3 text-white" strokeWidth={3} />}
+                    {isNext && <Navigation className="h-3 w-3 text-orange-400" />}
+                  </div>
+                  {!isLast && (
+                    <div
+                      className={cn(
+                        "mt-0.5 w-0.5 flex-1",
+                        isDone ? "bg-green-400" : "bg-gray-200"
+                      )}
+                      style={{ minHeight: 20 }}
+                    />
+                  )}
+                </div>
+
+                {/* text */}
+                <div className={cn("min-w-0 pb-3", isLast && "pb-0")}>
+                  {isNext && (
+                    <p className="mb-0.5 text-[10px] font-semibold text-orange-500">
+                      {t("route.points.next")}
+                    </p>
+                  )}
+                  <p
+                    className={cn(
+                      "text-[13px] leading-snug",
+                      isDone
+                        ? "text-gray-400 line-through decoration-gray-400"
+                        : isNext
+                        ? "font-semibold text-gray-900"
+                        : "text-gray-800"
+                    )}
+                  >
+                    {label}
+                  </p>
+                  {isDone && point.arrivedAt && (
+                    <p className="mt-0.5 text-[10px] text-green-600">
+                      {t("route.points.arrivedAt")}{" "}
+                      {new Intl.DateTimeFormat(locale, {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      }).format(new Date(point.arrivedAt))}
+                    </p>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
 }

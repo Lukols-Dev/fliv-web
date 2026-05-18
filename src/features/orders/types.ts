@@ -75,6 +75,7 @@ export type TransportOrderRoutePointDto = {
   address: string | null;
   latitude: number;
   longitude: number;
+  arrivedAt?: string | null;
 };
 
 export type TransportOrderRoutePointPayload = Omit<

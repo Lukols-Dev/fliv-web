@@ -127,7 +127,13 @@
     "route": {
       "title": "Trasa",
       "edit": "Edytuj trasę",
-      "mapPlaceholder": "Mapa (placeholder)"
+      "mapPlaceholder": "Mapa (placeholder)",
+      "points": {
+        "title": "Punkty trasy",
+        "confirmed": "zaliczone",
+        "next": "Następny cel",
+        "arrivedAt": "Dotarcie:"
+      }
     },
     "stats": {
       "approachDistance": "Dojazd do 1. punktu",
