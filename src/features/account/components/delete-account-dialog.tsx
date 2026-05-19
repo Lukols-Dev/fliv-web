@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -61,13 +61,22 @@ export function DeleteAccountDialog({
     formState: { errors, isSubmitting },
   } = form;
 
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
   const value = watch("confirmation");
   const canDelete = value.trim() === CONFIRM_TOKEN && !isSubmitting;
 
   const submit = async () => {
-    await onConfirmDelete();
-    reset();
-    onOpenChange(false);
+    setSubmitError(null);
+    try {
+      await onConfirmDelete();
+      reset();
+      onOpenChange(false);
+    } catch (err) {
+      setSubmitError(
+        err instanceof Error ? err.message : t("errors.generic")
+      );
+    }
   };
 
   return (
@@ -137,6 +146,12 @@ export function DeleteAccountDialog({
               >
                 {isSubmitting ? t("actions.deleting") : t("actions.delete")}
               </Button>
+
+              {submitError && (
+                <p className="text-destructive text-sm text-center">
+                  {submitError}
+                </p>
+              )}
             </form>
           </div>
         </div>

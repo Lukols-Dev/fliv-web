@@ -348,6 +348,9 @@
     "validation": {
       "required": "To pole jest wymagane",
       "mustMatch": "Wpisz dokładnie: {token}"
+    },
+    "errors": {
+      "generic": "Wystąpił błąd. Spróbuj ponownie."
     }
   },
   "Pagination": {

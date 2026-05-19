@@ -348,6 +348,9 @@
     "validation": {
       "required": "This field is required",
       "mustMatch": "Type exactly: {token}"
+    },
+    "errors": {
+      "generic": "Something went wrong. Please try again."
     }
   },
   "Pagination": {

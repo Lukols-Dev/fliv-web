@@ -10,12 +10,15 @@ import { AccountProfileCard } from "@/features/account/components/account-card";
 import { DeleteAccountBtn } from "@/features/account/components/delete-account-btn";
 
 import { authClient } from "@/features/auth/lib/auth";
+import { useRouter } from "@/i18n/navigation";
 import { useCurrentUserQuery } from "@/features/account/hooks/use-current-user-query";
 import { useUpdateProfileMutation } from "@/features/account/hooks/use-update-profile-mutation";
+import { deleteCurrentUser } from "@/features/account/services";
 import type { UpdateAccountValues } from "@/features/account/components/validation-schema";
 
 export default function AccountPageClient() {
   const t = useTranslations("AccountPage");
+  const router = useRouter();
 
   const {
     data: user,
@@ -46,11 +49,10 @@ export default function AccountPageClient() {
   );
 
   const handleDelete = useCallback(async () => {
-    const res = await authClient.deleteUser();
-    if (res?.error) {
-      throw new Error(res.error.message ?? "Delete failed");
-    }
-  }, []);
+    await deleteCurrentUser();
+    await authClient.signOut();
+    router.replace("/sign-in");
+  }, [router]);
 
   if (isPending && !user) {
     return (
