@@ -798,6 +798,16 @@ function RoutePointsProgress({
   locale: string;
 }) {
   const [open, setOpen] = React.useState(false);
+  const prefersReducedMotion = useReducedMotion();
+  const contentTransition = prefersReducedMotion
+    ? { duration: 0 }
+    : {
+        height: { duration: 0.24, ease: [0.22, 1, 0.36, 1] },
+        opacity: { duration: 0.16, ease: "easeOut" as const },
+      };
+  const iconTransition = prefersReducedMotion
+    ? { duration: 0 }
+    : { duration: 0.18, ease: "easeOut" as const };
 
   if (routePoints.length === 0) return null;
 
@@ -816,16 +826,25 @@ function RoutePointsProgress({
               <span className="font-normal text-green-600">{t("route.points.confirmed")}</span>
             </span>
           </div>
-          <ChevronDown
-            className={cn(
-              "h-4 w-4 text-muted-foreground transition-transform duration-200",
-              open && "rotate-180"
-            )}
-          />
+          <motion.span
+            animate={{ rotate: open ? 180 : 0 }}
+            transition={iconTransition}
+            className="flex h-4 w-4 items-center justify-center text-muted-foreground"
+          >
+            <ChevronDown className="h-4 w-4" />
+          </motion.span>
         </button>
       </CollapsibleTrigger>
 
-      <CollapsibleContent>
+      <CollapsibleContent forceMount className="overflow-hidden">
+        <motion.div
+          initial={false}
+          animate={{ height: open ? "auto" : 0, opacity: open ? 1 : 0 }}
+          transition={contentTransition}
+          className="overflow-hidden"
+          aria-hidden={!open}
+          inert={!open ? true : undefined}
+        >
         <div className="mt-1 rounded-lg border border-border/60 bg-white px-4 py-3">
           {sorted.map((point, i) => {
             const isDone = i < confirmedCount;
@@ -892,6 +911,7 @@ function RoutePointsProgress({
             );
           })}
         </div>
+      </motion.div>
       </CollapsibleContent>
     </Collapsible>
   );
