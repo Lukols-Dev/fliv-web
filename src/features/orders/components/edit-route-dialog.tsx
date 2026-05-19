@@ -367,7 +367,7 @@ export function EditRouteDialog({
     ? visiblePolyline
     : routeQuery.data?.routePlan?.polyline ?? initialMapData?.polyline ?? null;
   const displayedApproachPolyline =
-    driverApproachRouteQuery.data?.route.polyline ??
+    driverApproachRouteQuery.data?.route?.polyline ??
     initialMapData?.approachPolyline;
   const displayedDriverLocation =
     mapDriverLocation ?? initialMapData?.driverLocation ?? null;

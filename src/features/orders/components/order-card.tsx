@@ -56,11 +56,11 @@ export default function OrderCard({
       onClick={onClick}
       onKeyDown={onKeyDown}
       aria-label={`${t("openDetails")} ${orderNumber}`}
-      className="cursor-pointer outline-none"
+      className="h-full cursor-pointer outline-none"
     >
       <Card
         className={cn(
-          "bg-white h-auto rounded-xl border shadow-none transition-all duration-200",
+          "bg-white h-full rounded-xl border shadow-none transition-all duration-200",
           "hover:shadow-lg hover:shadow-[#F2542F]/15 hover:-translate-y-1",
           "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
           isActive
@@ -223,7 +223,7 @@ export default function OrderCard({
           </div>
         </div>
 
-        <div className="px-4 pt-3">
+        <div className="mt-auto px-4 pt-3">
           <Separator />
         </div>
 
