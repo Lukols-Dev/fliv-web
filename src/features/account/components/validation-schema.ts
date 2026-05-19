@@ -4,25 +4,11 @@ const avatarFileSchema = z
   .custom<File>((v) => typeof File !== "undefined" && v instanceof File)
   .optional();
 
-export const createUpdateAccountSchema = (m: {
-  required: string;
-  emailInvalid: string;
-  passwordMin: string;
-}) =>
+export const createUpdateAccountSchema = (m: { required: string }) =>
   z.object({
     firstName: z.string().trim().min(1, { error: m.required }),
     lastName: z.string().trim().min(1, { error: m.required }),
-    email: z
-      .string()
-      .trim()
-      .toLowerCase()
-      .pipe(z.email({ error: m.emailInvalid })),
     phone: z.string().trim().min(1, { error: m.required }),
-    password: z
-      .string()
-      .trim()
-      .optional()
-      .refine((v) => !v || v.length >= 8, { message: m.passwordMin }),
     avatarFile: avatarFileSchema,
   });
 

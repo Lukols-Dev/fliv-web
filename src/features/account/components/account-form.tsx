@@ -4,6 +4,7 @@ import { useEffect, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Lock } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,9 +28,7 @@ function getDefaults(user: AccountUser): UpdateAccountValues {
   return {
     firstName: user.firstName ?? "",
     lastName: user.lastName ?? "",
-    email: user.email ?? "",
     phone: user.phone ?? "",
-    password: "",
   };
 }
 
@@ -45,8 +44,6 @@ export function AccountProfileForm({
     () =>
       createUpdateAccountSchema({
         required: t("validation.required"),
-        emailInvalid: t("validation.emailInvalid"),
-        passwordMin: t("validation.passwordMin"),
       }),
     [t]
   );
@@ -107,32 +104,30 @@ export function AccountProfileForm({
 
       <div className="grid gap-2">
         <Label htmlFor="email">{t("fields.email")}</Label>
-        <Input
-          id="email"
-          disabled={!isEditing}
-          placeholder={t("placeholders.email")}
-          type="email"
-          aria-invalid={!!errors.email}
-          {...register("email")}
-        />
-        {errors.email?.message && (
-          <p className="text-destructive text-xs">{errors.email.message}</p>
-        )}
+        <div className="relative">
+          <Input
+            id="email"
+            type="email"
+            value={user.email ?? ""}
+            disabled
+            className="cursor-not-allowed pr-9"
+          />
+          <Lock className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        </div>
       </div>
 
       <div className="grid gap-2">
         <Label htmlFor="password">{t("fields.password")}</Label>
-        <Input
-          id="password"
-          disabled={!isEditing}
-          type="password"
-          placeholder={t("placeholders.password")}
-          aria-invalid={!!errors.password}
-          {...register("password")}
-        />
-        {errors.password?.message && (
-          <p className="text-destructive text-xs">{errors.password.message}</p>
-        )}
+        <div className="relative">
+          <Input
+            id="password"
+            type="password"
+            value="********"
+            disabled
+            className="cursor-not-allowed pr-9"
+          />
+          <Lock className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        </div>
       </div>
 
       <div className="grid gap-2">
