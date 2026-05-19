@@ -117,12 +117,12 @@ export default function OrderDetailsSheet({
         ? {
             routePoints: details.routePoints,
             polyline: details.routePlan?.polyline,
-            approachPolyline: approachRoute?.route.polyline,
+            approachPolyline: approachRoute?.route?.polyline,
             driverLocation: mapDriverLocation,
           }
         : undefined,
     [
-      approachRoute?.route.polyline,
+      approachRoute?.route?.polyline,
       details,
       mapDriverLocation,
     ]
@@ -434,7 +434,7 @@ export default function OrderDetailsSheet({
                               <HereStaticMap
                                 routePoints={orderDetails?.routePoints ?? []}
                                 polyline={orderDetails?.routePlan?.polyline}
-                                approachPolyline={approachRoute?.route.polyline}
+                                approachPolyline={approachRoute?.route?.polyline}
                                 driverLocation={mapDriverLocation}
                                 isUpdating={driverLocationQuery.isFetching}
                                 isDriverLocationRefreshing={

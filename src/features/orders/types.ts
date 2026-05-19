@@ -50,7 +50,7 @@ export type DriverLiveLocationDto = {
 
 export type DriverApproachRouteDto = {
   location: DriverLiveLocationDto;
-  route: {
+  route?: {
     polyline: string;
     distanceMeters: number;
     durationSeconds: number;
