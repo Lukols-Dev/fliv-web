@@ -55,6 +55,14 @@ export type UploadAvatarResult = {
   avatarUrl: string;
 };
 
+export function deleteCurrentUser(options: { signal?: AbortSignal } = {}) {
+  return apiFetchPath<{ success: boolean }>(accountEndpoints.deleteMe, {
+    method: "DELETE",
+    signal: options.signal,
+    withCredentials: true,
+  });
+}
+
 export function uploadCurrentUserAvatar(
   file: File,
   options: { signal?: AbortSignal } = {}
