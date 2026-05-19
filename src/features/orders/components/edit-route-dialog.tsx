@@ -1127,11 +1127,11 @@ function PanelSection({
     ? { duration: 0 }
     : {
         height: { duration: 0.24, ease: [0.22, 1, 0.36, 1] },
-        opacity: { duration: 0.16, ease: "easeOut" },
+        opacity: { duration: 0.16, ease: "easeOut" as const },
       };
   const iconTransition = prefersReducedMotion
     ? { duration: 0 }
-    : { duration: 0.18, ease: "easeOut" };
+    : { duration: 0.18, ease: "easeOut" as const };
 
   return (
     <Collapsible open={open} onOpenChange={onOpenChange} className="border-b py-3">
@@ -1205,6 +1205,18 @@ function RoutePointRow({
     opacity: isDragging ? 0.4 : undefined,
   };
 
+  const prefersReducedMotion = useReducedMotion();
+  const [open, setOpen] = React.useState(true);
+  const contentTransition = prefersReducedMotion
+    ? { duration: 0 }
+    : {
+        height: { duration: 0.24, ease: [0.22, 1, 0.36, 1] },
+        opacity: { duration: 0.16, ease: "easeOut" as const },
+      };
+  const iconTransition = prefersReducedMotion
+    ? { duration: 0 }
+    : { duration: 0.18, ease: "easeOut" as const };
+
   return (
     <div
       ref={setNodeRef}
@@ -1213,36 +1225,53 @@ function RoutePointRow({
       onMouseEnter={() => onHover(point.clientId)}
       onMouseLeave={() => onHover(null)}
     >
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <div className="flex min-w-0 items-center gap-2">
-          <button
-            type="button"
-            className="cursor-grab touch-none text-muted-foreground/50 hover:text-muted-foreground active:cursor-grabbing"
-            {...attributes}
-            {...listeners}
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          className="cursor-grab touch-none text-muted-foreground/50 hover:text-muted-foreground active:cursor-grabbing"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          title={point.markerMode === "numbered" ? "Przełącz na ikonę" : "Przełącz na numer"}
+          onClick={() => onUpdate(point.clientId, {
+            markerMode: point.markerMode === "numbered" ? "typed" : "numbered",
+          })}
+          className="flex h-6 min-w-6 items-center justify-center rounded border px-1 text-xs font-semibold hover:bg-muted transition-colors"
+        >
+          {point.markerMode === "numbered"
+            ? index + 1
+            : <PointTypeIcon type={point.type} className="h-3.5 w-3.5" />}
+        </button>
+        <button
+          type="button"
+          onClick={() => setOpen((value) => !value)}
+          aria-expanded={open}
+          className="flex min-w-0 flex-1 items-center gap-1.5 text-left"
+        >
+          <motion.span
+            animate={{ rotate: open ? 0 : -90 }}
+            transition={iconTransition}
+            className="flex h-4 w-4 shrink-0 items-center justify-center text-muted-foreground"
           >
-            <GripVertical className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            title={point.markerMode === "numbered" ? "Przełącz na ikonę" : "Przełącz na numer"}
-            onClick={() => onUpdate(point.clientId, {
-              markerMode: point.markerMode === "numbered" ? "typed" : "numbered",
-            })}
-            className="flex h-6 min-w-6 items-center justify-center rounded border px-1 text-xs font-semibold hover:bg-muted transition-colors"
-          >
-            {point.markerMode === "numbered"
-              ? index + 1
-              : <PointTypeIcon type={point.type} className="h-3.5 w-3.5" />}
-          </button>
-          {point.partnerPoiId ? (
-            <span className="rounded-full border px-2 py-0.5 text-[11px] text-muted-foreground">
-              POI
-              {point.partnerPoiName ? ` · ${point.partnerPoiName}` : ""}
-            </span>
-          ) : null}
-        </div>
-        <div className="flex flex-wrap justify-end gap-1">
+            <ChevronDown className="h-4 w-4" />
+          </motion.span>
+          <span className="truncate text-sm font-medium">
+            {point.label?.trim() ||
+              point.address?.trim() ||
+              `Punkt ${index + 1}`}
+          </span>
+        </button>
+        {point.partnerPoiId ? (
+          <span className="shrink-0 rounded-full border px-2 py-0.5 text-[11px] text-muted-foreground">
+            POI
+            {point.partnerPoiName ? ` · ${point.partnerPoiName}` : ""}
+          </span>
+        ) : null}
+        <div className="flex shrink-0 justify-end gap-1">
           <Button
             type="button"
             variant="ghost"
@@ -1295,7 +1324,15 @@ function RoutePointRow({
         </div>
       </div>
 
-      <div className="grid gap-2">
+      <motion.div
+        initial={false}
+        animate={{ height: open ? "auto" : 0, opacity: open ? 1 : 0 }}
+        transition={contentTransition}
+        className="overflow-hidden"
+        aria-hidden={!open}
+        inert={!open ? true : undefined}
+      >
+      <div className="grid gap-2 pt-2">
         <Input
           value={point.label ?? ""}
           onChange={(event) =>
@@ -1365,6 +1402,7 @@ function RoutePointRow({
           />
         </div>
       </div>
+      </motion.div>
     </div>
   );
 }
