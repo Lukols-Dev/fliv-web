@@ -97,6 +97,7 @@ export type HazardousGood =
   | "other";
 
 export type RoutingProfile = {
+  mode?: "here" | "manual";
   transportMode: "car" | "truck";
   routingMode: "fast" | "short";
   trafficMode: "default" | "disabled";

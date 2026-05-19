@@ -696,23 +696,31 @@ export function EditRouteDialog({
             }
             className="absolute top-4 left-4 z-10 flex flex-wrap gap-1.5"
           >
-            <Badge variant="outline" className={cn(glassClass, "text-foreground")}>
-              {routingProfile.transportMode === "truck" ? "Ciężarówka" : "Samochód"}
-            </Badge>
-            <Badge variant="outline" className={cn(glassClass, "text-foreground")}>
-              {routingProfile.routingMode === "fast" ? "Trasa szybka" : "Trasa krótka"}
-            </Badge>
-            {routingProfile.trafficMode === "default" && (
-              <Badge variant="outline" className={cn(glassClass, "text-foreground")}>Ruch drogowy</Badge>
-            )}
-            {routingProfile.avoidTolls && (
-              <Badge variant="outline" className={cn(glassClass, "text-foreground")}>Unikaj opłat</Badge>
-            )}
-            {routingProfile.avoidFerries && (
-              <Badge variant="outline" className={cn(glassClass, "text-foreground")}>Unikaj promów</Badge>
-            )}
-            {routingProfile.avoidMotorways && (
-              <Badge variant="outline" className={cn(glassClass, "text-foreground")}>Unikaj autostrad</Badge>
+            {routingProfile.mode === "manual" ? (
+              <Badge variant="outline" className={cn(glassClass, "text-amber-600 dark:text-amber-400")}>
+                Trasa ręczna
+              </Badge>
+            ) : (
+              <>
+                <Badge variant="outline" className={cn(glassClass, "text-foreground")}>
+                  {routingProfile.transportMode === "truck" ? "Ciężarówka" : "Samochód"}
+                </Badge>
+                <Badge variant="outline" className={cn(glassClass, "text-foreground")}>
+                  {routingProfile.routingMode === "fast" ? "Trasa szybka" : "Trasa krótka"}
+                </Badge>
+                {routingProfile.trafficMode === "default" && (
+                  <Badge variant="outline" className={cn(glassClass, "text-foreground")}>Ruch drogowy</Badge>
+                )}
+                {routingProfile.avoidTolls && (
+                  <Badge variant="outline" className={cn(glassClass, "text-foreground")}>Unikaj opłat</Badge>
+                )}
+                {routingProfile.avoidFerries && (
+                  <Badge variant="outline" className={cn(glassClass, "text-foreground")}>Unikaj promów</Badge>
+                )}
+                {routingProfile.avoidMotorways && (
+                  <Badge variant="outline" className={cn(glassClass, "text-foreground")}>Unikaj autostrad</Badge>
+                )}
+              </>
             )}
           </motion.div>
 
@@ -1663,78 +1671,96 @@ function RoutingSettings({
   value: RoutingProfile;
   onChange: (value: RoutingProfile) => void;
 }) {
+  const isManual = value.mode === "manual";
+
   return (
     <div className="space-y-3">
-      <FieldRow label="Transport">
-        <Select
-          value={value.transportMode}
-          onValueChange={(next) =>
-            onChange({
-              ...value,
-              transportMode: next as RoutingProfile["transportMode"],
-            })
-          }
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {TRANSPORT_MODES.map((item) => (
-              <SelectItem key={item.value} value={item.value}>
-                {item.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </FieldRow>
-      <FieldRow label="Routing">
-        <Select
-          value={value.routingMode}
-          onValueChange={(next) =>
-            onChange({
-              ...value,
-              routingMode: next as RoutingProfile["routingMode"],
-            })
-          }
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {ROUTING_MODES.map((item) => (
-              <SelectItem key={item.value} value={item.value}>
-                {item.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </FieldRow>
       <SwitchRow
-        label="Traffic"
-        checked={value.trafficMode === "default"}
+        label="Trasa ręczna (linia prosta)"
+        checked={isManual}
         onCheckedChange={(checked) =>
-          onChange({ ...value, trafficMode: checked ? "default" : "disabled" })
+          onChange({ ...value, mode: checked ? "manual" : "here" })
         }
       />
-      <SwitchRow
-        label="Unikaj opłat"
-        checked={value.avoidTolls}
-        onCheckedChange={(checked) => onChange({ ...value, avoidTolls: checked })}
-      />
-      <SwitchRow
-        label="Unikaj promów"
-        checked={value.avoidFerries}
-        onCheckedChange={(checked) =>
-          onChange({ ...value, avoidFerries: checked })
-        }
-      />
-      <SwitchRow
-        label="Unikaj autostrad"
-        checked={value.avoidMotorways}
-        onCheckedChange={(checked) =>
-          onChange({ ...value, avoidMotorways: checked })
-        }
-      />
+      {isManual ? (
+        <p className="text-xs text-muted-foreground rounded-md border p-2">
+          Dystans i czas obliczane są na podstawie odległości w linii prostej
+          między punktami. Przeliczenie trasy nie wymaga HERE API.
+        </p>
+      ) : (
+        <>
+          <FieldRow label="Transport">
+            <Select
+              value={value.transportMode}
+              onValueChange={(next) =>
+                onChange({
+                  ...value,
+                  transportMode: next as RoutingProfile["transportMode"],
+                })
+              }
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {TRANSPORT_MODES.map((item) => (
+                  <SelectItem key={item.value} value={item.value}>
+                    {item.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FieldRow>
+          <FieldRow label="Routing">
+            <Select
+              value={value.routingMode}
+              onValueChange={(next) =>
+                onChange({
+                  ...value,
+                  routingMode: next as RoutingProfile["routingMode"],
+                })
+              }
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ROUTING_MODES.map((item) => (
+                  <SelectItem key={item.value} value={item.value}>
+                    {item.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FieldRow>
+          <SwitchRow
+            label="Traffic"
+            checked={value.trafficMode === "default"}
+            onCheckedChange={(checked) =>
+              onChange({ ...value, trafficMode: checked ? "default" : "disabled" })
+            }
+          />
+          <SwitchRow
+            label="Unikaj opłat"
+            checked={value.avoidTolls}
+            onCheckedChange={(checked) => onChange({ ...value, avoidTolls: checked })}
+          />
+          <SwitchRow
+            label="Unikaj promów"
+            checked={value.avoidFerries}
+            onCheckedChange={(checked) =>
+              onChange({ ...value, avoidFerries: checked })
+            }
+          />
+          <SwitchRow
+            label="Unikaj autostrad"
+            checked={value.avoidMotorways}
+            onCheckedChange={(checked) =>
+              onChange({ ...value, avoidMotorways: checked })
+            }
+          />
+        </>
+      )}
     </div>
   );
 }
