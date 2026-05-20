@@ -468,7 +468,7 @@
       "status": "Status",
       "points": "Points",
       "current": "Current",
-      "needsRecalculation": "Needs recalculation",
+      "needsRecalculation": "Out of date",
       "notCalculated": "Not calculated"
     },
     "routePoints": {
@@ -615,8 +615,8 @@
     "PROBLEM_REPORTED": "Problem reported",
     "ORDER_ASSIGNED": "Order assigned",
     "ORDER_COMPLETED": "Order completed"
-   },
-   "OrdersGrid": {
+  },
+  "OrdersGrid": {
     "driver": "Driver"
-   }
+  }
 }

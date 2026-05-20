@@ -468,7 +468,7 @@
       "status": "Status",
       "points": "Punkty",
       "current": "Aktualna",
-      "needsRecalculation": "Wymaga przeliczenia",
+      "needsRecalculation": "Nieaktualna",
       "notCalculated": "Nieprzeliczona"
     },
     "routePoints": {

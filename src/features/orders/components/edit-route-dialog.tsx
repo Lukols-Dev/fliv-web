@@ -731,14 +731,14 @@ export function EditRouteDialog({
                 ? { duration: 0.12 }
                 : { duration: 0.24, delay: 0.2, ease: "easeOut" }
             }
-            className="absolute bottom-4 left-4 z-10 flex flex-col items-start gap-2"
+            className="absolute bottom-4 left-4 z-10 flex w-[420px] max-w-[calc(100vw-2rem)] flex-col items-start gap-2"
           >
             <div
               className={cn(
                 "relative overflow-hidden rounded-xl transition-all duration-500 ease-in-out",
                 glassClass,
                 vehicleCardOpen
-                  ? "max-h-72 w-full"
+                  ? "max-h-80 w-full"
                   : "max-h-10 w-10 cursor-pointer hover:brightness-95 dark:hover:brightness-125"
               )}
               onClick={!vehicleCardOpen ? () => setVehicleCardOpen(true) : undefined}
@@ -754,12 +754,13 @@ export function EditRouteDialog({
                 "transition-opacity duration-200",
                 vehicleCardOpen ? "opacity-100 delay-200" : "opacity-0 pointer-events-none"
               )}>
-                <div className="relative h-28">
+                <div className="relative h-36">
                   <Image
                     src={routingProfile.transportMode === "truck" ? "/images/vehicle-truck.png" : "/images/vehicle-bus.png"}
                     alt={t("vehicle.alt")}
                     fill
-                    className="object-cover"
+                    sizes="420px"
+                    className="object-contain object-center"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                   <div className="absolute bottom-2 left-3 flex items-center gap-1.5">
@@ -793,7 +794,7 @@ export function EditRouteDialog({
                 )}
               </div>
             </div>
-            <div className={cn("flex items-center gap-px rounded-xl overflow-hidden text-sm", glassClass)}>
+            <div className={cn("flex w-full min-w-0 items-center gap-px overflow-hidden rounded-xl text-sm", glassClass)}>
               <MapSummaryCell label={t("summary.distance")} value={preview ? formatDistance(preview.distanceMeters, locale) : "—"} />
               <div className="w-px self-stretch bg-black/10 dark:bg-white/10" />
               <MapSummaryCell label={t("summary.time")} value={preview ? formatDuration(preview.durationSeconds, t) : "—"} />
@@ -1933,9 +1934,11 @@ function MapSummaryCell({
   valueClassName?: string;
 }) {
   return (
-    <div className="flex flex-col px-4 py-2.5">
-      <span className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</span>
-      <span className={cn("text-sm font-semibold", valueClassName)}>{value}</span>
+    <div className="flex min-w-0 flex-1 flex-col px-3 py-2.5">
+      <span className="truncate text-[10px] uppercase tracking-wide text-muted-foreground">{label}</span>
+      <span className={cn("truncate text-sm font-semibold", valueClassName)} title={value}>
+        {value}
+      </span>
     </div>
   );
 }
