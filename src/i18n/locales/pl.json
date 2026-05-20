@@ -1,0 +1,622 @@
+{
+  "LandingPage": {
+    "title": "Strona główna",
+    "description": "Strona główna aplikacji."
+  },
+  "ErrorPage": {
+    "title": "Wystąpił błąd"
+  },
+  "SignInPage": {
+    "title": "Zaloguj się",
+    "description": "Witaj ponownie! Proszę zaloguj się, aby kontynuować.",
+    "submit": "Zaloguj się",
+    "footerText": "Nie masz jeszcze konta?",
+    "footerCta": "Zarejestruj się"
+  },
+  "SignUpPage": {
+    "title": "Utwórz konto",
+    "description": "Podaj email poniżej, aby założyć konto.",
+    "submit": "Zarejestruj się",
+    "footerText": "Masz już konto?",
+    "footerCta": "Zaloguj się"
+  },
+  "SignUpForm": {
+    "fields": {
+      "emailLabel": "Email",
+      "emailPlaceholder": "name@example.com",
+      "firstNameLabel": "Imię",
+      "firstNamePlaceholder": "Jan",
+      "lastNameLabel": "Nazwisko",
+      "lastNamePlaceholder": "Kowalski",
+      "passwordLabel": "Hasło",
+      "passwordPlaceholder": "**********",
+      "acceptTermsLabel": "Akceptuję regulamin"
+    },
+    "buttons": {
+      "submit": "Utwórz konto",
+      "submitting": "Tworzenie konta..."
+    },
+    "errors": {
+      "generic": "Nie udało się utworzyć konta. Spróbuj ponownie."
+    },
+    "validation": {
+      "emailInvalid": "Podaj poprawny adres e-mail",
+      "passwordRequired": "Hasło jest wymagane",
+      "firstNameRequired": "Imię jest wymagane",
+      "lastNameRequired": "Nazwisko jest wymagane",
+      "acceptTermsRequired": "Akceptuję regulamin i politykę prywatności FLIV."
+    }
+  },
+  "SignInForm": {
+    "fields": {
+      "emailLabel": "Email",
+      "emailPlaceholder": "name@example.com",
+      "passwordLabel": "Hasło",
+      "passwordPlaceholder": "**********"
+    },
+    "links": {
+      "forgotPassword": "Nie pamiętasz hasła?"
+    },
+    "buttons": {
+      "submit": "Zaloguj się",
+      "submitting": "Logowanie..."
+    },
+    "errors": {
+      "accountNotActive": "Twoje konto nie jest aktywne. Skontaktuj się z administratorem.",
+      "generic": "Nie udało się zalogować. Spróbuj ponownie."
+    },
+    "validation": {
+      "emailInvalid": "Podaj poprawny adres e-mail",
+      "passwordRequired": "Hasło jest wymagane"
+    }
+  },
+  "LocaleSwitcher": {
+    "label": "Język",
+    "locale": {
+      "en": "Angielski",
+      "pl": "Polski"
+    }
+  },
+  "DashboardNav": {
+    "groups": {
+      "main": "Główne",
+      "settings": "System"
+    },
+    "items": {
+      "dashboard": "Panel",
+      "orders": "Zlecenia",
+      "account": "Konto"
+    }
+  },
+  "OrdersPage": {
+    "title": "Zlecenia",
+    "create": "Utwórz nowe zlecenie",
+    "loading": "Ładowanie zleceń…",
+    "error": "Nie udało się pobrać zleceń",
+    "details": {
+      "title": "Zlecenie",
+      "subtitle": "Szczegóły zlecenia",
+      "close": "Zamknij"
+    },
+    "empty": {
+      "title": "Brak zleceń",
+      "description": "Gdy pojawią się nowe zlecenia, zobaczysz je tutaj."
+    }
+  },
+  "OrderCard": {
+    "orderNumberLabel": "Numer zlecenia",
+    "createdAt": "Utworzono:",
+    "openDetails": "Otwórz szczegóły zlecenia",
+    "actions": {
+      "callDriver": "Zadzwoń do kierowcy",
+      "messageDriver": "Wyślij wiadomość do kierowcy"
+    }
+  },
+  "OrdersDetails": {
+    "header": {
+      "subtitle": "W realizacji"
+    },
+    "tabs": {
+      "info": "Informacje o zleceniu",
+      "documents": "Dokumenty"
+    },
+    "actions": {
+      "edit": "Edytuj",
+      "delete": "Usuń"
+    },
+    "driver": {
+      "role": "Kierowca",
+      "call": "Zadzwoń",
+      "message": "Wiadomość"
+    },
+    "route": {
+      "title": "Trasa",
+      "edit": "Edytuj trasę",
+      "mapPlaceholder": "Mapa (placeholder)",
+      "points": {
+        "title": "Punkty trasy",
+        "confirmed": "zaliczone",
+        "next": "Następny cel",
+        "arrivedAt": "Dotarcie:"
+      }
+    },
+    "stats": {
+      "approachDistance": "Dojazd do 1. punktu",
+      "approachEta": "Szac. czas dojazdu",
+      "traveledDistance": "Przebyty dystans",
+      "distance": "Dystans trasy",
+      "startTime": "Godzina startu",
+      "startDate": "Data startu"
+    },
+    "tracking": {
+      "title": "Historia śledzenia",
+      "empty": "Brak zdarzeń śledzenia"
+    },
+    "trackingStatus": {
+      "waiting": "Oczekuje",
+      "accepted": "Przyjęto",
+      "loaded": "Załadunek",
+      "delivered": "Dostarczono"
+    },
+    "documents": {
+      "error": "Nie udało się załadować dokumentów",
+      "title": "Dokumenty",
+      "empty": "Brak dokumentów",
+      "add": "Dodaj plik",
+      "actions": {
+        "view": "Podgląd",
+        "delete": "Usuń",
+        "close": "Zamknij"
+      },
+      "previewAlt": "Podgląd dokumentu"
+    }
+  },
+  "OrderStatus": {
+    "PENDING": "Oczekuje",
+    "ACCEPTED": "Przyjęto",
+    "IN_PROGRESS": "W trasie",
+    "LOADING": "Załadunek",
+    "UNLOADING": "Rozładunek",
+    "PAUSED": "Wstrzymane",
+    "COMPLETED": "Zakończone",
+    "PROBLEM": "Problem"
+  },
+  "CreateOrderDialog": {
+    "trigger": "Utwórz nowe zlecenie",
+    "editTitle": "Edytuj zlecenie transportowe",
+    "title": "Tworzenie zlecenia transportowego",
+    "optional": "opcjonalne",
+    "tabs": {
+      "record": "Ewidencja",
+      "vehicle": "Pojazd",
+      "payer": "Płatnik",
+      "transport": "Transport",
+      "attachments": "Załączniki",
+      "notes": "Uwagi"
+    },
+    "fields": {
+      "ztNumber": "Numer ZT",
+      "pwNumber": "Numer PW",
+      "timelinessStatus": "Status terminowości",
+      "vehiclePlate": "Samochód",
+      "trailerPlate": "Naczepa",
+      "driver": "Kierowca",
+      "driverFirstName": "Imię",
+      "driverLastName": "Nazwisko",
+      "driverPhone": "Telefon",
+      "clientName": "Zleceniodawca",
+      "contractNumber": "Zlecenie/Kontrakt",
+      "payer": "Płatnik",
+      "payerName": "Nazwa płatnika",
+      "payerVatId": "NIP",
+      "payerEmail": "Email",
+      "fromCountry": "Z kraju",
+      "fromAddress": "Z adresu",
+      "toCountry": "Do kraju",
+      "toAddress": "Do adresu",
+      "cargoWeightKg": "Waga (kg)",
+      "loadingDate": "Data załadunku",
+      "loadingTime": "Godzina załadunku",
+      "cargoDescription": "Ładunek",
+      "temperatureSensitive": "Wrażliwość na temperaturę",
+      "attachments": "Pliki",
+      "notes": "Opis"
+    },
+    "placeholders": {
+      "ztNumber": "Numer",
+      "pwNumber": "Numer",
+      "timelinessStatus": "Wybierz status terminowości",
+      "vehiclePlate": "Numer rejestracyjny",
+      "trailerPlate": "Numer rejestracyjny",
+      "driverFirstName": "Imię",
+      "driverLastName": "Nazwisko",
+      "driverPhone": "Telefon",
+      "clientName": "Zleceniodawca",
+      "contractNumber": "Numer",
+      "payerName": "Nazwa",
+      "payerVatId": "NIP",
+      "payerEmail": "Email",
+      "fromCountry": "Polska",
+      "fromAddress": "Wpisz adres z którego ma być wywóz",
+      "toCountry": "Polska",
+      "toAddress": "Wpisz adres do którego ma być dostarczenie",
+      "cargoWeightKg": "3500",
+      "loadingTime": "HH:mm",
+      "cargoDescription": "Opis",
+      "temperatureSensitive": "Tak/Nie",
+      "notes": "Dodaj uwagi…"
+    },
+    "options": {
+      "timelinessStatus": {
+        "on_time": "Terminowość"
+      },
+      "temperatureSensitive": {
+        "yes": "Tak",
+        "no": "Nie"
+      }
+    },
+    "helpers": {
+      "attachments": "Możesz dodać pliki później.",
+      "attachmentsList": "Lista załączników"
+    },
+    "documents": {
+      "remove": "Usuń dokument"
+    },
+    "buttons": {
+      "submit": "Utwórz zlecenie",
+      "submitting": "Tworzenie…",
+      "close": "Zamknij",
+      "save": "Zapisz zmiany",
+      "saving": "Zapisywanie…"
+    },
+    "validation": {
+      "required": "To pole jest wymagane",
+      "emailInvalid": "Podaj poprawny adres e-mail",
+      "phoneInvalid": "Podaj poprawny numer telefonu",
+      "weightInvalid": "Podaj poprawną wagę",
+      "dateInvalid": "Podaj poprawną datę",
+      "invalidOption": "Wybierz poprawną wartość",
+      "invalidFile": "Nieprawidłowy plik."
+    }
+  },
+  "Notifications": {
+    "title": "Powiadomienia",
+    "clearAll": "Wyczyść wszystkie",
+    "loading": "Ładowanie powiadomień…",
+    "loadError": "Nie udało się załadować powiadomień",
+    "retry": "Spróbuj ponownie",
+    "empty": {
+      "title": "Brak powiadomień",
+      "description": "Gdy pojawią się nowe zdarzenia, zobaczysz je tutaj."
+    },
+    "popover": {
+      "title": "Powiadomienia",
+      "openNotifications": "Otwórz powiadomienia",
+      "showAll": "Pokaż wszystkie powiadomienia"
+    },
+    "row": {
+      "openMenu": "Otwórz menu",
+      "delete": "Usuń"
+    },
+    "messages": {
+      "ORDER_STATUS_CHANGED": "Zlecenie {zTNumber} ma nowy status.",
+      "ORDER_EVENT": "Zlecenie {zTNumber} ma nowe zdarzenie."
+    }
+  },
+  "UserNav": {
+    "settings": "Ustawienia",
+    "signOut": "Wyloguj"
+  },
+  "AccountPage": {
+    "title": "Profil użytkownika",
+    "loading": "Ładowanie profilu…",
+    "loadError": "Nie udało się pobrać profilu",
+    "retry": "Spróbuj ponownie",
+    "errorPrefix": "Błąd",
+    "role": {
+      "DISPATCHER": "Dyspozytor",
+      "DRIVER": "Kierowca",
+      "noRole": "Brak roli"
+    },
+    "actions": {
+      "editProfile": "Edytuj profil",
+      "closeEditProfile": "Anuluj edycję",
+      "deleteAccount": "Usuń konto"
+    }
+  },
+  "AccountForm": {
+    "fields": {
+      "firstName": "Imię",
+      "lastName": "Nazwisko",
+      "email": "Email",
+      "password": "Hasło",
+      "phone": "Telefon"
+    },
+    "placeholders": {
+      "firstName": "Jan",
+      "lastName": "Kowalski",
+      "email": "jan.kowalski@gmail.com",
+      "password": "••••••••••••••••",
+      "phone": "Telefon"
+    },
+    "buttons": {
+      "save": "Zapisz zmiany",
+      "saving": "Zapisywanie..."
+    },
+    "validation": {
+      "required": "To pole jest wymagane",
+      "emailInvalid": "Podaj poprawny adres e-mail",
+      "passwordMin": "Hasło musi mieć minimum 8 znaków"
+    }
+  },
+  "DeleteAccountDialog": {
+    "title": "Usuń konto",
+    "description": "Ta operacja jest nieodwracalna. Utracisz dostęp do konta, historii i wszystkich danych powiązanych z Twoim profilem.",
+    "confirmText": "Aby potwierdzić, wpisz w polu poniżej:",
+    "inputPlaceholder": "Text",
+    "actions": {
+      "close": "Zamknij",
+      "delete": "Usuń konto",
+      "deleting": "Usuwanie..."
+    },
+    "validation": {
+      "required": "To pole jest wymagane",
+      "mustMatch": "Wpisz dokładnie: {token}"
+    },
+    "errors": {
+      "generic": "Wystąpił błąd. Spróbuj ponownie."
+    }
+  },
+  "Pagination": {
+    "prev": "Poprzednia",
+    "next": "Następna"
+  },
+  "UploadFileDialog": {
+    "title": "Dodaj dokument",
+    "subtitle": "Wybierz plik i nadaj mu nazwę.",
+    "dropzone": {
+      "title": "Przeciągnij dokument tutaj",
+      "active": "Upuść dokument, aby dodać",
+      "hint": "Możesz też kliknąć i wybrać plik z dysku."
+    },
+    "fields": {
+      "title": "Nazwa pliku",
+      "titlePlaceholder": "Np. CMR Wiedeń 11.10"
+    },
+    "selected": {
+      "title": "Wybrane pliki"
+    },
+    "limits": {
+      "reachedMany": "Osiągnięto limit: maks. {max} plików.",
+      "reachedSingle": "Możesz dodać tylko 1 plik."
+    },
+    "actions": {
+      "pickFile": "Wybierz plik",
+      "remove": "Usuń",
+      "cancel": "Anuluj",
+      "close": "Zamknij",
+      "changeFile": "Zmień plik",
+      "confirmOne": "Dodaj plik",
+      "confirmMany": "Dodaj pliki"
+    },
+    "errors": {
+      "title": "Nie udało się dodać pliku",
+      "titleRequired": "Podaj nazwę pliku.",
+      "fileRequired": "Podaj plik.",
+      "tooManyFiles": "Możesz dodać maksymalnie {max} plików.",
+      "fileTooLarge": "Plik jest za duży. Maksymalnie: {max}.",
+      "invalidType": "Nieobsługiwany typ pliku.",
+      "unknown": "Wystąpił nieoczekiwany błąd."
+    }
+  },
+  "RouteEditor": {
+    "title": "Edytuj trasę",
+    "routeLoadError": "Nie udało się pobrać danych trasy.",
+    "minimumPoints": "Do przeliczenia trasy wymagane są minimum dwa punkty.",
+    "operationError": "Nie udało się wykonać operacji. Sprawdź punkty i przelicz trasę ponownie.",
+    "manualRoute": "Trasa ręczna",
+    "traffic": "Ruch drogowy",
+    "avoidTolls": "Unikaj opłat",
+    "avoidFerries": "Unikaj promów",
+    "avoidMotorways": "Unikaj autostrad",
+    "sections": {
+      "routePoints": "Punkty trasy",
+      "partnerPois": "Punkty partnerskie",
+      "routingSettings": "Ustawienia trasy",
+      "truckParameters": "Parametry ciężarówki",
+      "summary": "Podsumowanie"
+    },
+    "actions": {
+      "reset": "Resetuj zmiany",
+      "recalculate": "Przelicz trasę",
+      "saveRoute": "Zapisz trasę",
+      "cancel": "Anuluj",
+      "delete": "Usuń",
+      "edit": "Edytuj",
+      "show": "Pokaż",
+      "hide": "Ukryj",
+      "close": "Zamknij"
+    },
+    "vehicle": {
+      "alt": "Pojazd",
+      "parameters": "Parametry pojazdu",
+      "car": "Samochód",
+      "truck": "Ciężarówka",
+      "fastRoute": "Trasa szybka",
+      "shortRoute": "Trasa krótka",
+      "heightShort": "Wys.",
+      "widthShort": "Szer.",
+      "lengthShort": "Dł.",
+      "axlesShort": "Osie",
+      "weight": "Masa",
+      "grossWeight": "DMC",
+      "trailersShort": "Nacz.",
+      "adr": "ADR",
+      "height": "Wysokość (cm)",
+      "width": "Szerokość (cm)",
+      "length": "Długość (cm)",
+      "currentWeight": "Aktualna masa (kg)",
+      "weightPerAxle": "Masa na oś (kg)",
+      "axleCount": "Liczba osi",
+      "trailers": "Naczepy",
+      "yes": "Tak",
+      "no": "Nie"
+    },
+    "summary": {
+      "distance": "Dystans",
+      "time": "Czas",
+      "status": "Status",
+      "points": "Punkty",
+      "current": "Aktualna",
+      "needsRecalculation": "Nieaktualna",
+      "notCalculated": "Nieprzeliczona"
+    },
+    "routePoints": {
+      "addFromAddress": "Dodaj punkt z adresu",
+      "label": "Etykieta",
+      "addressDescription": "Adres opisowy",
+      "latitude": "Szerokość geograficzna",
+      "longitude": "Długość geograficzna",
+      "fallback": "Punkt {index}",
+      "markerToIcon": "Przełącz na ikonę",
+      "markerToNumber": "Przełącz na numer",
+      "detachPoi": "Odłącz POI",
+      "poi": "POI",
+      "behavior": {
+        "STOP": "Postój",
+        "PASS_THROUGH": "Przebieg"
+      }
+    },
+    "pointTypes": {
+      "LOADING": "Załadunek",
+      "UNLOADING": "Rozładunek",
+      "FUEL": "Tankowanie",
+      "PARKING": "Parking",
+      "SERVICE": "Serwis",
+      "OTHER": "Inne"
+    },
+    "partnerPoiTypes": {
+      "FUEL": "Stacja paliw",
+      "PARKING": "Parking",
+      "SERVICE": "Serwis",
+      "OTHER": "Punkt partnerski"
+    },
+    "partnerPois": {
+      "showMarkers": "Pokaż markery POI",
+      "editPoint": "Edytuj punkt",
+      "addPoint": "Dodaj punkt",
+      "namePlaceholder": "Nazwa punktu",
+      "active": "Aktywny",
+      "addressPlaceholder": "Adres do geokodowania HERE",
+      "savePoint": "Zapisz punkt",
+      "bboxPending": "Punkty zostaną pobrane po załadowaniu obszaru mapy.",
+      "loading": "Ładowanie punktów partnerskich...",
+      "loadError": "Nie udało się pobrać punktów partnerskich.",
+      "empty": "Brak punktów partnerskich w tym obszarze.",
+      "hidden": "ukryty",
+      "onRoute": "w trasie",
+      "detachFromRoute": "Odłącz z trasy",
+      "addToRoute": "Dodaj do trasy"
+    },
+    "routing": {
+      "manualLine": "Trasa ręczna (linia prosta)",
+      "manualDescription": "Dystans i czas obliczane są na podstawie odległości w linii prostej między punktami. Przeliczenie trasy nie wymaga HERE API.",
+      "transport": "Transport",
+      "routing": "Routing",
+      "traffic": "Traffic"
+    },
+    "transportModes": {
+      "car": "Samochód",
+      "truck": "Ciężarówka"
+    },
+    "routingModes": {
+      "fast": "Szybka",
+      "short": "Krótka"
+    },
+    "hazardousGoods": {
+      "title": "Towary niebezpieczne",
+      "explosive": "Wybuchowe",
+      "gas": "Gaz",
+      "flammable": "Łatwopalne",
+      "combustible": "Palne",
+      "organic": "Organiczne",
+      "poison": "Trujące",
+      "radioactive": "Radioaktywne",
+      "corrosive": "Korozyjne",
+      "poisonousInhalation": "Toksyczne przy wdychaniu",
+      "harmfulToWater": "Szkodliwe dla wody",
+      "other": "Inne"
+    },
+    "duration": {
+      "minutes": "{minutes} min",
+      "hoursMinutes": "{hours} h {minutes} min"
+    }
+  },
+  "HereMap": {
+    "loading": "Ładowanie mapy…",
+    "updatingPosition": "Aktualizowanie pozycji…",
+    "noRoutePoints": "Brak punktów trasy",
+    "driverLocation": "Lokalizacja kierowcy",
+    "lastRefresh": "Ostatnie odświeżenie: {time}",
+    "accuracy": "Dokładność: {meters} m",
+    "noData": "brak danych",
+    "routePointBehavior": {
+      "STOP": "Postój",
+      "PASS_THROUGH": "Przebieg"
+    },
+    "partnerPoi": {
+      "addAsRoutePoint": "Dodaj jako punkt trasy",
+      "detachFromRoute": "Odłącz POI od trasy",
+      "calculating": "Przeliczanie..."
+    },
+    "settings": {
+      "open": "Otwórz ustawienia mapy",
+      "close": "Zamknij ustawienia mapy",
+      "title": "Ustawienia mapy",
+      "view": "Widok",
+      "map": "Mapa",
+      "satellite": "Satelita",
+      "trafficFlow": "Warunki ruchu",
+      "trafficIncidents": "Zdarzenia drogowe",
+      "vehicleRestrictions": "Ograniczenia dla ciężarówek"
+    },
+    "controls": {
+      "refreshDriverLocation": "Odśwież pozycję kierowcy",
+      "zoomIn": "Przybliż mapę",
+      "zoomOut": "Oddal mapę"
+    },
+    "pointTypes": {
+      "LOADING": "Załadunek",
+      "UNLOADING": "Rozładunek",
+      "FUEL": "Tankowanie",
+      "PARKING": "Parking",
+      "SERVICE": "Serwis",
+      "OTHER": "Inne"
+    },
+    "partnerPoiTypes": {
+      "FUEL": "Stacja paliw",
+      "PARKING": "Parking",
+      "SERVICE": "Serwis",
+      "OTHER": "Punkt partnerski"
+    },
+    "errors": {
+      "missingApiKey": "Brakuje NEXT_PUBLIC_HERE_MAPS_API_KEY",
+      "loadFailed": "Nie udało się załadować mapy HERE"
+    }
+  },
+  "OrderEventType": {
+    "STATUS_CHANGED": "Zmiana statusu",
+    "INCIDENT_DETOUR": "Zmiana trasy",
+    "INCIDENT_ACCIDENT": "Wypadek",
+    "INCIDENT_DELAY": "Opóźnienie",
+    "ROUTE_PAUSED": "Trasa wstrzymana",
+    "ROUTE_RESUMED": "Trasa wznowiona",
+    "ROUTE_FINISHED": "Trasa zakończona",
+    "PROBLEM_REPORTED": "Zgłoszenie problemu",
+    "ORDER_ASSIGNED": "Zlecenie przydzielone",
+    "ORDER_COMPLETED": "Zlecenie zakończone"
+   },
+   "OrdersGrid": {
+    "driver": "Kierowca"
+   }
+}

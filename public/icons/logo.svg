@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Warstwa_1" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 1550 390">
+  <!-- Generator: Adobe Illustrator 29.4.0, SVG Export Plug-In . SVG Version: 2.1.0 Build 152)  -->
+  <defs>
+    <style>
+      .st0 {
+        fill: #f2542f;
+      }
+    </style>
+  </defs>
+  <polygon class="st0" points="628.2 277.2 628.2 8.5 503.3 8.5 503.3 383.2 576.2 383.2 628.2 383.2 815.6 383.2 815.6 277.2 628.2 277.2"/>
+  <g>
+    <path class="st0" d="M1193.9,8.5l105.3,248.3,105.2-248.3h130.4l-170.9,373.8h-129.3L1063.2,8.5h130.7Z"/>
+    <rect class="st0" x="876.7" y="8.5" width="124.9" height="374.7"/>
+    <path class="st0" d="M440.9,8.5H122.9l-56.4,55.5v56.9h211.3c-117.5,18-207.9,117.9-211.2,239.6h-.2v22.6h127.6c-1.1-70.3,54.5-137.6,121.7-137.6h102.9c12,0,21.8-9.6,21.8-21.6v-104h-55.6l56-55.3V8.5h.1Z"/>
+  </g>
+</svg>
