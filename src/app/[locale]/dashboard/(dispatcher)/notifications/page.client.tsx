@@ -42,7 +42,9 @@ export default function NotificationsPageClient() {
         <div className="flex flex-1 flex-col gap-2">
           <div className="max-w-4xl flex flex-col gap-4 py-6 md:gap-6 md:py-8">
             <div className="px-4 lg:px-6">
-              <div className="text-sm text-muted-foreground">Loading...</div>
+              <div className="text-sm text-muted-foreground">
+                {t("loading")}
+              </div>
             </div>
           </div>
         </div>
@@ -58,11 +60,11 @@ export default function NotificationsPageClient() {
             <div className="px-4 lg:px-6">
               <div className="rounded-xl border bg-background p-4 space-y-3">
                 <p className="text-sm text-destructive">
-                  Error loading notifications
+                  {t("loadError")}
                   {error ? `: ${(error as Error).message}` : ""}
                 </p>
                 <button className="text-sm underline" onClick={() => refetch()}>
-                  Retry
+                  {t("retry")}
                 </button>
               </div>
             </div>
@@ -87,7 +89,7 @@ export default function NotificationsPageClient() {
           <div className="px-4 lg:px-6">
             {items.length === 0 ? (
               <div className="text-sm text-muted-foreground">
-                No notifications
+                {t("empty.title")}
               </div>
             ) : (
               <>

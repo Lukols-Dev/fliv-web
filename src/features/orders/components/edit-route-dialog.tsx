@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Image from "next/image";
+import { useLocale, useTranslations } from "next-intl";
 import { motion, useReducedMotion } from "motion/react";
 import {
   ChevronDown,
@@ -103,55 +104,51 @@ import type {
 
 const POINT_TYPES: Array<{
   value: TransportOrderRoutePointType;
-  label: string;
 }> = [
-    { value: "LOADING", label: "Załadunek" },
-    { value: "UNLOADING", label: "Rozładunek" },
-    { value: "FUEL", label: "Tankowanie" },
-    { value: "PARKING", label: "Parking" },
-    { value: "SERVICE", label: "Serwis" },
-    { value: "OTHER", label: "Inne" },
+    { value: "LOADING" },
+    { value: "UNLOADING" },
+    { value: "FUEL" },
+    { value: "PARKING" },
+    { value: "SERVICE" },
+    { value: "OTHER" },
   ];
 
 const PARTNER_POI_TYPES: Array<{
   value: PartnerPoiType;
-  label: string;
 }> = [
-    { value: "FUEL", label: "Stacja paliw" },
-    { value: "PARKING", label: "Parking" },
-    { value: "SERVICE", label: "Serwis" },
-    { value: "OTHER", label: "Inne" },
+    { value: "FUEL" },
+    { value: "PARKING" },
+    { value: "SERVICE" },
+    { value: "OTHER" },
   ];
 
 const TRANSPORT_MODES: Array<{
   value: RoutingProfile["transportMode"];
-  label: string;
 }> = [
-    { value: "car", label: "Car" },
-    { value: "truck", label: "Truck" },
+    { value: "car" },
+    { value: "truck" },
   ];
 
 const ROUTING_MODES: Array<{
   value: RoutingProfile["routingMode"];
-  label: string;
 }> = [
-    { value: "fast", label: "Fast" },
-    { value: "short", label: "Short" },
+    { value: "fast" },
+    { value: "short" },
   ];
 
 
-const HAZARDOUS_GOODS: Array<{ value: HazardousGood; label: string }> = [
-  { value: "explosive", label: "Wybuchowe" },
-  { value: "gas", label: "Gaz" },
-  { value: "flammable", label: "Łatwopalne" },
-  { value: "combustible", label: "Palne" },
-  { value: "organic", label: "Organiczne" },
-  { value: "poison", label: "Trujące" },
-  { value: "radioactive", label: "Radioaktywne" },
-  { value: "corrosive", label: "Korozyjne" },
-  { value: "poisonousInhalation", label: "Toksyczne przy wdychaniu" },
-  { value: "harmfulToWater", label: "Szkodliwe dla wody" },
-  { value: "other", label: "Inne" },
+const HAZARDOUS_GOODS: Array<{ value: HazardousGood }> = [
+  { value: "explosive" },
+  { value: "gas" },
+  { value: "flammable" },
+  { value: "combustible" },
+  { value: "organic" },
+  { value: "poison" },
+  { value: "radioactive" },
+  { value: "corrosive" },
+  { value: "poisonousInhalation" },
+  { value: "harmfulToWater" },
+  { value: "other" },
 ];
 
 type LocalRoutePoint = RoutePointDraft & {
@@ -191,6 +188,8 @@ export function EditRouteDialog({
   mapLayoutId,
   initialMapData,
 }: Props) {
+  const t = useTranslations("RouteEditor");
+  const locale = useLocale();
   const prefersReducedMotion = useReducedMotion();
   const routeQuery = useOrderRouteQuery({ id: orderId, enabled: open });
   const driverLocationQuery = useOrderLocationQuery({
@@ -474,10 +473,10 @@ export function EditRouteDialog({
   const handleAddPartnerPoiToRoute = React.useCallback(
     async (poi: PartnerPoiDto) => {
       await applyRoutePointsAndRecalculate(
-        insertPartnerPoiIntoRoute(routePoints, poi)
+        insertPartnerPoiIntoRoute(routePoints, poi, t)
       );
     },
-    [applyRoutePointsAndRecalculate, routePoints]
+    [applyRoutePointsAndRecalculate, routePoints, t]
   );
 
   const handleDetachPartnerPoiFromRoute = React.useCallback(
@@ -652,7 +651,7 @@ export function EditRouteDialog({
         className="h-screen! w-screen! max-w-none! translate-x-0! translate-y-0! left-0! top-0! overflow-hidden rounded-none border-0 p-0 data-[state=open]:animate-none! data-[state=closed]:animate-none!"
         showCloseButton={false}
       >
-        <DialogTitle className="sr-only">Edytuj trasę</DialogTitle>
+        <DialogTitle className="sr-only">{t("title")}</DialogTitle>
         <div className="relative h-full min-h-0 overflow-hidden bg-background">
           <motion.div
             layoutId={prefersReducedMotion ? undefined : mapLayoutId}
@@ -698,27 +697,27 @@ export function EditRouteDialog({
           >
             {routingProfile.mode === "manual" ? (
               <Badge variant="outline" className={cn(glassClass, "text-amber-600 dark:text-amber-400")}>
-                Trasa ręczna
+                {t("manualRoute")}
               </Badge>
             ) : (
               <>
                 <Badge variant="outline" className={cn(glassClass, "text-foreground")}>
-                  {routingProfile.transportMode === "truck" ? "Ciężarówka" : "Samochód"}
+                  {routingProfile.transportMode === "truck" ? t("vehicle.truck") : t("vehicle.car")}
                 </Badge>
                 <Badge variant="outline" className={cn(glassClass, "text-foreground")}>
-                  {routingProfile.routingMode === "fast" ? "Trasa szybka" : "Trasa krótka"}
+                  {routingProfile.routingMode === "fast" ? t("vehicle.fastRoute") : t("vehicle.shortRoute")}
                 </Badge>
                 {routingProfile.trafficMode === "default" && (
-                  <Badge variant="outline" className={cn(glassClass, "text-foreground")}>Ruch drogowy</Badge>
+                  <Badge variant="outline" className={cn(glassClass, "text-foreground")}>{t("traffic")}</Badge>
                 )}
                 {routingProfile.avoidTolls && (
-                  <Badge variant="outline" className={cn(glassClass, "text-foreground")}>Unikaj opłat</Badge>
+                  <Badge variant="outline" className={cn(glassClass, "text-foreground")}>{t("avoidTolls")}</Badge>
                 )}
                 {routingProfile.avoidFerries && (
-                  <Badge variant="outline" className={cn(glassClass, "text-foreground")}>Unikaj promów</Badge>
+                  <Badge variant="outline" className={cn(glassClass, "text-foreground")}>{t("avoidFerries")}</Badge>
                 )}
                 {routingProfile.avoidMotorways && (
-                  <Badge variant="outline" className={cn(glassClass, "text-foreground")}>Unikaj autostrad</Badge>
+                  <Badge variant="outline" className={cn(glassClass, "text-foreground")}>{t("avoidMotorways")}</Badge>
                 )}
               </>
             )}
@@ -732,14 +731,14 @@ export function EditRouteDialog({
                 ? { duration: 0.12 }
                 : { duration: 0.24, delay: 0.2, ease: "easeOut" }
             }
-            className="absolute bottom-4 left-4 z-10 flex flex-col items-start gap-2"
+            className="absolute bottom-4 left-4 z-10 flex w-[420px] max-w-[calc(100vw-2rem)] flex-col items-start gap-2"
           >
             <div
               className={cn(
                 "relative overflow-hidden rounded-xl transition-all duration-500 ease-in-out",
                 glassClass,
                 vehicleCardOpen
-                  ? "max-h-72 w-full"
+                  ? "max-h-80 w-full"
                   : "max-h-10 w-10 cursor-pointer hover:brightness-95 dark:hover:brightness-125"
               )}
               onClick={!vehicleCardOpen ? () => setVehicleCardOpen(true) : undefined}
@@ -755,17 +754,18 @@ export function EditRouteDialog({
                 "transition-opacity duration-200",
                 vehicleCardOpen ? "opacity-100 delay-200" : "opacity-0 pointer-events-none"
               )}>
-                <div className="relative h-28">
+                <div className="relative h-36">
                   <Image
                     src={routingProfile.transportMode === "truck" ? "/images/vehicle-truck.png" : "/images/vehicle-bus.png"}
-                    alt="Pojazd"
+                    alt={t("vehicle.alt")}
                     fill
-                    className="object-cover"
+                    sizes="420px"
+                    className="object-contain object-center"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                   <div className="absolute bottom-2 left-3 flex items-center gap-1.5">
                     <Truck className="h-3.5 w-3.5 text-white" />
-                    <span className="text-xs font-semibold text-white">Parametry pojazdu</span>
+                    <span className="text-xs font-semibold text-white">{t("vehicle.parameters")}</span>
                   </div>
                   <button
                     type="button"
@@ -778,34 +778,34 @@ export function EditRouteDialog({
                 {routingProfile.transportMode === "truck" && (
                   <>
                     <div className="grid grid-cols-4 divide-x divide-black/10 dark:divide-white/10">
-                      <VehicleParamCell label="Wys." value={vehicleSpec.heightCm} unit="cm" />
-                      <VehicleParamCell label="Szer." value={vehicleSpec.widthCm} unit="cm" />
-                      <VehicleParamCell label="Dł." value={vehicleSpec.lengthCm} unit="cm" />
-                      <VehicleParamCell label="Osie" value={vehicleSpec.axleCount} />
+                      <VehicleParamCell label={t("vehicle.heightShort")} value={vehicleSpec.heightCm} unit="cm" />
+                      <VehicleParamCell label={t("vehicle.widthShort")} value={vehicleSpec.widthCm} unit="cm" />
+                      <VehicleParamCell label={t("vehicle.lengthShort")} value={vehicleSpec.lengthCm} unit="cm" />
+                      <VehicleParamCell label={t("vehicle.axlesShort")} value={vehicleSpec.axleCount} />
                     </div>
                     <div className="h-px bg-black/10 dark:bg-white/10" />
                     <div className="grid grid-cols-4 divide-x divide-black/10 dark:divide-white/10">
-                      <VehicleParamCell label="Masa" value={vehicleSpec.currentWeightKg} unit="kg" />
-                      <VehicleParamCell label="DMC" value={vehicleSpec.grossWeightKg} unit="kg" />
-                      <VehicleParamCell label="Nacz." value={vehicleSpec.trailerCount} />
-                      <VehicleParamCell label="ADR" value={Array.isArray(vehicleSpec.hazardousGoods) ? "Tak" : "Nie"} />
+                      <VehicleParamCell label={t("vehicle.weight")} value={vehicleSpec.currentWeightKg} unit="kg" />
+                      <VehicleParamCell label={t("vehicle.grossWeight")} value={vehicleSpec.grossWeightKg} unit="kg" />
+                      <VehicleParamCell label={t("vehicle.trailersShort")} value={vehicleSpec.trailerCount} />
+                      <VehicleParamCell label={t("vehicle.adr")} value={Array.isArray(vehicleSpec.hazardousGoods) ? t("vehicle.yes") : t("vehicle.no")} />
                     </div>
                   </>
                 )}
               </div>
             </div>
-            <div className={cn("flex items-center gap-px rounded-xl overflow-hidden text-sm", glassClass)}>
-              <MapSummaryCell label="Dystans" value={preview ? formatDistance(preview.distanceMeters) : "—"} />
+            <div className={cn("flex w-full min-w-0 items-center gap-px overflow-hidden rounded-xl text-sm", glassClass)}>
+              <MapSummaryCell label={t("summary.distance")} value={preview ? formatDistance(preview.distanceMeters, locale) : "—"} />
               <div className="w-px self-stretch bg-black/10 dark:bg-white/10" />
-              <MapSummaryCell label="Czas" value={preview ? formatDuration(preview.durationSeconds) : "—"} />
+              <MapSummaryCell label={t("summary.time")} value={preview ? formatDuration(preview.durationSeconds, t) : "—"} />
               <div className="w-px self-stretch bg-black/10 dark:bg-white/10" />
               <MapSummaryCell
-                label="Status"
-                value={previewIsCurrent ? "Aktualna" : preview ? "Wymaga przeliczenia" : "Nieprzeliczona"}
+                label={t("summary.status")}
+                value={previewIsCurrent ? t("summary.current") : preview ? t("summary.needsRecalculation") : t("summary.notCalculated")}
                 valueClassName={previewIsCurrent ? "text-emerald-600 dark:text-emerald-400" : preview ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"}
               />
               <div className="w-px self-stretch bg-black/10 dark:bg-white/10" />
-              <MapSummaryCell label="Punkty" value={String(routePoints.length)} />
+              <MapSummaryCell label={t("summary.points")} value={String(routePoints.length)} />
             </div>
           </motion.div>
 
@@ -827,7 +827,7 @@ export function EditRouteDialog({
           >
             <div className={cn("flex h-10 shrink-0 items-center px-1", asideOpen && "border-b")}>
               <div className="min-w-0 flex-1 overflow-hidden">
-                <h2 className="truncate pl-3 text-sm font-semibold">Edytuj trasę</h2>
+                <h2 className="truncate pl-3 text-sm font-semibold">{t("title")}</h2>
               </div>
               <div className="flex shrink-0 gap-1">
                 <button
@@ -855,13 +855,13 @@ export function EditRouteDialog({
               </div>
             ) : routeQuery.isError ? (
               <div className="p-4 text-sm text-destructive">
-                Nie udało się pobrać danych trasy.
+                {t("routeLoadError")}
               </div>
             ) : (
               <>
                 <div className="min-h-0 flex-1 overflow-y-auto p-4">
                   <PanelSection
-                    title="Punkty trasy"
+                    title={t("sections.routePoints")}
                     open={sectionOpen.points}
                     onOpenChange={(value) =>
                       setSectionOpen((prev) => ({ ...prev, points: value }))
@@ -874,7 +874,7 @@ export function EditRouteDialog({
                           onChange={(event) =>
                             setAddressQuery(event.target.value)
                           }
-                          placeholder="Dodaj punkt z adresu"
+                          placeholder={t("routePoints.addFromAddress")}
                         />
                         <Button
                           type="button"
@@ -937,7 +937,7 @@ export function EditRouteDialog({
                   </PanelSection>
 
                   <PanelSection
-                    title="Punkty partnerskie"
+                    title={t("sections.partnerPois")}
                     open={sectionOpen.partnerPois}
                     onOpenChange={(value) =>
                       setSectionOpen((prev) => ({
@@ -987,7 +987,7 @@ export function EditRouteDialog({
                   </PanelSection>
 
                   <PanelSection
-                    title="Ustawienia trasy"
+                    title={t("sections.routingSettings")}
                     open={sectionOpen.routing}
                     onOpenChange={(value) =>
                       setSectionOpen((prev) => ({ ...prev, routing: value }))
@@ -1004,7 +1004,7 @@ export function EditRouteDialog({
 
                   {routingProfile.transportMode === "truck" ? (
                     <PanelSection
-                      title="Parametry ciężarówki"
+                      title={t("sections.truckParameters")}
                       open={sectionOpen.vehicle}
                       onOpenChange={(value) =>
                         setSectionOpen((prev) => ({ ...prev, vehicle: value }))
@@ -1022,7 +1022,7 @@ export function EditRouteDialog({
 
                   <div className="hidden">
                     <PanelSection
-                      title="Podsumowanie"
+                      title={t("sections.summary")}
                       open={sectionOpen.summary}
                       onOpenChange={(value) =>
                         setSectionOpen((prev) => ({ ...prev, summary: value }))
@@ -1030,28 +1030,28 @@ export function EditRouteDialog({
                     >
                       <div className="grid grid-cols-2 gap-3 text-sm">
                         <SummaryItem
-                          label="Dystans"
-                          value={preview ? formatDistance(preview.distanceMeters) : "—"}
+                          label={t("summary.distance")}
+                          value={preview ? formatDistance(preview.distanceMeters, locale) : "—"}
                         />
                         <SummaryItem
-                          label="Czas"
+                          label={t("summary.time")}
                           value={
                             preview
-                              ? formatDuration(preview.durationSeconds)
+                              ? formatDuration(preview.durationSeconds, t)
                               : "—"
                           }
                         />
                         <SummaryItem
-                          label="Status"
+                          label={t("summary.status")}
                           value={
                             previewIsCurrent
-                              ? "Aktualna"
+                              ? t("summary.current")
                               : preview
-                                ? "Wymaga przeliczenia"
-                                : "Nieprzeliczona"
+                                ? t("summary.needsRecalculation")
+                                : t("summary.notCalculated")
                           }
                         />
-                        <SummaryItem label="Punkty" value={String(routePoints.length)} />
+                        <SummaryItem label={t("summary.points")} value={String(routePoints.length)} />
                       </div>
                     </PanelSection>
                   </div>
@@ -1060,7 +1060,7 @@ export function EditRouteDialog({
                 <div className="space-y-2 border-t p-4">
                   {!canCalculate ? (
                     <p className="text-xs text-muted-foreground">
-                      Do przeliczenia trasy wymagane są minimum dwa punkty.
+                      {t("minimumPoints")}
                     </p>
                   ) : null}
                   {(isDirty || (!!preview && !previewIsCurrent)) && (
@@ -1072,7 +1072,7 @@ export function EditRouteDialog({
                       disabled={calculateMutation.isPending || saveMutation.isPending}
                     >
                       <RotateCcw className="mr-2 h-4 w-4" />
-                      Resetuj zmiany
+                      {t("actions.reset")}
                     </Button>
                   )}
                   <div className="flex gap-2">
@@ -1086,7 +1086,7 @@ export function EditRouteDialog({
                       {calculateMutation.isPending ? (
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       ) : null}
-                      Przelicz trasę
+                      {t("actions.recalculate")}
                     </Button>
                     <Button
                       type="button"
@@ -1099,13 +1099,12 @@ export function EditRouteDialog({
                       ) : (
                         <Save className="mr-2 h-4 w-4" />
                       )}
-                      Zapisz trasę
+                      {t("actions.saveRoute")}
                     </Button>
                   </div>
                   {calculateMutation.isError || saveMutation.isError ? (
                     <p className="text-xs text-destructive">
-                      Nie udało się wykonać operacji. Sprawdź punkty i przelicz
-                      trasę ponownie.
+                      {t("operationError")}
                     </p>
                   ) : null}
                 </div>
@@ -1198,6 +1197,7 @@ function RoutePointRow({
   onHover: (clientId: string | null) => void;
   isDetachingPartnerPoi: boolean;
 }) {
+  const t = useTranslations("RouteEditor");
   const {
     attributes,
     listeners,
@@ -1244,7 +1244,7 @@ function RoutePointRow({
         </button>
         <button
           type="button"
-          title={point.markerMode === "numbered" ? "Przełącz na ikonę" : "Przełącz na numer"}
+          title={point.markerMode === "numbered" ? t("routePoints.markerToIcon") : t("routePoints.markerToNumber")}
           onClick={() => onUpdate(point.clientId, {
             markerMode: point.markerMode === "numbered" ? "typed" : "numbered",
           })}
@@ -1270,12 +1270,12 @@ function RoutePointRow({
           <span className="truncate text-sm font-medium">
             {point.label?.trim() ||
               point.address?.trim() ||
-              `Punkt ${index + 1}`}
+              t("routePoints.fallback", { index: index + 1 })}
           </span>
         </button>
         {point.partnerPoiId ? (
           <span className="shrink-0 rounded-full border px-2 py-0.5 text-[11px] text-muted-foreground">
-            POI
+            {t("routePoints.poi")}
             {point.partnerPoiName ? ` · ${point.partnerPoiName}` : ""}
           </span>
         ) : null}
@@ -1317,7 +1317,7 @@ function RoutePointRow({
               ) : (
                 <X className="mr-1 h-3.5 w-3.5" />
               )}
-              Odłącz POI
+              {t("routePoints.detachPoi")}
             </Button>
           ) : null}
           <Button
@@ -1346,14 +1346,14 @@ function RoutePointRow({
           onChange={(event) =>
             onUpdate(point.clientId, { label: event.target.value })
           }
-          placeholder="Label"
+          placeholder={t("routePoints.label")}
         />
         <Input
           value={point.address ?? ""}
           onChange={(event) =>
             onUpdate(point.clientId, { address: event.target.value })
           }
-          placeholder="Adres opisowy"
+          placeholder={t("routePoints.addressDescription")}
         />
         <div className="grid grid-cols-2 gap-2">
           <Select
@@ -1370,7 +1370,7 @@ function RoutePointRow({
             <SelectContent>
               {POINT_TYPES.map((item) => (
                 <SelectItem key={item.value} value={item.value}>
-                  {item.label}
+                  {getRoutePointTypeLabel(item.value, t)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -1388,8 +1388,8 @@ function RoutePointRow({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="STOP">Postój</SelectItem>
-              <SelectItem value="PASS_THROUGH">Przebieg</SelectItem>
+              <SelectItem value="STOP">{t("routePoints.behavior.STOP")}</SelectItem>
+              <SelectItem value="PASS_THROUGH">{t("routePoints.behavior.PASS_THROUGH")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -1399,14 +1399,14 @@ function RoutePointRow({
             onChange={(value) => {
               if (value !== null) onUpdate(point.clientId, { latitude: value });
             }}
-            placeholder="Latitude"
+            placeholder={t("routePoints.latitude")}
           />
           <NumberInput
             value={point.longitude}
             onChange={(value) => {
               if (value !== null) onUpdate(point.clientId, { longitude: value });
             }}
-            placeholder="Longitude"
+            placeholder={t("routePoints.longitude")}
           />
         </div>
       </div>
@@ -1460,6 +1460,7 @@ function PartnerPoiSection({
   onDetachFromRoute: (clientId: string) => void | Promise<void>;
   onHover: (id: string | null) => void;
 }) {
+  const t = useTranslations("RouteEditor");
   const canSubmit = !!form.address.trim() && !isSubmitting;
 
   return (
@@ -1467,7 +1468,7 @@ function PartnerPoiSection({
       <label className="flex items-center justify-between gap-3 text-sm">
         <span className="flex items-center gap-2">
           <MapPin className="h-4 w-4" />
-          Pokaż markery POI
+          {t("partnerPois.showMarkers")}
         </span>
         <Switch checked={showOnMap} onCheckedChange={onShowOnMapChange} />
       </label>
@@ -1475,7 +1476,7 @@ function PartnerPoiSection({
       <div className="space-y-2 rounded-md border p-3">
         <div className="flex items-center justify-between">
           <p className="text-sm font-semibold">
-            {editingId ? "Edytuj punkt" : "Dodaj punkt"}
+            {editingId ? t("partnerPois.editPoint") : t("partnerPois.addPoint")}
           </p>
           {editingId ? (
             <Button
@@ -1484,7 +1485,7 @@ function PartnerPoiSection({
               size="sm"
               onClick={onCancelEdit}
             >
-              Anuluj
+              {t("actions.cancel")}
             </Button>
           ) : null}
         </div>
@@ -1494,7 +1495,7 @@ function PartnerPoiSection({
           onChange={(event) =>
             onFormChange({ ...form, name: event.target.value })
           }
-          placeholder="Nazwa punktu"
+          placeholder={t("partnerPois.namePlaceholder")}
         />
         <div className="grid grid-cols-[1fr_auto] gap-2">
           <Select
@@ -1509,7 +1510,7 @@ function PartnerPoiSection({
             <SelectContent>
               {PARTNER_POI_TYPES.map((item) => (
                 <SelectItem key={item.value} value={item.value}>
-                  {item.label}
+                  {getPartnerPoiTypeLabel(item.value, t)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -1521,7 +1522,7 @@ function PartnerPoiSection({
                 onFormChange({ ...form, isActive: checked })
               }
             />
-            Aktywny
+            {t("partnerPois.active")}
           </label>
         </div>
         <Input
@@ -1529,7 +1530,7 @@ function PartnerPoiSection({
           onChange={(event) =>
             onFormChange({ ...form, address: event.target.value })
           }
-          placeholder="Adres do geokodowania HERE"
+          placeholder={t("partnerPois.addressPlaceholder")}
         />
         <Button
           type="button"
@@ -1544,27 +1545,27 @@ function PartnerPoiSection({
           ) : (
             <Plus className="mr-2 h-4 w-4" />
           )}
-          {editingId ? "Zapisz punkt" : "Dodaj punkt"}
+          {editingId ? t("partnerPois.savePoint") : t("partnerPois.addPoint")}
         </Button>
       </div>
 
       <div className="space-y-2">
         {!bboxReady ? (
           <p className="rounded-md border p-3 text-xs text-muted-foreground">
-            Punkty zostaną pobrane po załadowaniu obszaru mapy.
+            {t("partnerPois.bboxPending")}
           </p>
         ) : isLoading ? (
           <div className="flex items-center gap-2 rounded-md border p-3 text-xs text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />
-            Ładowanie punktów partnerskich...
+            {t("partnerPois.loading")}
           </div>
         ) : isError ? (
           <p className="rounded-md border p-3 text-xs text-destructive">
-            Nie udało się pobrać punktów partnerskich.
+            {t("partnerPois.loadError")}
           </p>
         ) : items.length === 0 ? (
           <p className="rounded-md border p-3 text-xs text-muted-foreground">
-            Brak punktów partnerskich w tym obszarze.
+            {t("partnerPois.empty")}
           </p>
         ) : (
           items.map((poi) => {
@@ -1581,12 +1582,12 @@ function PartnerPoiSection({
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold">
-                      {poi.name || getPartnerPoiTypeLabel(poi.type)}
+                      {poi.name || getPartnerPoiTypeLabel(poi.type, t)}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {getPartnerPoiTypeLabel(poi.type)}
-                      {!poi.isActive ? " · ukryty" : ""}
-                      {routeClientId ? " · w trasie" : ""}
+                      {getPartnerPoiTypeLabel(poi.type, t)}
+                      {!poi.isActive ? ` · ${t("partnerPois.hidden")}` : ""}
+                      {routeClientId ? ` · ${t("partnerPois.onRoute")}` : ""}
                     </p>
                     <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
                       {poi.address}
@@ -1618,7 +1619,7 @@ function PartnerPoiSection({
                           ) : (
                             <X className="h-4 w-4" />
                           )}
-                          Odłącz z trasy
+                          {t("partnerPois.detachFromRoute")}
                         </DropdownMenuItem>
                       ) : (
                         <DropdownMenuItem
@@ -1629,15 +1630,15 @@ function PartnerPoiSection({
                           }}
                         >
                           <Plus className="h-4 w-4" />
-                          Dodaj do trasy
+                          {t("partnerPois.addToRoute")}
                         </DropdownMenuItem>
                       )}
                       <DropdownMenuItem onClick={() => onEdit(poi)}>
                         <Pencil className="h-4 w-4" />
-                        Edytuj
+                        {t("actions.edit")}
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => onToggleActive(poi)}>
-                        {poi.isActive ? "Ukryj" : "Pokaż"}
+                        {poi.isActive ? t("actions.hide") : t("actions.show")}
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
@@ -1650,7 +1651,7 @@ function PartnerPoiSection({
                         ) : (
                           <Trash2 className="h-4 w-4" />
                         )}
-                        Usuń
+                        {t("actions.delete")}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -1671,12 +1672,13 @@ function RoutingSettings({
   value: RoutingProfile;
   onChange: (value: RoutingProfile) => void;
 }) {
+  const t = useTranslations("RouteEditor");
   const isManual = value.mode === "manual";
 
   return (
     <div className="space-y-3">
       <SwitchRow
-        label="Trasa ręczna (linia prosta)"
+        label={t("routing.manualLine")}
         checked={isManual}
         onCheckedChange={(checked) =>
           onChange({ ...value, mode: checked ? "manual" : "here" })
@@ -1684,12 +1686,11 @@ function RoutingSettings({
       />
       {isManual ? (
         <p className="text-xs text-muted-foreground rounded-md border p-2">
-          Dystans i czas obliczane są na podstawie odległości w linii prostej
-          między punktami. Przeliczenie trasy nie wymaga HERE API.
+          {t("routing.manualDescription")}
         </p>
       ) : (
         <>
-          <FieldRow label="Transport">
+          <FieldRow label={t("routing.transport")}>
             <Select
               value={value.transportMode}
               onValueChange={(next) =>
@@ -1705,13 +1706,13 @@ function RoutingSettings({
               <SelectContent>
                 {TRANSPORT_MODES.map((item) => (
                   <SelectItem key={item.value} value={item.value}>
-                    {item.label}
+                    {t(`transportModes.${item.value}`)}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </FieldRow>
-          <FieldRow label="Routing">
+          <FieldRow label={t("routing.routing")}>
             <Select
               value={value.routingMode}
               onValueChange={(next) =>
@@ -1727,33 +1728,33 @@ function RoutingSettings({
               <SelectContent>
                 {ROUTING_MODES.map((item) => (
                   <SelectItem key={item.value} value={item.value}>
-                    {item.label}
+                    {t(`routingModes.${item.value}`)}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </FieldRow>
           <SwitchRow
-            label="Traffic"
+            label={t("routing.traffic")}
             checked={value.trafficMode === "default"}
             onCheckedChange={(checked) =>
               onChange({ ...value, trafficMode: checked ? "default" : "disabled" })
             }
           />
           <SwitchRow
-            label="Unikaj opłat"
+            label={t("avoidTolls")}
             checked={value.avoidTolls}
             onCheckedChange={(checked) => onChange({ ...value, avoidTolls: checked })}
           />
           <SwitchRow
-            label="Unikaj promów"
+            label={t("avoidFerries")}
             checked={value.avoidFerries}
             onCheckedChange={(checked) =>
               onChange({ ...value, avoidFerries: checked })
             }
           />
           <SwitchRow
-            label="Unikaj autostrad"
+            label={t("avoidMotorways")}
             checked={value.avoidMotorways}
             onCheckedChange={(checked) =>
               onChange({ ...value, avoidMotorways: checked })
@@ -1772,6 +1773,7 @@ function VehicleSettings({
   value: VehicleSpec;
   onChange: (value: VehicleSpec) => void;
 }) {
+  const t = useTranslations("RouteEditor");
   const hazardousGoods = value.hazardousGoods ?? [];
   const adrEnabled = Array.isArray(value.hazardousGoods);
 
@@ -1781,14 +1783,14 @@ function VehicleSettings({
 
   return (
     <div className="space-y-3">
-      <NumberField label="Wysokość (cm)" value={value.heightCm} onChange={(v) => setNumber("heightCm", v)} />
-      <NumberField label="Szerokość (cm)" value={value.widthCm} onChange={(v) => setNumber("widthCm", v)} />
-      <NumberField label="Długość (cm)" value={value.lengthCm} onChange={(v) => setNumber("lengthCm", v)} />
-      <NumberField label="Aktualna masa (kg)" value={value.currentWeightKg} onChange={(v) => setNumber("currentWeightKg", v)} />
-      <NumberField label="DMC (kg)" value={value.grossWeightKg} onChange={(v) => setNumber("grossWeightKg", v)} />
-      <NumberField label="Masa na oś (kg)" value={value.weightPerAxleKg} onChange={(v) => setNumber("weightPerAxleKg", v)} />
-      <NumberField label="Liczba osi" value={value.axleCount} onChange={(v) => setNumber("axleCount", v)} />
-      <FieldRow label="Naczepy">
+      <NumberField label={t("vehicle.height")} value={value.heightCm} onChange={(v) => setNumber("heightCm", v)} />
+      <NumberField label={t("vehicle.width")} value={value.widthCm} onChange={(v) => setNumber("widthCm", v)} />
+      <NumberField label={t("vehicle.length")} value={value.lengthCm} onChange={(v) => setNumber("lengthCm", v)} />
+      <NumberField label={t("vehicle.currentWeight")} value={value.currentWeightKg} onChange={(v) => setNumber("currentWeightKg", v)} />
+      <NumberField label={t("vehicle.grossWeight")} value={value.grossWeightKg} onChange={(v) => setNumber("grossWeightKg", v)} />
+      <NumberField label={t("vehicle.weightPerAxle")} value={value.weightPerAxleKg} onChange={(v) => setNumber("weightPerAxleKg", v)} />
+      <NumberField label={t("vehicle.axleCount")} value={value.axleCount} onChange={(v) => setNumber("axleCount", v)} />
+      <FieldRow label={t("vehicle.trailers")}>
         <Select
           value={String(value.trailerCount ?? 1)}
           onValueChange={(next) => setNumber("trailerCount", Number(next))}
@@ -1806,7 +1808,7 @@ function VehicleSettings({
         </Select>
       </FieldRow>
 
-      <FieldRow label="ADR">
+      <FieldRow label={t("vehicle.adr")}>
         <RadioGroup
           value={adrEnabled ? "yes" : "no"}
           onValueChange={(next) =>
@@ -1819,18 +1821,18 @@ function VehicleSettings({
         >
           <div className="flex items-center gap-2">
             <RadioGroupItem id="adr-no" value="no" />
-            <Label htmlFor="adr-no">Nie</Label>
+            <Label htmlFor="adr-no">{t("vehicle.no")}</Label>
           </div>
           <div className="flex items-center gap-2">
             <RadioGroupItem id="adr-yes" value="yes" />
-            <Label htmlFor="adr-yes">Tak</Label>
+            <Label htmlFor="adr-yes">{t("vehicle.yes")}</Label>
           </div>
         </RadioGroup>
       </FieldRow>
 
       {adrEnabled ? (
         <div className="space-y-2">
-          <Label className="text-xs">Towary niebezpieczne</Label>
+          <Label className="text-xs">{t("hazardousGoods.title")}</Label>
           <div className="grid grid-cols-1 gap-2 rounded-md border p-2">
             {HAZARDOUS_GOODS.map((item) => (
               <label key={item.value} className="flex items-center gap-2 text-xs">
@@ -1843,7 +1845,7 @@ function VehicleSettings({
                     onChange({ ...value, hazardousGoods: next });
                   }}
                 />
-                {item.label}
+                {t(`hazardousGoods.${item.value}`)}
               </label>
             ))}
           </div>
@@ -1932,9 +1934,11 @@ function MapSummaryCell({
   valueClassName?: string;
 }) {
   return (
-    <div className="flex flex-col px-4 py-2.5">
-      <span className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</span>
-      <span className={cn("text-sm font-semibold", valueClassName)}>{value}</span>
+    <div className="flex min-w-0 flex-1 flex-col px-3 py-2.5">
+      <span className="truncate text-[10px] uppercase tracking-wide text-muted-foreground">{label}</span>
+      <span className={cn("truncate text-sm font-semibold", valueClassName)} title={value}>
+        {value}
+      </span>
     </div>
   );
 }
@@ -2030,19 +2034,20 @@ function normalizeForMap(
 
 function insertPartnerPoiIntoRoute(
   points: LocalRoutePoint[],
-  poi: PartnerPoiDto
+  poi: PartnerPoiDto,
+  t: ReturnType<typeof useTranslations>
 ): LocalRoutePoint[] {
   const nextPoint: LocalRoutePoint = {
     clientId: crypto.randomUUID(),
     markerMode: "typed",
     partnerPoiId: poi.id,
-    partnerPoiName: poi.name ?? getPartnerPoiTypeLabel(poi.type),
+    partnerPoiName: poi.name ?? getPartnerPoiTypeLabel(poi.type, t),
     sequence: 0,
     type: poi.type,
     behavior: "STOP",
     source: "DISPATCHER",
     isManual: true,
-    label: poi.name || getPartnerPoiTypeLabel(poi.type),
+    label: poi.name || getPartnerPoiTypeLabel(poi.type, t),
     address: poi.address,
     latitude: poi.latitude,
     longitude: poi.longitude,
@@ -2096,14 +2101,18 @@ function defaultPartnerPoiForm(): PartnerPoiFormState {
   };
 }
 
-function getPartnerPoiTypeLabel(type: PartnerPoiType): string {
-  return type === "FUEL"
-    ? "Stacja paliw"
-    : type === "PARKING"
-      ? "Parking"
-      : type === "SERVICE"
-        ? "Serwis"
-        : "Inne";
+function getRoutePointTypeLabel(
+  type: TransportOrderRoutePointType,
+  t: ReturnType<typeof useTranslations>
+): string {
+  return t(`pointTypes.${type}`);
+}
+
+function getPartnerPoiTypeLabel(
+  type: PartnerPoiType,
+  t: ReturnType<typeof useTranslations>
+): string {
+  return t(`partnerPoiTypes.${type}`);
 }
 
 function normalizeVehicleSpec(vehicleSpec: VehicleSpec): VehicleSpec {
@@ -2159,17 +2168,20 @@ function sortStable(value: unknown): unknown {
   return value;
 }
 
-function formatDistance(distanceMeters: number): string {
+function formatDistance(distanceMeters: number, locale: string): string {
   return distanceMeters < 1000
     ? `${Math.round(distanceMeters)} m`
-    : `${new Intl.NumberFormat("pl-PL", {
+    : `${new Intl.NumberFormat(locale, {
       maximumFractionDigits: distanceMeters >= 100_000 ? 0 : 1,
     }).format(distanceMeters / 1000)} km`;
 }
 
-function formatDuration(durationSeconds: number): string {
+function formatDuration(
+  durationSeconds: number,
+  t: ReturnType<typeof useTranslations>
+): string {
   const hours = Math.floor(durationSeconds / 3600);
   const minutes = Math.round((durationSeconds % 3600) / 60);
-  if (!hours) return `${minutes} min`;
-  return `${hours} h ${minutes} min`;
+  if (!hours) return t("duration.minutes", { minutes });
+  return t("duration.hoursMinutes", { hours, minutes });
 }

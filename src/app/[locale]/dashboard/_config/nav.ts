@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { LayoutDashboard, FileText } from "lucide-react";
+import { FileText } from "lucide-react";
 import type { routing } from "@/i18n/routing";
 import { Role } from "@/features/auth/lib/roles";
 

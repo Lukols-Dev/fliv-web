@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { Loader2, Minus, Plus, RefreshCw, Settings, X } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { Switch } from "@/components/ui/switch";
@@ -272,6 +273,8 @@ export function HereStaticMap({
   onPartnerPoiDetachFromRoute,
   onViewportBboxChange,
 }: Props) {
+  const t = useTranslations("HereMap");
+  const locale = useLocale();
   const mapRef = React.useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = React.useRef<HereMap | null>(null);
   const defaultLayersRef = React.useRef<HereDefaultLayers | null>(null);
@@ -390,12 +393,12 @@ export function HereStaticMap({
 
       const title = document.createElement("div");
       title.className = "font-semibold";
-      title.textContent = poi.name || getPartnerPoiTypeLabel(poi.type);
+      title.textContent = poi.name || getPartnerPoiTypeLabel(poi.type, t);
       content.appendChild(title);
 
       const type = document.createElement("div");
       type.className = "text-xs text-muted-foreground";
-      type.textContent = getPartnerPoiTypeLabel(poi.type);
+      type.textContent = getPartnerPoiTypeLabel(poi.type, t);
       content.appendChild(type);
 
       const address = document.createElement("div");
@@ -412,10 +415,10 @@ export function HereStaticMap({
       button.type = "button";
       button.className =
         "rounded-md bg-primary px-2 py-1 text-xs font-medium text-primary-foreground";
-      button.textContent = "Dodaj jako punkt trasy";
+      button.textContent = t("partnerPoi.addAsRoutePoint");
       button.addEventListener("click", () => {
         button.setAttribute("disabled", "true");
-        button.textContent = "Przeliczanie...";
+        button.textContent = t("partnerPoi.calculating");
         Promise.resolve(onPartnerPoiAddToRoute(poi))
           .then(() => {
             if (infoBubbleRef.current) {
@@ -424,7 +427,7 @@ export function HereStaticMap({
           })
           .catch(() => {
             button.removeAttribute("disabled");
-            button.textContent = "Dodaj jako punkt trasy";
+            button.textContent = t("partnerPoi.addAsRoutePoint");
           });
       });
       content.appendChild(button);
@@ -442,6 +445,7 @@ export function HereStaticMap({
       closeHoverBubble,
       closePartnerPoiBubble,
       onPartnerPoiAddToRoute,
+      t,
     ]
   );
 
@@ -468,13 +472,15 @@ export function HereStaticMap({
       const title = document.createElement("div");
       title.className = "font-semibold";
       title.textContent =
-        point.label || `${index + 1}. ${getRoutePointTypeLabel(point.type)}`;
+        point.label || `${index + 1}. ${getRoutePointTypeLabel(point.type, t)}`;
       content.appendChild(title);
 
       const type = document.createElement("div");
       type.className = "text-xs text-muted-foreground";
-      type.textContent = `${getRoutePointTypeLabel(point.type)} · ${
-        point.behavior === "PASS_THROUGH" ? "Przebieg" : "Postój"
+      type.textContent = `${getRoutePointTypeLabel(point.type, t)} · ${
+        point.behavior === "PASS_THROUGH"
+          ? t("routePointBehavior.PASS_THROUGH")
+          : t("routePointBehavior.STOP")
       }`;
       content.appendChild(type);
 
@@ -495,11 +501,11 @@ export function HereStaticMap({
         button.type = "button";
         button.className =
           "rounded-md border px-2 py-1 text-xs font-medium text-foreground";
-        button.textContent = "Odłącz POI od trasy";
+        button.textContent = t("partnerPoi.detachFromRoute");
         button.addEventListener("click", () => {
           if (!point.clientId) return;
           button.setAttribute("disabled", "true");
-          button.textContent = "Przeliczanie...";
+          button.textContent = t("partnerPoi.calculating");
           Promise.resolve(onPartnerPoiDetachFromRoute(point.clientId))
             .then(() => {
               if (infoBubbleRef.current) {
@@ -508,7 +514,7 @@ export function HereStaticMap({
             })
             .catch(() => {
               button.removeAttribute("disabled");
-              button.textContent = "Odłącz POI od trasy";
+              button.textContent = t("partnerPoi.detachFromRoute");
             });
         });
         content.appendChild(button);
@@ -527,6 +533,7 @@ export function HereStaticMap({
       closeHoverBubble,
       closePartnerPoiBubble,
       onPartnerPoiDetachFromRoute,
+      t,
     ]
   );
 
@@ -548,14 +555,14 @@ export function HereStaticMap({
 
       const title = document.createElement("div");
       title.className = "font-semibold";
-      title.textContent = "Lokalizacja kierowcy";
+      title.textContent = t("driverLocation");
       content.appendChild(title);
 
       const updatedAt = document.createElement("div");
       updatedAt.className = "text-xs text-muted-foreground";
-      updatedAt.textContent = `Ostatnie odświeżenie: ${formatDriverLocationTimestamp(
-        location.updatedAt
-      )}`;
+      updatedAt.textContent = t("lastRefresh", {
+        time: formatDriverLocationTimestamp(location.updatedAt, locale, t("noData")),
+      });
       content.appendChild(updatedAt);
 
       const coords = document.createElement("div");
@@ -566,9 +573,9 @@ export function HereStaticMap({
       if (typeof location.accuracyMeters === "number") {
         const accuracy = document.createElement("div");
         accuracy.className = "text-[11px] text-muted-foreground";
-        accuracy.textContent = `Dokładność: ${Math.round(
-          location.accuracyMeters
-        )} m`;
+        accuracy.textContent = t("accuracy", {
+          meters: Math.round(location.accuracyMeters),
+        });
         content.appendChild(accuracy);
       }
 
@@ -584,6 +591,8 @@ export function HereStaticMap({
       cancelPendingHoverClose,
       closeHoverBubble,
       closePartnerPoiBubble,
+      locale,
+      t,
     ]
   );
 
@@ -591,7 +600,7 @@ export function HereStaticMap({
     const apiKey = process.env.NEXT_PUBLIC_HERE_MAPS_API_KEY;
 
     if (!apiKey) {
-      setError("Missing NEXT_PUBLIC_HERE_MAPS_API_KEY");
+      setError(t("errors.missingApiKey"));
       return;
     }
 
@@ -634,7 +643,7 @@ export function HereStaticMap({
       })
       .catch(() => {
         if (!cancelled) {
-          setError("Failed to load HERE map");
+          setError(t("errors.loadFailed"));
         }
       });
 
@@ -658,7 +667,7 @@ export function HereStaticMap({
       hereRef.current = null;
       uiRef.current = null;
     };
-  }, [closePartnerPoiBubble, onViewportBboxChange, showUiControls]);
+  }, [closePartnerPoiBubble, onViewportBboxChange, showUiControls, t]);
 
   React.useEffect(() => {
     const container = mapRef.current;
@@ -984,7 +993,7 @@ export function HereStaticMap({
         aria-hidden={mapReady}
       >
         <Loader2 className="h-7 w-7 animate-spin text-muted-foreground" />
-        <p className="text-sm text-muted-foreground">Ładowanie mapy…</p>
+        <p className="text-sm text-muted-foreground">{t("loading")}</p>
       </div>
 
       {/* Route / details update indicator — appears on the live map */}
@@ -1000,13 +1009,13 @@ export function HereStaticMap({
       >
         <div className="flex items-center gap-2 rounded-full border bg-background/90 px-3 py-1.5 text-xs text-muted-foreground shadow-sm backdrop-blur-sm">
           <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          Aktualizowanie pozycji…
+          {t("updatingPosition")}
         </div>
       </div>
 
       {!sortedPoints.length && mapReady && (
         <div className="pointer-events-none absolute left-3 top-3 rounded-md border bg-background/90 px-2 py-1 text-[11px] text-muted-foreground shadow-sm">
-          Brak punktów trasy
+          {t("noRoutePoints")}
         </div>
       )}
 
@@ -1062,11 +1071,13 @@ function MapDriverRefreshControl({
   isRefreshing: boolean;
   onRefresh: () => void;
 }) {
+  const t = useTranslations("HereMap");
+
   return (
     <button
       type="button"
-      aria-label="Odśwież pozycję kierowcy"
-      title="Odśwież pozycję kierowcy"
+      aria-label={t("controls.refreshDriverLocation")}
+      title={t("controls.refreshDriverLocation")}
       onClick={onRefresh}
       disabled={isRefreshing}
       className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border bg-background/90 text-foreground shadow-lg backdrop-blur-md transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-70"
@@ -1104,6 +1115,7 @@ function MapSettingsControl({
   onVehicleRestrictionsEnabledChange: (checked: boolean) => void;
 }) {
   const prefersReducedMotion = useReducedMotion();
+  const t = useTranslations("HereMap");
 
   return (
     <motion.div
@@ -1131,7 +1143,7 @@ function MapSettingsControl({
       >
         <button
           type="button"
-          aria-label="Otwórz ustawienia mapy"
+          aria-label={t("settings.open")}
           aria-expanded={open}
           onClick={() => {
             if (!open) onOpenChange(true);
@@ -1151,14 +1163,14 @@ function MapSettingsControl({
         >
           <div className="min-w-0 flex-1">
             <span className="truncate text-sm font-semibold">
-              Ustawienia mapy
+              {t("settings.title")}
             </span>
           </div>
           <button
             type="button"
             onClick={() => onOpenChange(false)}
             className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            aria-label="Zamknij ustawienia mapy"
+            aria-label={t("settings.close")}
           >
             <X className="h-3.5 w-3.5" />
           </button>
@@ -1173,37 +1185,37 @@ function MapSettingsControl({
       >
         <div className="space-y-2">
           <div className="text-xs font-medium text-muted-foreground">
-            Widok
+            {t("settings.view")}
           </div>
           <div className="grid grid-cols-2 gap-1 rounded-lg bg-muted/70 p-1">
             <MapViewButton
               active={mapView === "map"}
               onClick={() => onMapViewChange("map")}
             >
-              Mapa
+              {t("settings.map")}
             </MapViewButton>
             <MapViewButton
               active={mapView === "satellite"}
               onClick={() => onMapViewChange("satellite")}
             >
-              Satelita
+              {t("settings.satellite")}
             </MapViewButton>
           </div>
         </div>
 
         <div className="space-y-3">
           <MapSettingsSwitch
-            label="Warunki ruchu"
+            label={t("settings.trafficFlow")}
             checked={trafficFlowEnabled}
             onCheckedChange={onTrafficFlowEnabledChange}
           />
           <MapSettingsSwitch
-            label="Zdarzenia drogowe"
+            label={t("settings.trafficIncidents")}
             checked={trafficIncidentsEnabled}
             onCheckedChange={onTrafficIncidentsEnabledChange}
           />
           <MapSettingsSwitch
-            label="Ograniczenia dla ciężarówek"
+            label={t("settings.vehicleRestrictions")}
             checked={vehicleRestrictionsEnabled}
             onCheckedChange={onVehicleRestrictionsEnabledChange}
           />
@@ -1264,6 +1276,8 @@ function MapZoomControl({
   onZoomOut: () => void;
   positionClassName: string;
 }) {
+  const t = useTranslations("HereMap");
+
   return (
     <div
       className={cn(
@@ -1273,7 +1287,7 @@ function MapZoomControl({
     >
       <button
         type="button"
-        aria-label="Przybliż mapę"
+        aria-label={t("controls.zoomIn")}
         onClick={onZoomIn}
         className="grid h-10 place-items-center transition-colors hover:bg-muted"
       >
@@ -1282,7 +1296,7 @@ function MapZoomControl({
       <div className="h-px bg-border" />
       <button
         type="button"
-        aria-label="Oddal mapę"
+        aria-label={t("controls.zoomOut")}
         onClick={onZoomOut}
         className="grid h-10 place-items-center transition-colors hover:bg-muted"
       >
@@ -1694,11 +1708,15 @@ function createPartnerPoiObjectsGroup(
   return group;
 }
 
-function formatDriverLocationTimestamp(value: string) {
+function formatDriverLocationTimestamp(
+  value: string,
+  locale: string,
+  noDataLabel: string
+) {
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "brak danych";
+  if (Number.isNaN(date.getTime())) return noDataLabel;
 
-  return new Intl.DateTimeFormat("pl-PL", {
+  return new Intl.DateTimeFormat(locale, {
     dateStyle: "short",
     timeStyle: "medium",
   }).format(date);
@@ -2003,18 +2021,11 @@ function getRoutePointGlyphSvg(
   return `<circle cx="15" cy="18.5" r="2.1" fill="${color}"/><circle cx="20" cy="18.5" r="2.1" fill="${color}"/><circle cx="25" cy="18.5" r="2.1" fill="${color}"/>`;
 }
 
-function getRoutePointTypeLabel(type: TransportOrderRoutePointDto["type"]) {
-  return type === "LOADING"
-    ? "Załadunek"
-    : type === "UNLOADING"
-    ? "Rozładunek"
-    : type === "FUEL"
-    ? "Tankowanie"
-    : type === "PARKING"
-    ? "Parking"
-    : type === "SERVICE"
-    ? "Serwis"
-    : "Inne";
+function getRoutePointTypeLabel(
+  type: TransportOrderRoutePointDto["type"],
+  t: ReturnType<typeof useTranslations>
+) {
+  return t(`pointTypes.${type}`);
 }
 
 function emitViewportBbox(
@@ -2092,14 +2103,11 @@ function roundBboxCoordinate(value: number): number {
   return Number(value.toFixed(5));
 }
 
-function getPartnerPoiTypeLabel(type: PartnerPoiDto["type"]) {
-  return type === "FUEL"
-    ? "Stacja paliw"
-    : type === "PARKING"
-    ? "Parking"
-    : type === "SERVICE"
-    ? "Serwis"
-    : "Punkt partnerski";
+function getPartnerPoiTypeLabel(
+  type: PartnerPoiDto["type"],
+  t: ReturnType<typeof useTranslations>
+) {
+  return t(`partnerPoiTypes.${type}`);
 }
 
 function loadHereMaps(): Promise<HereNamespace> {
