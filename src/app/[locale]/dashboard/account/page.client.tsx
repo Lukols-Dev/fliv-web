@@ -56,7 +56,7 @@ export default function AccountPageClient() {
 
   if (isPending && !user) {
     return (
-      <div className="rounded-2xl border bg-white p-6">Ładowanie profilu…</div>
+      <div className="rounded-2xl border bg-white p-6">{t("loading")}</div>
     );
   }
 
@@ -64,11 +64,11 @@ export default function AccountPageClient() {
     return (
       <div className="rounded-2xl border bg-white p-6 space-y-3">
         <p className="text-sm text-destructive">
-          Nie udało się pobrać profilu
+          {t("loadError")}
           {error ? `: ${(error as Error).message}` : "."}
         </p>
         <Button variant="outline" onClick={() => refetch()}>
-          Spróbuj ponownie
+          {t("retry")}
         </Button>
       </div>
     );

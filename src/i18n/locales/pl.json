@@ -3,6 +3,9 @@
     "title": "Strona główna",
     "description": "Strona główna aplikacji."
   },
+  "ErrorPage": {
+    "title": "Wystąpił błąd"
+  },
   "SignInPage": {
     "title": "Zaloguj się",
     "description": "Witaj ponownie! Proszę zaloguj się, aby kontynuować.",
@@ -88,6 +91,8 @@
   "OrdersPage": {
     "title": "Zlecenia",
     "create": "Utwórz nowe zlecenie",
+    "loading": "Ładowanie zleceń…",
+    "error": "Nie udało się pobrać zleceń",
     "details": {
       "title": "Zlecenie",
       "subtitle": "Szczegóły zlecenia",
@@ -160,8 +165,10 @@
       "add": "Dodaj plik",
       "actions": {
         "view": "Podgląd",
-        "delete": "Usuń"
-      }
+        "delete": "Usuń",
+        "close": "Zamknij"
+      },
+      "previewAlt": "Podgląd dokumentu"
     }
   },
   "OrderStatus": {
@@ -275,6 +282,9 @@
   "Notifications": {
     "title": "Powiadomienia",
     "clearAll": "Wyczyść wszystkie",
+    "loading": "Ładowanie powiadomień…",
+    "loadError": "Nie udało się załadować powiadomień",
+    "retry": "Spróbuj ponownie",
     "empty": {
       "title": "Brak powiadomień",
       "description": "Gdy pojawią się nowe zdarzenia, zobaczysz je tutaj."
@@ -299,6 +309,10 @@
   },
   "AccountPage": {
     "title": "Profil użytkownika",
+    "loading": "Ładowanie profilu…",
+    "loadError": "Nie udało się pobrać profilu",
+    "retry": "Spróbuj ponownie",
+    "errorPrefix": "Błąd",
     "role": {
       "DISPATCHER": "Dyspozytor",
       "DRIVER": "Kierowca",
@@ -393,6 +407,201 @@
       "fileTooLarge": "Plik jest za duży. Maksymalnie: {max}.",
       "invalidType": "Nieobsługiwany typ pliku.",
       "unknown": "Wystąpił nieoczekiwany błąd."
+    }
+  },
+  "RouteEditor": {
+    "title": "Edytuj trasę",
+    "routeLoadError": "Nie udało się pobrać danych trasy.",
+    "minimumPoints": "Do przeliczenia trasy wymagane są minimum dwa punkty.",
+    "operationError": "Nie udało się wykonać operacji. Sprawdź punkty i przelicz trasę ponownie.",
+    "manualRoute": "Trasa ręczna",
+    "traffic": "Ruch drogowy",
+    "avoidTolls": "Unikaj opłat",
+    "avoidFerries": "Unikaj promów",
+    "avoidMotorways": "Unikaj autostrad",
+    "sections": {
+      "routePoints": "Punkty trasy",
+      "partnerPois": "Punkty partnerskie",
+      "routingSettings": "Ustawienia trasy",
+      "truckParameters": "Parametry ciężarówki",
+      "summary": "Podsumowanie"
+    },
+    "actions": {
+      "reset": "Resetuj zmiany",
+      "recalculate": "Przelicz trasę",
+      "saveRoute": "Zapisz trasę",
+      "cancel": "Anuluj",
+      "delete": "Usuń",
+      "edit": "Edytuj",
+      "show": "Pokaż",
+      "hide": "Ukryj",
+      "close": "Zamknij"
+    },
+    "vehicle": {
+      "alt": "Pojazd",
+      "parameters": "Parametry pojazdu",
+      "car": "Samochód",
+      "truck": "Ciężarówka",
+      "fastRoute": "Trasa szybka",
+      "shortRoute": "Trasa krótka",
+      "heightShort": "Wys.",
+      "widthShort": "Szer.",
+      "lengthShort": "Dł.",
+      "axlesShort": "Osie",
+      "weight": "Masa",
+      "grossWeight": "DMC",
+      "trailersShort": "Nacz.",
+      "adr": "ADR",
+      "height": "Wysokość (cm)",
+      "width": "Szerokość (cm)",
+      "length": "Długość (cm)",
+      "currentWeight": "Aktualna masa (kg)",
+      "weightPerAxle": "Masa na oś (kg)",
+      "axleCount": "Liczba osi",
+      "trailers": "Naczepy",
+      "yes": "Tak",
+      "no": "Nie"
+    },
+    "summary": {
+      "distance": "Dystans",
+      "time": "Czas",
+      "status": "Status",
+      "points": "Punkty",
+      "current": "Aktualna",
+      "needsRecalculation": "Wymaga przeliczenia",
+      "notCalculated": "Nieprzeliczona"
+    },
+    "routePoints": {
+      "addFromAddress": "Dodaj punkt z adresu",
+      "label": "Etykieta",
+      "addressDescription": "Adres opisowy",
+      "latitude": "Szerokość geograficzna",
+      "longitude": "Długość geograficzna",
+      "fallback": "Punkt {index}",
+      "markerToIcon": "Przełącz na ikonę",
+      "markerToNumber": "Przełącz na numer",
+      "detachPoi": "Odłącz POI",
+      "poi": "POI",
+      "behavior": {
+        "STOP": "Postój",
+        "PASS_THROUGH": "Przebieg"
+      }
+    },
+    "pointTypes": {
+      "LOADING": "Załadunek",
+      "UNLOADING": "Rozładunek",
+      "FUEL": "Tankowanie",
+      "PARKING": "Parking",
+      "SERVICE": "Serwis",
+      "OTHER": "Inne"
+    },
+    "partnerPoiTypes": {
+      "FUEL": "Stacja paliw",
+      "PARKING": "Parking",
+      "SERVICE": "Serwis",
+      "OTHER": "Punkt partnerski"
+    },
+    "partnerPois": {
+      "showMarkers": "Pokaż markery POI",
+      "editPoint": "Edytuj punkt",
+      "addPoint": "Dodaj punkt",
+      "namePlaceholder": "Nazwa punktu",
+      "active": "Aktywny",
+      "addressPlaceholder": "Adres do geokodowania HERE",
+      "savePoint": "Zapisz punkt",
+      "bboxPending": "Punkty zostaną pobrane po załadowaniu obszaru mapy.",
+      "loading": "Ładowanie punktów partnerskich...",
+      "loadError": "Nie udało się pobrać punktów partnerskich.",
+      "empty": "Brak punktów partnerskich w tym obszarze.",
+      "hidden": "ukryty",
+      "onRoute": "w trasie",
+      "detachFromRoute": "Odłącz z trasy",
+      "addToRoute": "Dodaj do trasy"
+    },
+    "routing": {
+      "manualLine": "Trasa ręczna (linia prosta)",
+      "manualDescription": "Dystans i czas obliczane są na podstawie odległości w linii prostej między punktami. Przeliczenie trasy nie wymaga HERE API.",
+      "transport": "Transport",
+      "routing": "Routing",
+      "traffic": "Traffic"
+    },
+    "transportModes": {
+      "car": "Samochód",
+      "truck": "Ciężarówka"
+    },
+    "routingModes": {
+      "fast": "Szybka",
+      "short": "Krótka"
+    },
+    "hazardousGoods": {
+      "title": "Towary niebezpieczne",
+      "explosive": "Wybuchowe",
+      "gas": "Gaz",
+      "flammable": "Łatwopalne",
+      "combustible": "Palne",
+      "organic": "Organiczne",
+      "poison": "Trujące",
+      "radioactive": "Radioaktywne",
+      "corrosive": "Korozyjne",
+      "poisonousInhalation": "Toksyczne przy wdychaniu",
+      "harmfulToWater": "Szkodliwe dla wody",
+      "other": "Inne"
+    },
+    "duration": {
+      "minutes": "{minutes} min",
+      "hoursMinutes": "{hours} h {minutes} min"
+    }
+  },
+  "HereMap": {
+    "loading": "Ładowanie mapy…",
+    "updatingPosition": "Aktualizowanie pozycji…",
+    "noRoutePoints": "Brak punktów trasy",
+    "driverLocation": "Lokalizacja kierowcy",
+    "lastRefresh": "Ostatnie odświeżenie: {time}",
+    "accuracy": "Dokładność: {meters} m",
+    "noData": "brak danych",
+    "routePointBehavior": {
+      "STOP": "Postój",
+      "PASS_THROUGH": "Przebieg"
+    },
+    "partnerPoi": {
+      "addAsRoutePoint": "Dodaj jako punkt trasy",
+      "detachFromRoute": "Odłącz POI od trasy",
+      "calculating": "Przeliczanie..."
+    },
+    "settings": {
+      "open": "Otwórz ustawienia mapy",
+      "close": "Zamknij ustawienia mapy",
+      "title": "Ustawienia mapy",
+      "view": "Widok",
+      "map": "Mapa",
+      "satellite": "Satelita",
+      "trafficFlow": "Warunki ruchu",
+      "trafficIncidents": "Zdarzenia drogowe",
+      "vehicleRestrictions": "Ograniczenia dla ciężarówek"
+    },
+    "controls": {
+      "refreshDriverLocation": "Odśwież pozycję kierowcy",
+      "zoomIn": "Przybliż mapę",
+      "zoomOut": "Oddal mapę"
+    },
+    "pointTypes": {
+      "LOADING": "Załadunek",
+      "UNLOADING": "Rozładunek",
+      "FUEL": "Tankowanie",
+      "PARKING": "Parking",
+      "SERVICE": "Serwis",
+      "OTHER": "Inne"
+    },
+    "partnerPoiTypes": {
+      "FUEL": "Stacja paliw",
+      "PARKING": "Parking",
+      "SERVICE": "Serwis",
+      "OTHER": "Punkt partnerski"
+    },
+    "errors": {
+      "missingApiKey": "Brakuje NEXT_PUBLIC_HERE_MAPS_API_KEY",
+      "loadFailed": "Nie udało się załadować mapy HERE"
     }
   },
   "OrderEventType": {

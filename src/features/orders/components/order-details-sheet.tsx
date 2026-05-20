@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { MapPin, MoreVertical, Truck, Eye, X, ChevronDown, CheckCircle2, Navigation, Circle } from "lucide-react";
+import { MapPin, MoreVertical, Truck, Eye, X, ChevronDown, CheckCircle2, Navigation } from "lucide-react";
 import {
   Collapsible,
   CollapsibleTrigger,
@@ -283,13 +283,13 @@ export default function OrderDetailsSheet({
                 size="icon"
                 className="absolute top-4 right-4 z-10 h-10 w-10 rounded-md bg-black/50  text-white border border-white/40 cursor-pointer"
                 onClick={() => setSelectedImageUrl(null)}
-                aria-label="Close"
+                aria-label={t("documents.actions.close")}
               >
                 <X className="h-5 w-5" />
               </Button>
               <Image
                 src={selectedImageUrl}
-                alt="Document preview"
+                alt={t("documents.previewAlt")}
                 width={1920}
                 height={1080}
                 className="max-h-screen w-auto h-auto object-contain"

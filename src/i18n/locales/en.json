@@ -3,6 +3,9 @@
     "title": "Landing Page",
     "description": "This is the landing page of the application."
   },
+  "ErrorPage": {
+    "title": "Something went wrong"
+  },
   "SignInPage": {
     "title": "Sign in",
     "description": "Welcome back! Please sign in to continue.",
@@ -88,6 +91,8 @@
   "OrdersPage": {
     "title": "Orders",
     "create": "Create order",
+    "loading": "Loading orders…",
+    "error": "Failed to load orders",
     "details": {
       "title": "Order",
       "subtitle": "Order details",
@@ -160,8 +165,10 @@
       "add": "Add file",
       "actions": {
         "view": "View",
-        "delete": "Delete"
-      }
+        "delete": "Delete",
+        "close": "Close"
+      },
+      "previewAlt": "Document preview"
     }
   },
   "OrderStatus": {
@@ -275,6 +282,9 @@
   "Notifications": {
     "title": "Notifications",
     "clearAll": "Clear all",
+    "loading": "Loading notifications…",
+    "loadError": "Failed to load notifications",
+    "retry": "Retry",
     "empty": {
       "title": "No notifications",
       "description": "When new events occur, you'll see them here."
@@ -299,6 +309,10 @@
   },
   "AccountPage": {
     "title": "User profile",
+    "loading": "Loading profile…",
+    "loadError": "Failed to load profile",
+    "retry": "Retry",
+    "errorPrefix": "Error",
     "role": {
       "DISPATCHER": "Dispatcher",
       "DRIVER": "Driver",
@@ -393,6 +407,201 @@
       "fileTooLarge": "File is too large. Max: {max}.",
       "invalidType": "Unsupported file type.",
       "unknown": "Unexpected error occurred."
+    }
+  },
+  "RouteEditor": {
+    "title": "Edit route",
+    "routeLoadError": "Failed to load route data.",
+    "minimumPoints": "At least two points are required to recalculate the route.",
+    "operationError": "The operation could not be completed. Check the points and recalculate the route.",
+    "manualRoute": "Manual route",
+    "traffic": "Traffic",
+    "avoidTolls": "Avoid tolls",
+    "avoidFerries": "Avoid ferries",
+    "avoidMotorways": "Avoid motorways",
+    "sections": {
+      "routePoints": "Route points",
+      "partnerPois": "Partner points",
+      "routingSettings": "Route settings",
+      "truckParameters": "Truck parameters",
+      "summary": "Summary"
+    },
+    "actions": {
+      "reset": "Reset changes",
+      "recalculate": "Recalculate route",
+      "saveRoute": "Save route",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "edit": "Edit",
+      "show": "Show",
+      "hide": "Hide",
+      "close": "Close"
+    },
+    "vehicle": {
+      "alt": "Vehicle",
+      "parameters": "Vehicle parameters",
+      "car": "Car",
+      "truck": "Truck",
+      "fastRoute": "Fast route",
+      "shortRoute": "Short route",
+      "heightShort": "H",
+      "widthShort": "W",
+      "lengthShort": "L",
+      "axlesShort": "Axles",
+      "weight": "Weight",
+      "grossWeight": "GVW",
+      "trailersShort": "Trl.",
+      "adr": "ADR",
+      "height": "Height (cm)",
+      "width": "Width (cm)",
+      "length": "Length (cm)",
+      "currentWeight": "Current weight (kg)",
+      "weightPerAxle": "Weight per axle (kg)",
+      "axleCount": "Axle count",
+      "trailers": "Trailers",
+      "yes": "Yes",
+      "no": "No"
+    },
+    "summary": {
+      "distance": "Distance",
+      "time": "Time",
+      "status": "Status",
+      "points": "Points",
+      "current": "Current",
+      "needsRecalculation": "Needs recalculation",
+      "notCalculated": "Not calculated"
+    },
+    "routePoints": {
+      "addFromAddress": "Add point from address",
+      "label": "Label",
+      "addressDescription": "Address description",
+      "latitude": "Latitude",
+      "longitude": "Longitude",
+      "fallback": "Point {index}",
+      "markerToIcon": "Switch to icon",
+      "markerToNumber": "Switch to number",
+      "detachPoi": "Detach POI",
+      "poi": "POI",
+      "behavior": {
+        "STOP": "Stop",
+        "PASS_THROUGH": "Pass-through"
+      }
+    },
+    "pointTypes": {
+      "LOADING": "Loading",
+      "UNLOADING": "Unloading",
+      "FUEL": "Refueling",
+      "PARKING": "Parking",
+      "SERVICE": "Service",
+      "OTHER": "Other"
+    },
+    "partnerPoiTypes": {
+      "FUEL": "Fuel station",
+      "PARKING": "Parking",
+      "SERVICE": "Service",
+      "OTHER": "Partner point"
+    },
+    "partnerPois": {
+      "showMarkers": "Show POI markers",
+      "editPoint": "Edit point",
+      "addPoint": "Add point",
+      "namePlaceholder": "Point name",
+      "active": "Active",
+      "addressPlaceholder": "Address for HERE geocoding",
+      "savePoint": "Save point",
+      "bboxPending": "Points will be loaded after the map area is ready.",
+      "loading": "Loading partner points...",
+      "loadError": "Failed to load partner points.",
+      "empty": "No partner points in this area.",
+      "hidden": "hidden",
+      "onRoute": "on route",
+      "detachFromRoute": "Detach from route",
+      "addToRoute": "Add to route"
+    },
+    "routing": {
+      "manualLine": "Manual route (straight line)",
+      "manualDescription": "Distance and time are calculated from straight-line distance between points. Recalculating the route does not require the HERE API.",
+      "transport": "Transport",
+      "routing": "Routing",
+      "traffic": "Traffic"
+    },
+    "transportModes": {
+      "car": "Car",
+      "truck": "Truck"
+    },
+    "routingModes": {
+      "fast": "Fast",
+      "short": "Short"
+    },
+    "hazardousGoods": {
+      "title": "Hazardous goods",
+      "explosive": "Explosive",
+      "gas": "Gas",
+      "flammable": "Flammable",
+      "combustible": "Combustible",
+      "organic": "Organic",
+      "poison": "Poison",
+      "radioactive": "Radioactive",
+      "corrosive": "Corrosive",
+      "poisonousInhalation": "Poisonous by inhalation",
+      "harmfulToWater": "Harmful to water",
+      "other": "Other"
+    },
+    "duration": {
+      "minutes": "{minutes} min",
+      "hoursMinutes": "{hours} h {minutes} min"
+    }
+  },
+  "HereMap": {
+    "loading": "Loading map…",
+    "updatingPosition": "Updating position…",
+    "noRoutePoints": "No route points",
+    "driverLocation": "Driver location",
+    "lastRefresh": "Last refresh: {time}",
+    "accuracy": "Accuracy: {meters} m",
+    "noData": "no data",
+    "routePointBehavior": {
+      "STOP": "Stop",
+      "PASS_THROUGH": "Pass-through"
+    },
+    "partnerPoi": {
+      "addAsRoutePoint": "Add as route point",
+      "detachFromRoute": "Detach POI from route",
+      "calculating": "Recalculating..."
+    },
+    "settings": {
+      "open": "Open map settings",
+      "close": "Close map settings",
+      "title": "Map settings",
+      "view": "View",
+      "map": "Map",
+      "satellite": "Satellite",
+      "trafficFlow": "Traffic flow",
+      "trafficIncidents": "Traffic incidents",
+      "vehicleRestrictions": "Truck restrictions"
+    },
+    "controls": {
+      "refreshDriverLocation": "Refresh driver position",
+      "zoomIn": "Zoom in",
+      "zoomOut": "Zoom out"
+    },
+    "pointTypes": {
+      "LOADING": "Loading",
+      "UNLOADING": "Unloading",
+      "FUEL": "Refueling",
+      "PARKING": "Parking",
+      "SERVICE": "Service",
+      "OTHER": "Other"
+    },
+    "partnerPoiTypes": {
+      "FUEL": "Fuel station",
+      "PARKING": "Parking",
+      "SERVICE": "Service",
+      "OTHER": "Partner point"
+    },
+    "errors": {
+      "missingApiKey": "Missing NEXT_PUBLIC_HERE_MAPS_API_KEY",
+      "loadFailed": "Failed to load HERE map"
     }
   },
   "OrderEventType": {

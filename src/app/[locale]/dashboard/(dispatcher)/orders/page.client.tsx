@@ -7,6 +7,7 @@ import { useDispatcherOrdersQuery } from "@/features/orders/hooks/use-dispatcher
 import { buildHrefFromSearchParams } from "@/lib/build-href";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useCallback } from "react";
+import { useTranslations } from "next-intl";
 
 function parsePositiveInt(v: string | null, fallback: number) {
   const n = Number(v);
@@ -14,6 +15,7 @@ function parsePositiveInt(v: string | null, fallback: number) {
 }
 
 export default function OrdersPageClient() {
+  const t = useTranslations("OrdersPage");
   const sp = useSearchParams();
   const pathname = usePathname();
 
@@ -33,14 +35,14 @@ export default function OrdersPageClient() {
   );
 
   if (isPending && !data) {
-    return <div className="mt-8 text-sm text-muted-foreground">Loading...</div>;
+    return <div className="mt-8 text-sm text-muted-foreground">{t("loading")}</div>;
   }
 
   if (isError) {
     return (
       <div className="mt-8 rounded-xl border bg-background p-4 space-y-3">
         <p className="text-sm text-destructive">
-          {"Error"}
+          {t("error")}
           {error ? `: ${(error as Error).message}` : ""}
         </p>
       </div>

@@ -99,7 +99,7 @@ export function OrderDocumentUploadDialog({ trigger, onAdd }: Props) {
             size="icon"
             onClick={close}
             className="h-10 w-10 rounded-xl"
-            aria-label="Close"
+            aria-label={t("actions.close")}
           >
             <X className="h-5 w-5" />
           </Button>

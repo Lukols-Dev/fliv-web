@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useTranslations } from "next-intl";
 
 type Props = {
   error: Error;
@@ -8,10 +9,11 @@ type Props = {
 };
 
 export default function Error({ error }: Props) {
+  const t = useTranslations("ErrorPage");
 
   useEffect(() => {
     console.error(error);
   }, [error]);
 
-  return <div>Error</div>;
+  return <div>{t("title")}</div>;
 }

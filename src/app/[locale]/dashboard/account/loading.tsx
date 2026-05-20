@@ -1,3 +1,3 @@
 export default function Loading() {
-  return <div className="p-6">Ładowanie profilu…</div>;
+  return <div className="p-6" aria-busy="true" />;
 }
